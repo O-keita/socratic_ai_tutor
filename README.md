@@ -1,10 +1,40 @@
 # Socratic AI Tutor: Hybrid Offline-First Personalized Learning
 
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/O-keita/socratic_ai_tutor.git)
 [![Flutter](https://img.shields.io/badge/Frontend-Flutter-blue.svg)](https://flutter.dev)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-green.svg)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The **Socratic AI Tutor** is a self-contained, **hybrid offline-first** mobile application and backend system designed to revolutionize self-learning through the **Socratic Method**. Instead of providing direct answers, this system acts as a guide, asking focused questions to help students discover concepts through their own reasoning.
+## 📝 Project Description
+The **Socratic AI Tutor** is a self-contained, **hybrid offline-first** mobile application and backend system designed to revolutionize self-learning through the **Socratic Method**, specifically tailored for technology education in low-resource environments. Instead of providing direct answers, this system acts as a guide, asking focused questions to help students discover concepts through their own reasoning.
+
+By combining on-device LLM inference (GGUF) with a cloud-fallback API, it provides a seamless learning experience regardless of internet availability.
+
+---
+
+## 🔗 Project Resources
+- **GitHub Repository**: [https://github.com/O-keita/socratic_ai_tutor.git](https://github.com/O-keita/socratic_ai_tutor.git)
+- **Research Background**: Refer to our internal documentation on "Bridging the Digital Reasoning Divide in Africa".
+
+---
+
+## 🎨 Designs & Architecture
+
+### 📱 App Interfaces
+| Onboarding | Chat Interface | Course Library |
+| :---: | :---: | :---: |
+| ![Onboarding Placeholder](https://via.placeholder.com/200x400?text=Onboarding) | ![Chat Placeholder](https://via.placeholder.com/200x400?text=Socratic+Chat) | ![Library Placeholder](https://via.placeholder.com/200x400?text=Courses) |
+
+### 🛠️ System Architecture (Flow Diagram)
+```mermaid
+graph TD
+    A[User Prompt] --> B{Connectivity?}
+    B -- Offline --> C[Local llama_flutter Engine]
+    B -- Online --> D[Remote FastAPI Engine]
+    C --> E[Socratic Guardrails]
+    D --> E
+    E --> F[Guiding Question]
+```
 
 ---
 
@@ -17,6 +47,29 @@ The **Socratic AI Tutor** is a self-contained, **hybrid offline-first** mobile a
 *   **📚 Curriculum-Based**: Integrated course library (Programming, Data Science, Critical Thinking) with metadata and lesson modules.
 *   **💾 Local Persistence**: Sessions and progress are saved locally, allowing students to pick up where they left off.
 *   **🎨 High-Contrast UI**: Refined "Modern Orange and Dark Blue" theme optimized for readability and accessibility in both Light and Dark modes.
+
+### ☁️ Remote Server Deployment (Fallback Engine)
+
+The system can optionally connect to a remote inference engine hosted on a **Virtual Private Server (VPS)** with 4GB+ RAM.
+
+#### 1. Server Setup
+```bash
+# Clone the repository
+git clone https://github.com/O-keita/socratic_ai_tutor.git
+cd socratic_ai_tutor
+
+# Ensure Docker & Docker Compose are installed
+docker compose build
+```
+
+#### 2. Model Placement
+Place the `socratic-q4_k_m.gguf` (~300MB) model in the root `models/` directory of the server. 
+
+#### 3. Launch
+```bash
+docker compose up -d
+```
+The server will be available at your server's IP on port 8000.
 
 ---
 
@@ -32,7 +85,7 @@ The **Socratic AI Tutor** is a self-contained, **hybrid offline-first** mobile a
 ### ML Layer
 - **Base Model**: Qwen3-0.6B (Optimized for mobile inference)
 - **Dataset**: ~37,000 Socratic dialogue turns training the model on pedagogical reasoning.
-- **Quantization**: GGUF (Q4_K_M) for 100% offline mobile utilization.
+- **Quantization**: GGUF (Q4_K_M) for ~300MB footprint, optimized for offline mobile utilization on commodity hardware.
 - **Tuning**: LoRA-based fine-tuning with integrated "Thought Chains" for teaching logic.
 
 ### Backend (Python/FastAPI)
@@ -72,33 +125,66 @@ socratic_ai_tutor/
 
 ---
 
-## ⚙️ Getting Started
+## ⚙️ Environment Setup & Installation
 
 ### 1. Prerequisites
-- Python 3.10+
-- Flutter SDK (latest stable)
-- Android Studio / Xcode
+- **Flutter**: 3.19.0+ 
+- **Python**: 3.10 or 3.11 (3.12 support depends on `llama-cpp-python` wheels)
+- **Mobile Hardware**: Android device with ARM64 architecture (Local inference will not work on x86 emulators).
+- **RAM**: 4GB+ RAM recommended for both backend and mobile device.
 
-### 2. Backend Setup
+### 2. Backend Environment (FastAPI)
 ```bash
+# Navigate to backend
 cd backend
+
+# Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies with build tools (required for llama-cpp)
+pip install --upgrade pip
 pip install -r ../requirements.txt
+
+# Run the server
 python main.py
 ```
 
-### 3. Frontend Setup
+### 3. Mobile App Environment (Flutter)
 ```bash
-cd frontend
+# Navigate to app folder
+cd socratic_app
+
+# Install dependencies
 flutter pub get
+
+# Connect an ARM64 Android device
 flutter run
 ```
 
-### 4. Model Setup
-Download the quantized model (e.g., `socratic-q4_k_m.gguf`) and place it in:
-- `backend/models/` (for server-side inference)
-- `frontend/assets/models/` (for mobile-native inference)
+### 4. GGUF Model Setup
+Currently, the system is designed for small, quantized models (~300MB).
+1. Download or export the `.gguf` model (e.g., `socratic-q4_k_m.gguf`).
+2. Place a copy in `backend/models/` for server-side fallback.
+3. For mobile, the app can be configured to load from `assets` or download on first run.
+
+## 🚢 Deployment Plan
+
+### ☁️ Remote Backend
+- **Host**: Any standard Linux VPS (4GB RAM minimum).
+- **Containerization**: Use the provided `Dockerfile` and `docker-compose.yml`.
+- **SSL/Production**: Recommended to use a reverse proxy (like Nginx) for HTTPS.
+- **Orchestration**:
+  ```bash
+  docker compose up --build -d
+  ```
+
+### 📱 Mobile Application (Android/iOS)
+1. **Model Delivery**: The ~300MB model file is hosted on a file server or model hub (e.g. Hugging Face).
+2. **Post-Install Download**: Due to the file size (~300MB), the app is designed to download the model to local storage on first launch or during setup.
+3. **Distribution**: 
+   - **Android**: Distribution via APK or App Bundle.
+   - **iOS**: Distribution via TestFlight or App Store.
 
 ---
 
@@ -114,7 +200,7 @@ The application is strictly programmed to follow these pedagogical rules:
 ## 📈 ML Development
 The project includes specialized notebooks for model development:
 - **`training/Qwen3_0_6B.ipynb`**: Process for fine-tuning the base model on Socratic dialogue examples using LoRA.
-- **`quantization/gguf_quantization.ipynb`**: Techniques used to compress 1.5B+ parameter models down to <1.5GB for mobile performance.
+- **`quantization/gguf_quantization.ipynb`**: Techniques used to compress LLMs down to ~300MB for mobile performance.
 
 ## 📚 Content Library
 The tutor's intelligence is supplemented by a structured curriculum across multiple domains:

@@ -22,6 +22,9 @@ dist/
 # Figma/Graphics files
 *.fig
 
+# Local Project Research
+research.txt
+
 # Large AI Models
 *.gguf
 *.bin

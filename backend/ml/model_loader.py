@@ -29,7 +29,8 @@ class ModelLoader:
     
     def __init__(self):
         self.config = self._load_config()
-        self.model_path = self.config.get('model', {}).get('path', '')
+        # Allow environment variable to override config path
+        self.model_path = os.getenv('MODEL_PATH', self.config.get('model', {}).get('path', ''))
         self.is_loaded = False
     
     def _load_config(self) -> dict:
@@ -69,11 +70,16 @@ class ModelLoader:
             model_config = self.config.get('model', {})
             print(f"Loading model from: {resolved_path}")
             
+            # Allow environment variable overrides for hardware optimization
+            n_ctx = int(os.getenv('N_CTX', model_config.get('n_ctx', 4096)))
+            n_threads = int(os.getenv('N_THREADS', model_config.get('n_threads', 4)))
+            n_gpu_layers = int(os.getenv('N_GPU_LAYERS', model_config.get('n_gpu_layers', 0)))
+
             ModelLoader._model = Llama(
                 model_path=resolved_path,
-                n_ctx=model_config.get('n_ctx', 4096),
-                n_threads=model_config.get('n_threads', 4),
-                n_gpu_layers=model_config.get('n_gpu_layers', 0),
+                n_ctx=n_ctx,
+                n_threads=n_threads,
+                n_gpu_layers=n_gpu_layers,
                 verbose=False
             )
             

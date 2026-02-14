@@ -10,8 +10,7 @@ import 'tutor_engine.dart';
 
 /// Service for local LLM inference using GGUF models with llama_flutter_android.
 /// 
-/// IMPORTANT: The model MUST be bundled as a release asset in android/app/src/main/assets/
-/// Flutter's asset system does not support large (>100MB) files via pubspec.yaml.
+/// IMPORTANT: Due to the model size (~300MB), it is recommended to download it to local storage.
 /// 
 /// Usage:
 /// ```dart
