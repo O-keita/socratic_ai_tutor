@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-02-12T10:00:00Z",
+  "courses": [
+    {
+      "id": "ml-data-science",
+      "version": "1.1.0",
+      "title": "Machine Learning & Data Science",
+      "description": "Comprehensive journey from Python fundamentals to advanced ML/AI techniques.",
+      "manifest_url": "http://10.0.2.2:8000/content/ml-data-science/course.json",
+      "thumbnail": "assets/images/ml.png"
+    },
+    {
+      "id": "intro-to-programming",
+      "version": "1.0.0",
+      "title": "Introduction to Programming",
+      "description": "Learn the fundamentals of programming through guided discovery.",
+      "manifest_url": "http://10.0.2.2:8000/content/intro-to-programming/course.json",
+      "thumbnail": "assets/images/programming.png"
+    }
+  ]
+}

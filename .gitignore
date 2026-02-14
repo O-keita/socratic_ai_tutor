@@ -1,0 +1,60 @@
+# .gitignore
+# Ignore Python virtual environments, logs, build artifacts, etc.
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+build/
+dist/
+.eggs/
+*.egg-info/
+.env
+.DS_Store
+.flutter-plugins
+.packages
+.pub-cache
+.idea/
+*.iml
+*.lock
+
+# Figma/Graphics files
+*.fig
+
+# Large AI Models
+*.gguf
+*.bin
+backend/models/
+socratic_app/assets/models/
+
+# Flutter specific (Root/Sub-project)
+socratic_app/build/
+socratic_app/.flutter-plugins
+socratic_app/.flutter-plugins-dependencies
+socratic_app/.packages
+socratic_app/.pub-cache/
+socratic_app/.dart_tool/
+socratic_app/generated/
+socratic_app/test_driver/
+socratic_app/linux/flutter/
+socratic_app/windows/flutter/
+
+# Python specific
+.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+backend/evaluation/logs/*.json
+
+# IDEs and OS
+.idea/
+.vscode/
+*.iml
+*.lock
+.DS_Store
+
+# Figma/Graphics files
+*.fig

@@ -1,0 +1,180 @@
+{
+  "id": "intro-to-programming",
+  "title": "Introduction to Programming",
+  "description": "Learn the fundamentals of programming through guided discovery",
+  "thumbnail": "assets/images/programming.png",
+  "difficulty": "Beginner",
+  "duration": "4 hours",
+  "totalLessons": 10,
+  "modules": [
+    {
+      "id": "mod-1",
+      "title": "Getting Started",
+      "description": "Understanding what programming is",
+      "orderIndex": 0,
+      "chapters": [
+        {
+          "id": "ch-1-1",
+          "title": "What is Programming?",
+          "orderIndex": 0,
+          "lessons": [
+            {
+              "id": "intro-to-programming-1-1-1",
+              "title": "Understanding Computers",
+              "orderIndex": 0,
+              "contentPath": "lessons/1-1-1.md",
+              "keyPoints": "Computers process information using hardware and software. All data is binary.",
+              "reflectionQuestions": [
+                "Why do you think computers use binary (0s and 1s)?",
+                "What makes a computer different from a calculator?"
+              ]
+            },
+            {
+              "id": "intro-to-programming-1-1-2",
+              "title": "What is a Program?",
+              "orderIndex": 1,
+              "contentPath": "lessons/1-1-2.md",
+              "keyPoints": "Programs are precise instructions. Computers follow them exactly.",
+              "reflectionQuestions": [
+                "Why do you think precision is so important in programming?",
+                "What might happen if you skip a step in your instructions?"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ch-1-2",
+          "title": "Your First Code",
+          "orderIndex": 1,
+          "lessons": [
+            {
+              "id": "intro-to-programming-1-2-1",
+              "title": "Hello, World!",
+              "orderIndex": 0,
+              "contentPath": "lessons/1-2-1.md",
+              "keyPoints": "print() displays text. Strings need quotation marks.",
+              "reflectionQuestions": [
+                "Why do you think we need quotation marks around the text?",
+                "What would happen if we forgot the closing parenthesis?"
+              ]
+            },
+            {
+              "id": "intro-to-programming-1-2-2",
+              "title": "Variables and Data",
+              "orderIndex": 1,
+              "contentPath": "lessons/1-2-2.md",
+              "keyPoints": "Variables store data. Different types: strings, integers, floats, booleans.",
+              "reflectionQuestions": [
+                "Why is it important to choose good variable names?",
+                "What type of variable would you use to store a temperature?"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mod-2",
+      "title": "Control Flow",
+      "description": "Making decisions in code",
+      "orderIndex": 1,
+      "chapters": [
+        {
+          "id": "ch-2-1",
+          "title": "Conditionals",
+          "orderIndex": 0,
+          "lessons": [
+            {
+              "id": "intro-to-programming-2-1-1",
+              "title": "If Statements",
+              "orderIndex": 0,
+              "contentPath": "lessons/2-1-1.md",
+              "keyPoints": "If statements make decisions. Use proper indentation. == for comparison.",
+              "reflectionQuestions": [
+                "Why do you think Python uses indentation instead of brackets?",
+                "What would happen if you used = instead of == for comparison?"
+              ]
+            },
+            {
+              "id": "intro-to-programming-2-1-2",
+              "title": "Logical Operators",
+              "orderIndex": 1,
+              "contentPath": "lessons/2-1-2.md",
+              "keyPoints": "and requires both True. or requires at least one True. not reverses.",
+              "reflectionQuestions": [
+                "When would you use AND versus OR in real life decisions?",
+                "How would you check if a number is between 1 and 10?"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ch-2-2",
+          "title": "Loops",
+          "orderIndex": 1,
+          "lessons": [
+            {
+              "id": "intro-to-programming-2-2-1",
+              "title": "For Loops",
+              "orderIndex": 0,
+              "contentPath": "lessons/2-2-1.md",
+              "keyPoints": "For loops repeat a known number of times. range() generates number sequences.",
+              "reflectionQuestions": [
+                "Why does range(5) give 0-4 instead of 1-5?",
+                "How would you print a multiplication table using loops?"
+              ]
+            },
+            {
+              "id": "intro-to-programming-2-2-2",
+              "title": "While Loops",
+              "orderIndex": 1,
+              "contentPath": "lessons/2-2-2.md",
+              "keyPoints": "While loops continue until condition is False. Avoid infinite loops.",
+              "reflectionQuestions": [
+                "What could cause an infinite loop?",
+                "When would a while loop be better than a for loop?"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mod-3",
+      "title": "Functions",
+      "description": "Organizing code into reusable blocks",
+      "orderIndex": 2,
+      "chapters": [
+        {
+          "id": "ch-3-1",
+          "title": "Creating Functions",
+          "orderIndex": 0,
+          "lessons": [
+            {
+              "id": "intro-to-programming-3-1-1",
+              "title": "What are Functions?",
+              "orderIndex": 0,
+              "contentPath": "lessons/3-1-1.md",
+              "keyPoints": "Functions are reusable code blocks. Parameters pass data to functions.",
+              "reflectionQuestions": [
+                "How do functions make code easier to maintain?",
+                "What makes a good function - doing one thing or many things?"
+              ]
+            },
+            {
+              "id": "intro-to-programming-3-1-2",
+              "title": "Return Values",
+              "orderIndex": 1,
+              "contentPath": "lessons/3-1-2.md",
+              "keyPoints": "return sends values back. Different from print which only displays.",
+              "reflectionQuestions": [
+                "Why would you return a value instead of just printing it?",
+                "What happens after a return statement executes?"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

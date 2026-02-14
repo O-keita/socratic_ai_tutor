@@ -1,0 +1,38 @@
+{
+  "model": {
+    "path": "models/socratic-q4_k_m.gguf",
+    "n_ctx": 4096,
+    "n_threads": 4,
+    "n_gpu_layers": 32,
+    "temperature": 0.4,
+    "max_tokens": 128,
+    "top_p": 0.9,
+    "top_k": 40,
+    "repeat_penalty": 1.2
+  },
+  "tutor": {
+    "difficulty_levels": {
+      "beginner": {
+        "hint_frequency": "high",
+        "scaffolding": "detailed",
+        "question_depth": "surface"
+      },
+      "intermediate": {
+        "hint_frequency": "medium",
+        "scaffolding": "moderate",
+        "question_depth": "analytical"
+      },
+      "advanced": {
+        "hint_frequency": "low",
+        "scaffolding": "minimal",
+        "question_depth": "deep"
+      }
+    },
+    "default_difficulty": "intermediate"
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "cors_origins": ["*"]
+  }
+}

@@ -1,0 +1,18 @@
+# requirements.txt
+# Python backend dependencies for Socratic AI tutor
+
+# Web Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+
+# LLM Inference (for GGUF models)
+llama-cpp-python>=0.2.50
+
+# Utilities
+python-multipart>=0.0.6
+httpx>=0.26.0
+
+# Optional: For GPU acceleration (uncomment if needed)
+# llama-cpp-python[cuda]>=0.2.50  # For NVIDIA GPUs
+# llama-cpp-python[metal]>=0.2.50  # For Apple Silicon

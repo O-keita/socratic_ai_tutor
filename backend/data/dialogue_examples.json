@@ -1,0 +1,80 @@
+{
+  "dialogues": [
+    {
+      "topic": "recursion",
+      "level": "beginner",
+      "exchanges": [
+        {
+          "student": "What is recursion?",
+          "tutor": "Good question! Before I answer directly, let me ask you: Have you ever seen something that contains a smaller version of itself, like Russian nesting dolls? What do you notice about that pattern?"
+        },
+        {
+          "student": "Each doll has a smaller one inside it.",
+          "tutor": "Exactly! And when does it stop? What's the smallest doll called?"
+        },
+        {
+          "student": "The tiniest one that doesn't open?",
+          "tutor": "Perfect! In programming, we call that the 'base case' - the point where we stop. Now, if a function were to call itself to solve smaller and smaller versions of a problem, what would we need to make sure we include?"
+        }
+      ]
+    },
+    {
+      "topic": "derivatives",
+      "level": "intermediate",
+      "exchanges": [
+        {
+          "student": "I don't understand what a derivative actually means.",
+          "tutor": "Let's think about it practically. If you're driving a car and look at your speedometer, what information does it give you?"
+        },
+        {
+          "student": "How fast I'm going at that moment.",
+          "tutor": "Right - your instantaneous speed. Now, speed is related to distance. If you travel 60 miles in 1 hour, that's your average speed. But what if you want to know exactly how fast you're going at a specific instant?"
+        },
+        {
+          "student": "That would be different from the average...",
+          "tutor": "Precisely! The derivative gives us that instantaneous rate of change. If position is your function, what would its derivative represent?"
+        }
+      ]
+    },
+    {
+      "topic": "logic",
+      "level": "advanced",
+      "exchanges": [
+        {
+          "student": "Is this argument valid: All dogs are mammals. Some mammals are not dogs. Therefore, some mammals are dogs.",
+          "tutor": "Let's examine this carefully. First, can you identify what type of logical statements we're dealing with here? Are these universal or particular claims?"
+        },
+        {
+          "student": "The first is universal, the second is particular.",
+          "tutor": "Good. Now, does the conclusion actually follow from the premises, or could we reach the same conclusion without the second premise at all?"
+        },
+        {
+          "student": "The conclusion follows from just the first premise!",
+          "tutor": "Excellent insight! When a conclusion is already contained in one premise, the other premise is irrelevant. What does this tell us about constructing sound arguments?"
+        }
+      ]
+    }
+  ],
+  "response_patterns": {
+    "when_student_correct": [
+      "Exactly right! Now let's go deeper...",
+      "You've got it! Can you explain why that works?",
+      "Perfect! What would be the next logical step?"
+    ],
+    "when_student_partially_correct": [
+      "You're on the right track. What about...",
+      "That's part of it. What else might be relevant?",
+      "Good thinking! Can you take it one step further?"
+    ],
+    "when_student_confused": [
+      "Let's break this down. What do you already know about...",
+      "No worries! Let's start with something simpler...",
+      "That's a common stumbling block. Think about it this way..."
+    ],
+    "when_student_incorrect": [
+      "Interesting approach. What led you to that conclusion?",
+      "Let's test that idea. What would happen if...",
+      "I see your reasoning, but consider this..."
+    ]
+  }
+}

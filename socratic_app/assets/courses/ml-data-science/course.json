@@ -1,0 +1,1310 @@
+{
+  "id": "ml-data-science",
+  "title": "Machine Learning & Data Science Mastery",
+  "description": "A comprehensive journey through data science and machine learning, from Python fundamentals to advanced deep learning architectures. Learn through the Socratic method with guided questions that help you discover concepts yourself.",
+  "imageUrl": "assets/images/ml_course.png",
+  "modules": [
+    {
+      "id": "module-1-python-foundations",
+      "title": "Python Foundations for Data Science",
+      "description": "Master the essential Python skills needed for data science and machine learning.",
+      "chapters": [
+        {
+          "id": "chapter-1-1-python-basics",
+          "title": "Python Basics",
+          "lessons": [
+            {
+              "id": "lesson-1-1-1",
+              "title": "Variables and Data Types",
+              "contentPath": "lessons/1-1-1-variables-data-types.md"
+            },
+            {
+              "id": "lesson-1-1-2",
+              "title": "Lists and Collections",
+              "contentPath": "lessons/1-1-2-lists-collections.md"
+            },
+            {
+              "id": "lesson-1-1-3",
+              "title": "Dictionaries and Sets",
+              "contentPath": "lessons/1-1-3-dictionaries-sets.md"
+            },
+            {
+              "id": "lesson-1-1-4",
+              "title": "Functions and Control Flow",
+              "contentPath": "lessons/1-1-4-functions-control-flow.md"
+            },
+            {
+              "id": "lesson-1-1-5",
+              "title": "Loops and Iteration",
+              "contentPath": "lessons/1-1-5-loops-iteration.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-2-data-manipulation",
+      "title": "Data Manipulation with NumPy & Pandas",
+      "description": "Learn to efficiently manipulate and analyze data using Python's most powerful libraries.",
+      "chapters": [
+        {
+          "id": "chapter-2-1-numpy",
+          "title": "NumPy Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-2-1-1",
+              "title": "Introduction to NumPy Arrays",
+              "contentPath": "lessons/2-1-1-numpy-arrays.md"
+            },
+            {
+              "id": "lesson-2-1-2",
+              "title": "Array Operations and Broadcasting",
+              "contentPath": "lessons/2-1-2-array-operations.md"
+            },
+            {
+              "id": "lesson-2-1-3",
+              "title": "Indexing and Slicing",
+              "contentPath": "lessons/2-1-3-indexing-slicing.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-2-2-pandas",
+          "title": "Pandas for Data Analysis",
+          "lessons": [
+            {
+              "id": "lesson-2-2-1",
+              "title": "DataFrames and Series",
+              "contentPath": "lessons/2-2-1-dataframes-series.md"
+            },
+            {
+              "id": "lesson-2-2-2",
+              "title": "Data Inspection and Selection",
+              "contentPath": "lessons/2-2-2-data-inspection.md"
+            },
+            {
+              "id": "lesson-2-2-3",
+              "title": "Data Transformations",
+              "contentPath": "lessons/2-2-3-data-transformations.md"
+            },
+            {
+              "id": "lesson-2-2-4",
+              "title": "GroupBy Operations",
+              "contentPath": "lessons/2-2-4-groupby-operations.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-2-3-data-joins",
+          "title": "Data Joins and Merging",
+          "lessons": [
+            {
+              "id": "lesson-2-3-1",
+              "title": "Inner and Outer Joins",
+              "contentPath": "lessons/2-3-1-inner-outer-joins.md"
+            },
+            {
+              "id": "lesson-2-3-2",
+              "title": "Left and Right Joins",
+              "contentPath": "lessons/2-3-2-left-right-joins.md"
+            },
+            {
+              "id": "lesson-2-3-3",
+              "title": "Concatenation and Filtering Joins",
+              "contentPath": "lessons/2-3-3-concatenation-filtering.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-3-statistics",
+      "title": "Statistics & Probability",
+      "description": "Build a strong foundation in statistical thinking for data science.",
+      "chapters": [
+        {
+          "id": "chapter-3-1-descriptive-stats",
+          "title": "Descriptive Statistics",
+          "lessons": [
+            {
+              "id": "lesson-3-1-1",
+              "title": "Describing Distributions",
+              "contentPath": "lessons/3-1-1-describing-distributions.md"
+            },
+            {
+              "id": "lesson-3-1-2",
+              "title": "Data Types and Measurement Scales",
+              "contentPath": "lessons/3-1-2-data-types-scales.md"
+            },
+            {
+              "id": "lesson-3-1-3",
+              "title": "Central Tendency and Spread",
+              "contentPath": "lessons/3-1-3-central-tendency.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-3-2-probability",
+          "title": "Probability Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-3-2-1",
+              "title": "Modeling Chance Events",
+              "contentPath": "lessons/3-2-1-modeling-chance.md"
+            },
+            {
+              "id": "lesson-3-2-2",
+              "title": "Normal Distributions",
+              "contentPath": "lessons/3-2-2-normal-distributions.md"
+            },
+            {
+              "id": "lesson-3-2-3",
+              "title": "Bayes' Theorem",
+              "contentPath": "lessons/3-2-3-bayes-theorem.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-3-3-inference",
+          "title": "Statistical Inference",
+          "lessons": [
+            {
+              "id": "lesson-3-3-1",
+              "title": "Hypothesis Testing",
+              "contentPath": "lessons/3-3-1-hypothesis-testing.md"
+            },
+            {
+              "id": "lesson-3-3-2",
+              "title": "Correlation vs Causation",
+              "contentPath": "lessons/3-3-2-correlation-causation.md"
+            },
+            {
+              "id": "lesson-3-3-3",
+              "title": "Bootstrapping and Confidence Intervals",
+              "contentPath": "lessons/3-3-3-bootstrapping.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-4-eda",
+      "title": "Exploratory Data Analysis",
+      "description": "Master the art of understanding and visualizing data before modeling.",
+      "chapters": [
+        {
+          "id": "chapter-4-1-exploration",
+          "title": "Data Exploration",
+          "lessons": [
+            {
+              "id": "lesson-4-1-1",
+              "title": "Exploring Distributions",
+              "contentPath": "lessons/4-1-1-exploring-distributions.md"
+            },
+            {
+              "id": "lesson-4-1-2",
+              "title": "Data Summaries",
+              "contentPath": "lessons/4-1-2-data-summaries.md"
+            },
+            {
+              "id": "lesson-4-1-3",
+              "title": "Relationships Between Variables",
+              "contentPath": "lessons/4-1-3-relationships.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-4-2-data-quality",
+          "title": "Data Quality",
+          "lessons": [
+            {
+              "id": "lesson-4-2-1",
+              "title": "Missing Data Handling",
+              "contentPath": "lessons/4-2-1-missing-data.md"
+            },
+            {
+              "id": "lesson-4-2-2",
+              "title": "Outlier Detection",
+              "contentPath": "lessons/4-2-2-outlier-detection.md"
+            },
+            {
+              "id": "lesson-4-2-3",
+              "title": "Data Cleaning and Validation",
+              "contentPath": "lessons/4-2-3-data-cleaning.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-4-3-visualization",
+          "title": "Data Visualization",
+          "lessons": [
+            {
+              "id": "lesson-4-3-1",
+              "title": "Visualization Principles",
+              "contentPath": "lessons/4-3-1-visualization-principles.md"
+            },
+            {
+              "id": "lesson-4-3-2",
+              "title": "Statistical Graphics",
+              "contentPath": "lessons/4-3-2-statistical-graphics.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-5-feature-engineering",
+      "title": "Feature Engineering",
+      "description": "Learn to create and transform features for better model performance.",
+      "chapters": [
+        {
+          "id": "chapter-5-1-encoding",
+          "title": "Feature Encoding",
+          "lessons": [
+            {
+              "id": "lesson-5-1-1",
+              "title": "One-Hot and Label Encoding",
+              "contentPath": "lessons/5-1-1-scaling-transformation.md"
+            },
+            {
+              "id": "lesson-5-1-2",
+              "title": "Target and Ordinal Encoding",
+              "contentPath": "lessons/5-1-2-encoding-categories.md"
+            },
+            {
+              "id": "lesson-5-1-3",
+              "title": "Handling Cyclical Features",
+              "contentPath": "lessons/5-1-3-handling-missing.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-5-2-transformations",
+          "title": "Feature Transformations",
+          "lessons": [
+            {
+              "id": "lesson-5-2-1",
+              "title": "Feature Scaling",
+              "contentPath": "lessons/5-2-1-feature-creation.md"
+            },
+            {
+              "id": "lesson-5-2-2",
+              "title": "Polynomial Features",
+              "contentPath": "lessons/5-2-2-feature-selection.md"
+            },
+            {
+              "id": "lesson-5-2-3",
+              "title": "Log and Box-Cox Transforms",
+              "contentPath": "lessons/5-2-3-dimensionality-reduction.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-5-3-selection",
+          "title": "Feature Selection",
+          "lessons": [
+            {
+              "id": "lesson-5-3-1",
+              "title": "Variance and Correlation Filters",
+              "contentPath": "lessons/5-3-1-filter-methods.md"
+            },
+            {
+              "id": "lesson-5-3-2",
+              "title": "Recursive Feature Elimination",
+              "contentPath": "lessons/5-3-2-rfe.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-6-supervised-learning",
+      "title": "Supervised Learning",
+      "description": "Master the core algorithms for regression and classification.",
+      "chapters": [
+        {
+          "id": "chapter-6-1-regression",
+          "title": "Regression Algorithms",
+          "lessons": [
+            {
+              "id": "lesson-6-1-1",
+              "title": "Linear Regression",
+              "contentPath": "lessons/6-1-1-linear-regression.md"
+            },
+            {
+              "id": "lesson-6-1-2",
+              "title": "Regularization: Ridge and Lasso",
+              "contentPath": "lessons/6-1-2-regularization.md"
+            },
+            {
+              "id": "lesson-6-1-3",
+              "title": "Regression Metrics and Evaluation",
+              "contentPath": "lessons/6-1-3-regression-metrics.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-6-2-classification",
+          "title": "Classification Algorithms",
+          "lessons": [
+            {
+              "id": "lesson-6-2-1",
+              "title": "Logistic Regression",
+              "contentPath": "lessons/6-2-1-logistic-regression.md"
+            },
+            {
+              "id": "lesson-6-2-2",
+              "title": "Decision Boundaries",
+              "contentPath": "lessons/6-2-2-classification-metrics.md"
+            },
+            {
+              "id": "lesson-6-2-3",
+              "title": "K-Nearest Neighbors",
+              "contentPath": "lessons/6-2-3-cross-validation.md"
+            },
+            {
+              "id": "lesson-6-2-4",
+              "title": "Naive Bayes Classifier",
+              "contentPath": "lessons/6-2-4-knn.md"
+            },
+            {
+              "id": "lesson-6-2-5",
+              "title": "Support Vector Machines",
+              "contentPath": "lessons/6-2-5-svm.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-6-3-trees",
+          "title": "Tree-Based Methods",
+          "lessons": [
+            {
+              "id": "lesson-6-3-1",
+              "title": "Decision Trees",
+              "contentPath": "lessons/6-3-1-decision-trees.md"
+            },
+            {
+              "id": "lesson-6-3-2",
+              "title": "Random Forests",
+              "contentPath": "lessons/6-3-2-random-forests.md"
+            },
+            {
+              "id": "lesson-6-3-3",
+              "title": "Gradient Boosting",
+              "contentPath": "lessons/6-3-3-gradient-boosting.md"
+            },
+            {
+              "id": "lesson-6-3-4",
+              "title": "XGBoost",
+              "contentPath": "lessons/6-3-4-xgboost.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-6-4-evaluation",
+          "title": "Model Evaluation",
+          "lessons": [
+            {
+              "id": "lesson-6-4-1",
+              "title": "Classification Metrics",
+              "contentPath": "lessons/6-4-1-model-comparison.md"
+            },
+            {
+              "id": "lesson-6-4-2",
+              "title": "Cross-Validation",
+              "contentPath": "lessons/6-4-2-bias-variance.md"
+            },
+            {
+              "id": "lesson-6-4-3",
+              "title": "Handling Class Imbalance",
+              "contentPath": "lessons/6-4-3-imbalanced-data.md"
+            },
+            {
+              "id": "lesson-6-4-4",
+              "title": "Model Calibration",
+              "contentPath": "lessons/6-4-4-model-calibration.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-7-unsupervised-learning",
+      "title": "Unsupervised Learning",
+      "description": "Discover patterns in data without labeled examples.",
+      "chapters": [
+        {
+          "id": "chapter-7-1-clustering",
+          "title": "Clustering",
+          "lessons": [
+            {
+              "id": "lesson-7-1-1",
+              "title": "K-Means Clustering",
+              "contentPath": "lessons/7-1-1-clustering-intro.md"
+            },
+            {
+              "id": "lesson-7-1-2",
+              "title": "Hierarchical Clustering",
+              "contentPath": "lessons/7-1-2-kmeans.md"
+            },
+            {
+              "id": "lesson-7-1-3",
+              "title": "Clustering Evaluation",
+              "contentPath": "lessons/7-1-3-hierarchical-clustering.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-7-2-dimensionality",
+          "title": "Dimensionality Reduction",
+          "lessons": [
+            {
+              "id": "lesson-7-2-1",
+              "title": "Principal Component Analysis",
+              "contentPath": "lessons/7-2-1-gmm.md"
+            },
+            {
+              "id": "lesson-7-2-2",
+              "title": "t-SNE and UMAP",
+              "contentPath": "lessons/7-2-2-cluster-evaluation.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-7-3-anomaly",
+          "title": "Anomaly Detection",
+          "lessons": [
+            {
+              "id": "lesson-7-3-1",
+              "title": "Anomaly Detection Methods",
+              "contentPath": "lessons/7-3-1-anomaly-detection.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-8-time-series",
+      "title": "Time Series Analysis",
+      "description": "Analyze and forecast temporal data patterns.",
+      "chapters": [
+        {
+          "id": "chapter-8-1-fundamentals",
+          "title": "Time Series Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-8-1-1",
+              "title": "Trends and Seasonality",
+              "contentPath": "lessons/8-1-1-time-series-intro.md"
+            },
+            {
+              "id": "lesson-8-1-2",
+              "title": "Stationarity",
+              "contentPath": "lessons/8-1-2-decomposition.md"
+            },
+            {
+              "id": "lesson-8-1-3",
+              "title": "Autocorrelation",
+              "contentPath": "lessons/8-1-3-autocorrelation.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-8-2-forecasting",
+          "title": "Forecasting Methods",
+          "lessons": [
+            {
+              "id": "lesson-8-2-1",
+              "title": "ARIMA Models",
+              "contentPath": "lessons/8-2-1-arima.md"
+            },
+            {
+              "id": "lesson-8-2-2",
+              "title": "Time Series Validation",
+              "contentPath": "lessons/8-2-2-exponential-smoothing.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-9-nlp",
+      "title": "Natural Language Processing",
+      "description": "Process and understand human language with machine learning.",
+      "chapters": [
+        {
+          "id": "chapter-9-1-text-preprocessing",
+          "title": "Text Preprocessing",
+          "lessons": [
+            {
+              "id": "lesson-9-1-1",
+              "title": "Tokenization",
+              "contentPath": "lessons/9-1-1-text-preprocessing.md"
+            },
+            {
+              "id": "lesson-9-1-2",
+              "title": "Stop Words and Stemming",
+              "contentPath": "lessons/9-1-2-bow-tfidf.md"
+            },
+            {
+              "id": "lesson-9-1-3",
+              "title": "Lemmatization",
+              "contentPath": "lessons/9-1-3-word-embeddings.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-9-2-text-representation",
+          "title": "Text Representation",
+          "lessons": [
+            {
+              "id": "lesson-9-2-1",
+              "title": "Bag of Words",
+              "contentPath": "lessons/9-2-1-text-classification.md"
+            },
+            {
+              "id": "lesson-9-2-2",
+              "title": "TF-IDF",
+              "contentPath": "lessons/9-2-2-sentiment-analysis.md"
+            },
+            {
+              "id": "lesson-9-2-3",
+              "title": "Word Embeddings",
+              "contentPath": "lessons/9-2-3-ner.md"
+            },
+            {
+              "id": "lesson-9-2-4",
+              "title": "Word2Vec and GloVe",
+              "contentPath": "lessons/9-2-4-word2vec-glove.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-9-3-nlp-tasks",
+          "title": "NLP Tasks",
+          "lessons": [
+            {
+              "id": "lesson-9-3-1",
+              "title": "Sentiment Analysis",
+              "contentPath": "lessons/9-3-1-topic-modeling.md"
+            },
+            {
+              "id": "lesson-9-3-2",
+              "title": "Named Entity Recognition",
+              "contentPath": "lessons/9-3-2-sequence-models.md"
+            },
+            {
+              "id": "lesson-9-3-3",
+              "title": "Text Classification",
+              "contentPath": "lessons/9-3-3-text-classification.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-10-neural-networks",
+      "title": "Neural Networks Fundamentals",
+      "description": "Understanding the building blocks of deep learning.",
+      "chapters": [
+        {
+          "id": "chapter-10-1-basics",
+          "title": "Neural Network Basics",
+          "lessons": [
+            {
+              "id": "lesson-10-1-1",
+              "title": "Perceptrons and Neurons",
+              "contentPath": "lessons/10-1-1-perceptrons.md"
+            },
+            {
+              "id": "lesson-10-1-2",
+              "title": "Activation Functions",
+              "contentPath": "lessons/10-1-2-activation-functions.md"
+            },
+            {
+              "id": "lesson-10-1-3",
+              "title": "Backpropagation",
+              "contentPath": "lessons/10-1-3-backpropagation.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-10-2-training",
+          "title": "Training Neural Networks",
+          "lessons": [
+            {
+              "id": "lesson-10-2-1",
+              "title": "Loss Functions",
+              "contentPath": "lessons/10-2-1-optimizers.md"
+            },
+            {
+              "id": "lesson-10-2-2",
+              "title": "Optimizers: SGD, Adam",
+              "contentPath": "lessons/10-2-2-loss-functions.md"
+            },
+            {
+              "id": "lesson-10-2-3",
+              "title": "Learning Rate Scheduling",
+              "contentPath": "lessons/10-2-3-regularization-nn.md"
+            },
+            {
+              "id": "lesson-10-2-4",
+              "title": "Batch Size and Training Dynamics",
+              "contentPath": "lessons/10-2-4-initialization.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-10-3-regularization",
+          "title": "Regularization Techniques",
+          "lessons": [
+            {
+              "id": "lesson-10-3-1",
+              "title": "Dropout",
+              "contentPath": "lessons/10-3-1-keras-basics.md"
+            },
+            {
+              "id": "lesson-10-3-2",
+              "title": "Batch Normalization",
+              "contentPath": "lessons/10-3-2-batch-normalization.md"
+            },
+            {
+              "id": "lesson-10-3-3",
+              "title": "Early Stopping",
+              "contentPath": "lessons/10-3-3-early-stopping.md"
+            },
+            {
+              "id": "lesson-10-3-4",
+              "title": "Weight Initialization",
+              "contentPath": "lessons/10-3-4-weight-initialization.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-11-cnn",
+      "title": "Convolutional Neural Networks",
+      "description": "Deep learning for image and visual data.",
+      "chapters": [
+        {
+          "id": "chapter-11-1-cnn-basics",
+          "title": "CNN Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-11-1-1",
+              "title": "Convolution Operations",
+              "contentPath": "lessons/11-1-1-cnn-intro.md"
+            },
+            {
+              "id": "lesson-11-1-2",
+              "title": "Pooling Layers",
+              "contentPath": "lessons/11-1-2-convolution-deep-dive.md"
+            },
+            {
+              "id": "lesson-11-1-3",
+              "title": "CNN Architectures",
+              "contentPath": "lessons/11-1-3-cnn-architectures.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-11-2-cv-tasks",
+          "title": "Computer Vision Tasks",
+          "lessons": [
+            {
+              "id": "lesson-11-2-1",
+              "title": "Image Classification",
+              "contentPath": "lessons/11-2-1-cnn-architectures.md"
+            },
+            {
+              "id": "lesson-11-2-2",
+              "title": "Object Detection: YOLO",
+              "contentPath": "lessons/11-2-2-image-classification.md"
+            },
+            {
+              "id": "lesson-11-2-3",
+              "title": "Semantic Segmentation",
+              "contentPath": "lessons/11-2-3-segmentation.md"
+            },
+            {
+              "id": "lesson-11-2-4",
+              "title": "Transfer Learning in Vision",
+              "contentPath": "lessons/11-2-4-transfer-learning-cv.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-11-3-advanced-cv",
+          "title": "Advanced Vision",
+          "lessons": [
+            {
+              "id": "lesson-11-3-1",
+              "title": "ResNet and Skip Connections",
+              "contentPath": "lessons/11-3-1-object-detection.md"
+            },
+            {
+              "id": "lesson-11-3-2",
+              "title": "Data Augmentation for Images",
+              "contentPath": "lessons/11-3-2-segmentation.md"
+            },
+            {
+              "id": "lesson-11-3-3",
+              "title": "Vision Transformers",
+              "contentPath": "lessons/11-3-3-vision-transformers.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-12-rnn",
+      "title": "Recurrent Neural Networks",
+      "description": "Deep learning for sequential data.",
+      "chapters": [
+        {
+          "id": "chapter-12-1-rnn-basics",
+          "title": "RNN Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-12-1-1",
+              "title": "Sequence Modeling",
+              "contentPath": "lessons/12-1-1-rnn-basics.md"
+            },
+            {
+              "id": "lesson-12-1-2",
+              "title": "Vanishing Gradients",
+              "contentPath": "lessons/12-1-2-vanishing-gradients.md"
+            },
+            {
+              "id": "lesson-12-1-3",
+              "title": "LSTM Networks",
+              "contentPath": "lessons/12-1-3-lstm.md"
+            },
+            {
+              "id": "lesson-12-1-4",
+              "title": "GRU Networks",
+              "contentPath": "lessons/12-1-4-gru.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-12-2-seq2seq",
+          "title": "Sequence-to-Sequence",
+          "lessons": [
+            {
+              "id": "lesson-12-2-1",
+              "title": "Encoder-Decoder Architecture",
+              "contentPath": "lessons/12-2-1-seq2seq.md"
+            },
+            {
+              "id": "lesson-12-2-2",
+              "title": "Attention Mechanism",
+              "contentPath": "lessons/12-2-2-attention.md"
+            },
+            {
+              "id": "lesson-12-2-3",
+              "title": "Teacher Forcing",
+              "contentPath": "lessons/12-2-3-teacher-forcing.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-13-transformers",
+      "title": "Transformers & Large Language Models",
+      "description": "State-of-the-art architectures for NLP and beyond.",
+      "chapters": [
+        {
+          "id": "chapter-13-1-transformer-arch",
+          "title": "Transformer Architecture",
+          "lessons": [
+            {
+              "id": "lesson-13-1-1",
+              "title": "Self-Attention",
+              "contentPath": "lessons/13-1-1-self-attention.md"
+            },
+            {
+              "id": "lesson-13-1-2",
+              "title": "Multi-Head Attention",
+              "contentPath": "lessons/13-1-2-transformer-architecture.md"
+            },
+            {
+              "id": "lesson-13-1-3",
+              "title": "Positional Encoding",
+              "contentPath": "lessons/13-1-3-positional-encoding.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-13-2-pretrained",
+          "title": "Pre-trained Language Models",
+          "lessons": [
+            {
+              "id": "lesson-13-2-1",
+              "title": "BERT: Bidirectional Encoding",
+              "contentPath": "lessons/13-2-1-bert.md"
+            },
+            {
+              "id": "lesson-13-2-2",
+              "title": "GPT: Generative Pre-training",
+              "contentPath": "lessons/13-2-2-gpt.md"
+            },
+            {
+              "id": "lesson-13-2-3",
+              "title": "Fine-tuning Language Models",
+              "contentPath": "lessons/13-2-3-fine-tuning-lm.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-13-3-contextual",
+          "title": "Contextual Embeddings",
+          "lessons": [
+            {
+              "id": "lesson-13-3-1",
+              "title": "Contextual vs Static Embeddings",
+              "contentPath": "lessons/13-3-1-transfer-learning.md"
+            },
+            {
+              "id": "lesson-13-3-2",
+              "title": "Masked Language Modeling",
+              "contentPath": "lessons/13-3-2-masked-lm.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-14-generative-models",
+      "title": "Generative Models",
+      "description": "Learn to generate new data with deep learning.",
+      "chapters": [
+        {
+          "id": "chapter-14-1-vaes",
+          "title": "Variational Autoencoders",
+          "lessons": [
+            {
+              "id": "lesson-14-1-1",
+              "title": "VAE Architecture",
+              "contentPath": "lessons/14-1-1-vae.md"
+            },
+            {
+              "id": "lesson-14-1-2",
+              "title": "Latent Space",
+              "contentPath": "lessons/14-1-2-gan.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-14-2-gans",
+          "title": "Generative Adversarial Networks",
+          "lessons": [
+            {
+              "id": "lesson-14-2-1",
+              "title": "GAN Architecture",
+              "contentPath": "lessons/14-2-1-diffusion.md"
+            },
+            {
+              "id": "lesson-14-2-2",
+              "title": "GAN Training Challenges",
+              "contentPath": "lessons/14-2-2-gan-training.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-15-ensemble",
+      "title": "Ensemble Methods",
+      "description": "Combine multiple models for better predictions.",
+      "chapters": [
+        {
+          "id": "chapter-15-1-ensemble-basics",
+          "title": "Ensemble Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-15-1-1",
+              "title": "Bagging and Bootstrap",
+              "contentPath": "lessons/15-1-1-bagging-random-forests.md"
+            },
+            {
+              "id": "lesson-15-1-2",
+              "title": "Boosting Methods",
+              "contentPath": "lessons/15-1-2-boosting.md"
+            },
+            {
+              "id": "lesson-15-1-3",
+              "title": "Stacking and Blending",
+              "contentPath": "lessons/15-1-3-stacking.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-15-2-advanced-ensemble",
+          "title": "Advanced Ensemble Techniques",
+          "lessons": [
+            {
+              "id": "lesson-15-2-1",
+              "title": "Ensemble Diversity",
+              "contentPath": "lessons/15-2-1-stacking.md"
+            },
+            {
+              "id": "lesson-15-2-2",
+              "title": "Out-of-Bag Error",
+              "contentPath": "lessons/15-2-2-oob-error.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-16-recommender",
+      "title": "Recommender Systems",
+      "description": "Build systems that suggest relevant items to users.",
+      "chapters": [
+        {
+          "id": "chapter-16-1-rec-basics",
+          "title": "Recommendation Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-16-1-1",
+              "title": "Collaborative Filtering",
+              "contentPath": "lessons/16-1-1-collaborative-filtering.md"
+            },
+            {
+              "id": "lesson-16-1-2",
+              "title": "Content-Based Filtering",
+              "contentPath": "lessons/16-1-2-content-based.md"
+            },
+            {
+              "id": "lesson-16-1-3",
+              "title": "Matrix Factorization",
+              "contentPath": "lessons/16-1-3-matrix-factorization.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-17-reinforcement-learning",
+      "title": "Reinforcement Learning",
+      "description": "Train agents to make decisions through interaction.",
+      "chapters": [
+        {
+          "id": "chapter-17-1-rl-basics",
+          "title": "RL Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-17-1-1",
+              "title": "Markov Decision Process",
+              "contentPath": "lessons/17-1-1-rl-intro.md"
+            },
+            {
+              "id": "lesson-17-1-2",
+              "title": "Bellman Equation",
+              "contentPath": "lessons/17-1-2-bellman.md"
+            },
+            {
+              "id": "lesson-17-1-3",
+              "title": "Q-Learning",
+              "contentPath": "lessons/17-1-3-q-learning.md"
+            },
+            {
+              "id": "lesson-17-1-4",
+              "title": "Exploration vs Exploitation",
+              "contentPath": "lessons/17-1-4-exploration.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-17-2-deep-rl",
+          "title": "Deep Reinforcement Learning",
+          "lessons": [
+            {
+              "id": "lesson-17-2-1",
+              "title": "Deep Q-Networks",
+              "contentPath": "lessons/17-2-1-q-learning.md"
+            },
+            {
+              "id": "lesson-17-2-2",
+              "title": "Policy Gradient Methods",
+              "contentPath": "lessons/17-2-2-policy-gradient.md"
+            },
+            {
+              "id": "lesson-17-2-3",
+              "title": "Actor-Critic Methods",
+              "contentPath": "lessons/17-2-3-actor-critic.md"
+            },
+            {
+              "id": "lesson-17-2-4",
+              "title": "Proximal Policy Optimization",
+              "contentPath": "lessons/17-2-4-ppo.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-18-graphs",
+      "title": "Graph Neural Networks",
+      "description": "Deep learning on graph-structured data.",
+      "chapters": [
+        {
+          "id": "chapter-18-1-gnn-basics",
+          "title": "GNN Fundamentals",
+          "lessons": [
+            {
+              "id": "lesson-18-1-1",
+              "title": "Graph Convolution",
+              "contentPath": "lessons/18-1-1-gnn-intro.md"
+            },
+            {
+              "id": "lesson-18-1-2",
+              "title": "Message Passing",
+              "contentPath": "lessons/18-1-2-message-passing.md"
+            },
+            {
+              "id": "lesson-18-1-3",
+              "title": "Node Classification",
+              "contentPath": "lessons/18-1-3-node-classification.md"
+            },
+            {
+              "id": "lesson-18-1-4",
+              "title": "Link Prediction",
+              "contentPath": "lessons/18-1-4-link-prediction.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-19-explainability",
+      "title": "Model Explainability & Interpretability",
+      "description": "Understanding and explaining model decisions.",
+      "chapters": [
+        {
+          "id": "chapter-19-1-interpretability",
+          "title": "Interpretability Methods",
+          "lessons": [
+            {
+              "id": "lesson-19-1-1",
+              "title": "SHAP Values",
+              "contentPath": "lessons/19-1-1-shap.md"
+            },
+            {
+              "id": "lesson-19-1-2",
+              "title": "LIME",
+              "contentPath": "lessons/19-1-2-feature-importance.md"
+            },
+            {
+              "id": "lesson-19-1-3",
+              "title": "Feature Importance",
+              "contentPath": "lessons/19-1-3-feature-importance.md"
+            },
+            {
+              "id": "lesson-19-1-4",
+              "title": "Counterfactual Explanations",
+              "contentPath": "lessons/19-1-4-counterfactuals.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-20-fairness",
+      "title": "Fairness & Ethics in ML",
+      "description": "Build responsible and fair machine learning systems.",
+      "chapters": [
+        {
+          "id": "chapter-20-1-bias",
+          "title": "Bias and Fairness",
+          "lessons": [
+            {
+              "id": "lesson-20-1-1",
+              "title": "Sources of Bias",
+              "contentPath": "lessons/20-1-1-fairness-bias.md"
+            },
+            {
+              "id": "lesson-20-1-2",
+              "title": "Fairness Metrics",
+              "contentPath": "lessons/20-1-2-responsible-ai.md"
+            },
+            {
+              "id": "lesson-20-1-3",
+              "title": "Debiasing Techniques",
+              "contentPath": "lessons/20-1-3-debiasing.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-20-2-ethics",
+          "title": "Responsible AI",
+          "lessons": [
+            {
+              "id": "lesson-20-2-1",
+              "title": "AI Ethics Principles",
+              "contentPath": "lessons/20-2-1-ethics-principles.md"
+            },
+            {
+              "id": "lesson-20-2-2",
+              "title": "Privacy in ML",
+              "contentPath": "lessons/20-2-2-privacy.md"
+            },
+            {
+              "id": "lesson-20-2-3",
+              "title": "Model Documentation",
+              "contentPath": "lessons/20-2-3-documentation.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-21-mlops",
+      "title": "MLOps & Model Deployment",
+      "description": "Take models from development to production.",
+      "chapters": [
+        {
+          "id": "chapter-21-1-deployment",
+          "title": "Model Deployment",
+          "lessons": [
+            {
+              "id": "lesson-21-1-1",
+              "title": "Model Serving",
+              "contentPath": "lessons/21-1-1-ml-pipelines.md"
+            },
+            {
+              "id": "lesson-21-1-2",
+              "title": "API Design for ML",
+              "contentPath": "lessons/21-1-2-experiment-tracking.md"
+            },
+            {
+              "id": "lesson-21-1-3",
+              "title": "Containerization",
+              "contentPath": "lessons/21-1-3-containerization.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-21-2-monitoring",
+          "title": "Production Monitoring",
+          "lessons": [
+            {
+              "id": "lesson-21-2-1",
+              "title": "Model Monitoring",
+              "contentPath": "lessons/21-2-1-model-deployment.md"
+            },
+            {
+              "id": "lesson-21-2-2",
+              "title": "Data Drift Detection",
+              "contentPath": "lessons/21-2-2-model-monitoring.md"
+            },
+            {
+              "id": "lesson-21-2-3",
+              "title": "A/B Testing for ML",
+              "contentPath": "lessons/21-2-3-ab-testing.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-21-3-practices",
+          "title": "MLOps Practices",
+          "lessons": [
+            {
+              "id": "lesson-21-3-1",
+              "title": "Experiment Tracking",
+              "contentPath": "lessons/21-3-1-experiment-tracking.md"
+            },
+            {
+              "id": "lesson-21-3-2",
+              "title": "Model Versioning",
+              "contentPath": "lessons/21-3-2-model-versioning.md"
+            },
+            {
+              "id": "lesson-21-3-3",
+              "title": "CI/CD for ML",
+              "contentPath": "lessons/21-3-3-cicd-ml.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-22-advanced",
+      "title": "Advanced Topics",
+      "description": "Cutting-edge techniques in machine learning.",
+      "chapters": [
+        {
+          "id": "chapter-22-1-efficiency",
+          "title": "Model Efficiency",
+          "lessons": [
+            {
+              "id": "lesson-22-1-1",
+              "title": "Model Quantization",
+              "contentPath": "lessons/22-1-1-automl.md"
+            },
+            {
+              "id": "lesson-22-1-2",
+              "title": "Knowledge Distillation",
+              "contentPath": "lessons/22-1-2-federated-learning.md"
+            },
+            {
+              "id": "lesson-22-1-3",
+              "title": "Pruning",
+              "contentPath": "lessons/22-1-3-pruning.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-22-2-advanced-learning",
+          "title": "Advanced Learning Paradigms",
+          "lessons": [
+            {
+              "id": "lesson-22-2-1",
+              "title": "Meta-Learning",
+              "contentPath": "lessons/22-2-1-continual-learning.md"
+            },
+            {
+              "id": "lesson-22-2-2",
+              "title": "Self-Supervised Learning",
+              "contentPath": "lessons/22-2-2-self-supervised.md"
+            },
+            {
+              "id": "lesson-22-2-3",
+              "title": "Federated Learning",
+              "contentPath": "lessons/22-2-3-federated.md"
+            },
+            {
+              "id": "lesson-22-2-4",
+              "title": "Continual Learning",
+              "contentPath": "lessons/22-2-4-continual.md"
+            }
+          ]
+        },
+        {
+          "id": "chapter-22-3-robustness",
+          "title": "Robustness & Uncertainty",
+          "lessons": [
+            {
+              "id": "lesson-22-3-1",
+              "title": "Adversarial Examples",
+              "contentPath": "lessons/22-3-1-adversarial.md"
+            },
+            {
+              "id": "lesson-22-3-2",
+              "title": "Uncertainty Estimation",
+              "contentPath": "lessons/22-3-2-uncertainty.md"
+            },
+            {
+              "id": "lesson-22-3-3",
+              "title": "Out-of-Distribution Detection",
+              "contentPath": "lessons/22-3-3-ood-detection.md"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

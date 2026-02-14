@@ -1,0 +1,31 @@
+{
+  "courses": [
+    {
+      "id": "ml-data-science",
+      "title": "Machine Learning & Data Science",
+      "description": "Comprehensive journey from Python fundamentals to advanced ML/AI techniques including deep learning, NLP, transformers, and MLOps",
+      "thumbnail": "assets/images/ml.png",
+      "difficulty": "Beginner to Advanced",
+      "duration": "80+ hours",
+      "totalLessons": 166
+    },
+    {
+      "id": "intro-to-programming",
+      "title": "Introduction to Programming",
+      "description": "Learn the fundamentals of programming through guided discovery",
+      "thumbnail": "assets/images/programming.png",
+      "difficulty": "Beginner",
+      "duration": "4 hours",
+      "totalLessons": 10
+    },
+    {
+      "id": "critical-thinking",
+      "title": "Critical Thinking Skills",
+      "description": "Develop analytical and reasoning abilities",
+      "thumbnail": "assets/images/thinking.png",
+      "difficulty": "Beginner",
+      "duration": "3 hours",
+      "totalLessons": 2
+    }
+  ]
+}

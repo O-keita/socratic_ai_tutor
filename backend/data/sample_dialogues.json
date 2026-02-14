@@ -1,0 +1,41 @@
+{
+  "sample_sessions": [
+    {
+      "id": "session_001",
+      "topic": "Understanding Sorting Algorithms",
+      "difficulty": "intermediate",
+      "messages": [
+        {"role": "tutor", "content": "Let's explore sorting algorithms together. If you had a deck of cards that was completely shuffled, how would you arrange them in order from Ace to King?"},
+        {"role": "student", "content": "I'd probably go through and find the smallest one first, then the next smallest."},
+        {"role": "tutor", "content": "Interesting approach! You're describing something called Selection Sort. Why do you think you'd naturally choose that method? What makes it intuitive?"},
+        {"role": "student", "content": "It's easy to understand - just keep finding the minimum."},
+        {"role": "tutor", "content": "True! But consider this: if you had 1000 cards, how many comparisons would you need to make in total? Think about what happens each time you find a minimum."},
+        {"role": "student", "content": "For the first card, I'd need to check all 1000. Then 999 for the next one..."},
+        {"role": "tutor", "content": "Exactly! So what's the total? And what does this tell us about the efficiency of this approach?"}
+      ]
+    },
+    {
+      "id": "session_002",
+      "topic": "Critical Thinking in Ethics",
+      "difficulty": "advanced",
+      "messages": [
+        {"role": "tutor", "content": "Let's examine a classic ethical dilemma. Is it ever morally acceptable to lie? What's your initial position?"},
+        {"role": "student", "content": "I think lying is generally wrong, but maybe sometimes it's okay."},
+        {"role": "tutor", "content": "Can you think of a specific situation where you believe lying would be morally acceptable? What makes that case different?"},
+        {"role": "student", "content": "Like if someone was going to hurt another person and asked where they were hiding."},
+        {"role": "tutor", "content": "A compelling example! So what principle are you applying here? Are you weighing consequences, or is there a duty you're prioritizing over truth-telling?"},
+        {"role": "student", "content": "I guess I'm saying preventing harm is more important than being truthful."},
+        {"role": "tutor", "content": "That's a consequentialist view. But consider: if we accept that lying is okay when it prevents harm, who gets to decide what counts as sufficient 'harm' to justify a lie?"}
+      ]
+    }
+  ],
+  "hint_templates": [
+    "Consider what would happen if the opposite were true...",
+    "Try breaking this into smaller, simpler parts...",
+    "What do you already know that might apply here?",
+    "Think about a concrete example...",
+    "What assumptions are you making?",
+    "How would you explain this to someone younger?",
+    "What's the most basic version of this problem?"
+  ]
+}

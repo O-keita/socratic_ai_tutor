@@ -1,0 +1,48 @@
+{
+  "id": "critical-thinking",
+  "title": "Critical Thinking Skills",
+  "description": "Develop analytical and reasoning abilities",
+  "thumbnail": "assets/images/thinking.png",
+  "difficulty": "Beginner",
+  "duration": "3 hours",
+  "totalLessons": 2,
+  "modules": [
+    {
+      "id": "ct-mod-1",
+      "title": "Foundations of Critical Thinking",
+      "description": "Understanding what critical thinking means",
+      "orderIndex": 0,
+      "chapters": [
+        {
+          "id": "ct-ch-1-1",
+          "title": "What is Critical Thinking?",
+          "orderIndex": 0,
+          "lessons": [
+            {
+              "id": "critical-thinking-1-1-1",
+              "title": "Introduction to Critical Thinking",
+              "orderIndex": 0,
+              "contentPath": "lessons/1-1-1.md",
+              "keyPoints": "Critical thinking is analyzing information objectively and questioning assumptions.",
+              "reflectionQuestions": [
+                "How do you currently evaluate whether information is trustworthy?",
+                "Can you think of a time when questioning an assumption led to a better outcome?"
+              ]
+            },
+            {
+              "id": "critical-thinking-1-1-2",
+              "title": "Cognitive Biases",
+              "orderIndex": 1,
+              "contentPath": "lessons/1-1-2.md",
+              "keyPoints": "Cognitive biases are mental shortcuts that can mislead us. Awareness helps overcome them.",
+              "reflectionQuestions": [
+                "Which cognitive bias do you think affects you most often?",
+                "How might confirmation bias affect research on controversial topics?"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

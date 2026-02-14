@@ -1,0 +1,159 @@
+{
+  "topics": [
+    {
+      "id": "mathematics",
+      "name": "Mathematics",
+      "description": "Explore mathematical concepts through guided inquiry",
+      "subtopics": [
+        {
+          "id": "calculus",
+          "name": "Calculus",
+          "concepts": ["derivatives", "integrals", "limits", "continuity"],
+          "guiding_questions": [
+            "What does it mean for a function to change?",
+            "How can we measure instantaneous change?",
+            "What is the relationship between area and accumulation?"
+          ]
+        },
+        {
+          "id": "algebra",
+          "name": "Algebra",
+          "concepts": ["equations", "functions", "polynomials", "inequalities"],
+          "guiding_questions": [
+            "What patterns do you notice in these expressions?",
+            "How can we represent unknown quantities?",
+            "What happens when we manipulate both sides equally?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "programming",
+      "name": "Programming",
+      "description": "Learn programming concepts through logical reasoning",
+      "subtopics": [
+        {
+          "id": "algorithms",
+          "name": "Algorithms",
+          "concepts": ["sorting", "searching", "recursion", "complexity"],
+          "guiding_questions": [
+            "What is the simplest case of this problem?",
+            "How would you solve this for a very small input?",
+            "What patterns emerge as the input grows?"
+          ]
+        },
+        {
+          "id": "data_structures",
+          "name": "Data Structures",
+          "concepts": ["arrays", "linked lists", "trees", "graphs"],
+          "guiding_questions": [
+            "How do we organize information for efficient access?",
+            "What trade-offs exist between different structures?",
+            "When would you choose one structure over another?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "science",
+      "name": "Science",
+      "description": "Discover scientific principles through observation and reasoning",
+      "subtopics": [
+        {
+          "id": "physics",
+          "name": "Physics",
+          "concepts": ["motion", "forces", "energy", "waves"],
+          "guiding_questions": [
+            "What do you observe about how objects move?",
+            "What causes change in motion?",
+            "How is energy transferred between systems?"
+          ]
+        },
+        {
+          "id": "biology",
+          "name": "Biology",
+          "concepts": ["cells", "genetics", "evolution", "ecosystems"],
+          "guiding_questions": [
+            "What are the basic units of life?",
+            "How is information passed between generations?",
+            "How do living things interact with their environment?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "philosophy",
+      "name": "Philosophy",
+      "description": "Engage in critical thinking and logical analysis",
+      "subtopics": [
+        {
+          "id": "logic",
+          "name": "Logic",
+          "concepts": ["arguments", "fallacies", "deduction", "induction"],
+          "guiding_questions": [
+            "What makes an argument valid?",
+            "How do we distinguish good reasoning from bad?",
+            "What assumptions are you making?"
+          ]
+        },
+        {
+          "id": "ethics",
+          "name": "Ethics",
+          "concepts": ["morality", "values", "justice", "rights"],
+          "guiding_questions": [
+            "What do you believe is the right thing to do?",
+            "How do we decide between competing values?",
+            "What principles guide ethical decision-making?"
+          ]
+        }
+      ]
+    }
+  ],
+  "socratic_method": {
+    "principles": [
+      "Ask questions rather than provide answers",
+      "Guide students to discover knowledge themselves",
+      "Build on what the student already knows",
+      "Use examples and counterexamples",
+      "Encourage critical examination of beliefs"
+    ],
+    "question_types": [
+      {
+        "type": "clarifying",
+        "description": "Questions that ask students to explain their thinking",
+        "examples": [
+          "What do you mean by that?",
+          "Can you give me an example?",
+          "How would you explain this in your own words?"
+        ]
+      },
+      {
+        "type": "probing",
+        "description": "Questions that dig deeper into reasoning",
+        "examples": [
+          "Why do you think that is true?",
+          "What evidence supports your view?",
+          "What assumptions are you making?"
+        ]
+      },
+      {
+        "type": "connecting",
+        "description": "Questions that link ideas together",
+        "examples": [
+          "How does this relate to what we discussed earlier?",
+          "Can you see any patterns here?",
+          "What are the implications of this?"
+        ]
+      },
+      {
+        "type": "challenging",
+        "description": "Questions that test understanding",
+        "examples": [
+          "What would happen if that weren't true?",
+          "Can you think of a counterexample?",
+          "How would someone disagree with this?"
+        ]
+      }
+    ]
+  }
+}
