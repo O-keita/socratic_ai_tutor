@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 📝 Project Description
-The **Socratic AI Tutor** is a self-contained, **hybrid offline-first** mobile application and backend system designed to revolutionize self-learning through the **Socratic Method**, specifically tailored for technology education in low-resource environments. Instead of providing direct answers, this system acts as a guide, asking focused questions to help students discover concepts through their own reasoning.
+The **Socratic AI Tutor** is a self-contained, **hybrid offline-first** mobile application and backend system designed to revolutionize **Data Science and Machine Learning** education through the **Socratic Method**. Specifically tailored for technology learners in low-resource environments, this system acts as a guide rather than a source of direct answers, asking focused questions to help students discover complex ML concepts through their own reasoning.
 
 By combining on-device LLM inference (GGUF) with a cloud-fallback API, it provides a seamless learning experience regardless of internet availability.
 
@@ -44,7 +44,7 @@ graph TD
 *   **🔄 Hybrid Intelligence**: Intelligently switches between high-speed local inference (100% offline) and high-accuracy remote inference depending on connectivity and priority.
 *   **📶 100% Offline Inference**: No internet required. Powered by quantized GGUF models running locally on ARM64 processors (Android/iOS).
 *   **⚡ Hardware Accelerated**: Uses efficient native libraries (`llama_flutter_android`) for low-latency, on-device Socratic reasoning.
-*   **📚 Curriculum-Based**: Integrated course library (Programming, Data Science, Critical Thinking) with metadata and lesson modules.
+*   **📚 DS/ML Curriculum**: Integrated course library focused on **Data Science & Machine Learning** (Probability, Neural Networks, Feature Engineering) with metadata and lesson modules.
 *   **💾 Local Persistence**: Sessions and progress are saved locally, allowing students to pick up where they left off.
 *   **🎨 High-Contrast UI**: Refined "Modern Orange and Dark Blue" theme optimized for readability and accessibility in both Light and Dark modes.
 
@@ -203,11 +203,11 @@ The project includes specialized notebooks for model development:
 - **`quantization/gguf_quantization.ipynb`**: Techniques used to compress LLMs down to ~300MB for mobile performance.
 
 ## 📚 Content Library
-The tutor's intelligence is supplemented by a structured curriculum across multiple domains:
-- **Mathematics**: Calculus, Algebra, and Geometry.
-- **Programming**: Algorithms, Data Structures, and Software Design.
-- **Science**: Physics and Biology.
-- **Critical Thinking**: Logic, Ethics, and Epistemology.
+The tutor's intelligence is supplemented by a structured curriculum centered on **Data Science and AI**:
+- **Machine Learning**: Linear Regression, Clustering, Neural Networks, and Evaluation Metrics.
+- **Data Science Foundations**: Statistics, Probability, Data Cleaning, and EDA.
+- **Advanced AI**: NLP, Computer Vision, and Transformer Architectures.
+- **Critical Computing**: Ethics in AI, Data Bias, and Algorithmic Reasoning.
 
 ---
 
