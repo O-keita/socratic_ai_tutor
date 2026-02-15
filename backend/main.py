@@ -28,18 +28,6 @@ from ml.model_loader import model_loader
 from evaluation.metrics import AdaptiveMetrics
 from core.auth import UserRegister, UserLogin, UserResponse, users_db, get_password_hash, save_users
 
-@app.middleware("http")
-async def log_requests(request, call_next):
-    import time
-    start_time = time.time()
-    path = request.url.path
-    method = request.method
-    logger.info(f">>> Request: {method} {path}")
-    response = await call_next(request)
-    duration = time.time() - start_time
-    logger.info(f"<<< Response: {method} {path} - Status: {response.status_code} - Duration: {duration:.4f}s")
-    return response
-
 # Load config
 def load_config():
     config_path = Path(__file__).parent / 'data' / 'config.json'
@@ -50,7 +38,6 @@ def load_config():
         return {"server": {"host": "0.0.0.0", "port": 8000, "cors_origins": ["*"]}}
 
 config = load_config()
-
 
 # Lifespan context manager for startup/shutdown
 @asynccontextmanager
@@ -67,13 +54,24 @@ async def lifespan(app: FastAPI):
     print("👋 Shutting down...")
     model_loader.unload_model()
 
-
 app = FastAPI(
     title="Socratic AI Tutor",
     description="An AI-powered Socratic tutoring system",
     version="1.0.0",
     lifespan=lifespan
 )
+
+@app.middleware("http")
+async def log_requests(request, call_next):
+    import time
+    start_time = time.time()
+    path = request.url.path
+    method = request.method
+    logger.info(f">>> Request: {method} {path}")
+    response = await call_next(request)
+    duration = time.time() - start_time
+    logger.info(f"<<< Response: {method} {path} - Status: {response.status_code} - Duration: {duration:.4f}s")
+    return response
 
 # Add CORS middleware
 app.add_middleware(
