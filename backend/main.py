@@ -3,15 +3,42 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from datetime import datetime
 import uvicorn
 import json
+import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
+
+# Configure logging
+log_dir = Path(__file__).parent / 'logs'
+log_dir.mkdir(exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(log_dir / "registration.log")
+    ]
+)
+logger = logging.getLogger("registration")
 
 from ml.inference_engine import inference_engine
 from ml.model_loader import model_loader
 from evaluation.metrics import AdaptiveMetrics
+from core.auth import UserRegister, UserLogin, UserResponse, users_db, get_password_hash, save_users
 
+@app.middleware("http")
+async def log_requests(request, call_next):
+    import time
+    start_time = time.time()
+    path = request.url.path
+    method = request.method
+    logger.info(f">>> Request: {method} {path}")
+    response = await call_next(request)
+    duration = time.time() - start_time
+    logger.info(f"<<< Response: {method} {path} - Status: {response.status_code} - Duration: {duration:.4f}s")
+    return response
 
 # Load config
 def load_config():
@@ -98,6 +125,86 @@ async def root():
         "message": "Socratic AI Tutor Backend is running",
         "model_loaded": model_loader.is_loaded,
         "version": "1.0.0"
+    }
+
+
+# Auth Routes
+@app.post("/register", response_model=UserResponse)
+async def register(user: UserRegister):
+    email_lower = user.email.lower()
+    username_lower = user.username.lower()
+    logger.info(f"--- Registration Attempt ---")
+    logger.info(f"Username: {user.username} (normalized: {username_lower})")
+    logger.info(f"Email: {user.email} (normalized: {email_lower})")
+    logger.info(f"Current users in DB keys: {list(users_db.keys())}")
+    
+    if email_lower in users_db:
+        logger.warning(f"Conflict: Email {email_lower} already exists")
+        existing_user = users_db[email_lower]
+        password_matches = existing_user["password_hash"] == get_password_hash(user.password)
+        logger.info(f"Password matches existing record: {password_matches}")
+        
+        if password_matches:
+            logger.info(f"Auto-returning existing user info for matching credentials")
+            return UserResponse(**existing_user)
+            
+        logger.error(f"Registration REJECTED: Email {email_lower} taken and password mismatch")
+        raise HTTPException(status_code=400, detail="Email already registered with a different password")
+    
+    # Check if username is already taken
+    for existing_email, existing_data in users_db.items():
+        if existing_data["username"].lower() == username_lower:
+            logger.warning(f"Conflict: Username {username_lower} already taken by {existing_email}")
+            raise HTTPException(status_code=400, detail="Username already taken")
+
+    import uuid
+    user_id = str(uuid.uuid4())
+    user_data = {
+        "id": user_id,
+        "username": user.username,
+        "email": email_lower,
+        "password_hash": get_password_hash(user.password),
+        "created_at": datetime.now()
+    }
+    users_db[email_lower] = user_data
+    save_users()
+    logger.info(f"SUCCESS: Created user {user.username} with ID {user_id}")
+    return UserResponse(**user_data)
+
+
+@app.post("/login")
+async def login(user: UserLogin):
+    identifier_lower = user.email.lower()
+    logger.info(f"--- Login Attempt ---")
+    logger.info(f"Identifier provided: {identifier_lower}")
+    logger.info(f"Targeting logic: searching in {len(users_db)} keys: {list(users_db.keys())}")
+    
+    target_user = None
+    # Search by email (direct key)
+    if identifier_lower in users_db:
+        target_user = users_db[identifier_lower]
+        logger.info("User found by email key match")
+    else:
+        # Search by username
+        for u in users_db.values():
+            if u["username"].lower() == identifier_lower:
+                target_user = u
+                logger.info(f"User found by username match: {u['username']}")
+                break
+            
+    if not target_user:
+        logger.warning(f"Login FAILED: User '{identifier_lower}' not found")
+        raise HTTPException(status_code=400, detail="User account not found")
+        
+    if target_user["password_hash"] != get_password_hash(user.password):
+        logger.warning(f"Login FAILED: Password mismatch for {identifier_lower}")
+        raise HTTPException(status_code=400, detail="Incorrect password")
+    
+    logger.info(f"SUCCESS: {target_user['username']} logged in")
+    return {
+        "id": target_user["id"],
+        "username": target_user["username"],
+        "token": f"mock-token-{target_user['id']}"
     }
 
 
