@@ -21,7 +21,7 @@ By combining on-device LLM inference (GGUF) with a cloud-fallback API, it provid
 ## � Video Demo
 Explore the Socratic AI Tutor in action! This video demonstrates the core functionalities, including the offline/online engine switching, the Socratic pedagogical guardrails, and the integrated course logic.
 
-[![Socratic AI Tutor Video Demo](https://img.shields.io/badge/Video-Demo--Watch--on--Drive-red?style=for-the-badge&logo=googledrive)](https://drive.google.com/file/d/19JzQTVYXiXWFX9ukc7zUP-SJ9GWhmDlB/view?usp=sharing)
+**Socratic AI Tutor Video Demo** : [https://drive.google.com/file/d/19JzQTVYXiXWFX9ukc7zUP-SJ9GWhmDlB/view?usp=sharing](https://drive.google.com/file/d/19JzQTVYXiXWFX9ukc7zUP-SJ9GWhmDlB/view?usp=sharing)
 
 *   **Duration**: ~10 Minutes
 *   **Key Focus**: Demonstrates real-time Socratic dialogue, engine status indicators, and offline DS/ML learning path.
