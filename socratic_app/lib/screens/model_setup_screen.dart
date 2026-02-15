@@ -65,6 +65,17 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
     }
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : AppTheme.darkBlue),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: isDark ? AppTheme.backgroundGradient : AppTheme.lightBackgroundGradient,
@@ -120,7 +131,11 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
                   ),
                 ),
                 const SizedBox(height: 48),
-                if (downloader.status == DownloadStatus.connecting) ...[
+                if (downloader.status == DownloadStatus.notStarted) ...[
+                  _buildDownloadButton(downloader),
+                  const SizedBox(height: 16),
+                  _buildSkipButton(),
+                ] else if (downloader.status == DownloadStatus.connecting) ...[
                   const CircularProgressIndicator(color: AppTheme.accentOrange),
                   const SizedBox(height: 16),
                   const Text(
@@ -156,32 +171,33 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildDownloadButton(downloader),
-                  if (downloader.status == DownloadStatus.notStarted || downloader.status == DownloadStatus.error) ...[
-                    _buildDownloadButton(downloader),
-                    const SizedBox(height: 16),
-                  ],
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _navigateToHome,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: AppTheme.accentOrange.withOpacity(0.5)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Text(
-                        'Continue to App',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.accentOrange,
-                        ),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 16),
+                  _buildSkipButton(),
                 ],
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkipButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: _navigateToHome,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          side: BorderSide(color: AppTheme.accentOrange.withOpacity(0.5)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: const Text(
+          'Skip & Use Online Mode',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.accentOrange,
           ),
         ),
       ),

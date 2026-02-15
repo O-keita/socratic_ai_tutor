@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
 import 'tutor_engine.dart';
 import 'llm_service.dart';
@@ -24,8 +25,22 @@ class HybridTutorService implements TutorEngine {
   static final HybridTutorService _instance = HybridTutorService._internal();
   factory HybridTutorService() => _instance;
   HybridTutorService._internal() {
+    _loadMode();
     // Initial status
     _updateStatus();
+  }
+
+  Future<void> _loadMode() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedMode = prefs.getString('tutor_mode');
+      if (savedMode != null) {
+        mode = TutorMode.values.firstWhere((e) => e.toString() == savedMode);
+        _updateStatus();
+      }
+    } catch (e) {
+      print('HybridTutorService: Error loading mode: $e');
+    }
   }
 
   Future<void> _updateStatus() async {
@@ -73,6 +88,16 @@ class HybridTutorService implements TutorEngine {
   void setMode(TutorMode newMode) {
     mode = newMode;
     _updateStatus();
+    _saveMode(newMode);
+  }
+
+  Future<void> _saveMode(TutorMode newMode) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('tutor_mode', newMode.toString());
+    } catch (e) {
+      print('HybridTutorService: Error saving mode: $e');
+    }
   }
 
   Future<TutorEngine> _getBestEngine() async {

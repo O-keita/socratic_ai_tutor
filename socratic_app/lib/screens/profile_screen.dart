@@ -3,11 +3,59 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../services/theme_service.dart';
 import '../services/auth_service.dart';
+import '../services/session_service.dart';
+import '../services/course_service.dart';
+import '../models/course.dart';
+import '../models/session.dart';
 import '../widgets/gradient_card.dart';
 import 'auth_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  int _sessionCount = 0;
+  int _questionCount = 0;
+  int _topicCount = 0;
+  List<Course> _courses = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final sessions = await SessionService.getSessions();
+      final courses = await CourseService().getCourses();
+      
+      int msgCount = 0;
+      final topics = <String>{};
+      for (var s in sessions) {
+        msgCount += s.messages.where((m) => m.isUser).length;
+        if (s.topic != null) topics.add(s.topic!);
+      }
+
+      if (mounted) {
+        setState(() {
+          _sessionCount = sessions.length;
+          _questionCount = msgCount;
+          _topicCount = topics.length;
+          _courses = courses;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading profile data: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,11 +143,11 @@ class ProfileScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatItem(context, '12', 'Sessions'),
+                      _buildStatItem(context, _sessionCount.toString(), 'Sessions'),
                       _buildDivider(context),
-                      _buildStatItem(context, '48', 'Questions'),
+                      _buildStatItem(context, _questionCount.toString(), 'Questions'),
                       _buildDivider(context),
-                      _buildStatItem(context, '5', 'Topics'),
+                      _buildStatItem(context, _topicCount.toString(), 'Topics'),
                     ],
                   ),
                 ],
@@ -120,43 +168,37 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   
-                  GradientCard(
-                    gradient: LinearGradient(
-                      colors: isDark 
-                          ? [const Color(0xFF1E1B2E), const Color(0xFF151226)]
-                          : [Colors.white, Colors.white.withOpacity(0.9)],
-                    ),
-                    borderGradient: isDark 
-                        ? AppTheme.borderGradient 
-                        : LinearGradient(colors: [AppTheme.accentOrange.withOpacity(0.2), AppTheme.accentOrange.withOpacity(0.1)]),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          _buildProgressItem(
-                            context,
-                            'Critical Thinking',
-                            0.75,
-                            AppTheme.accentOrange,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildProgressItem(
-                            context,
-                            'Problem Solving',
-                            0.60,
-                            const Color(0xFF3B82F6),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildProgressItem(
-                            context,
-                            'Analytical Skills',
-                            0.85,
-                            const Color(0xFF10B981),
-                          ),
-                        ],
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_courses.isEmpty)
+                    const Text('No course progress yet.')
+                  else
+                    GradientCard(
+                      gradient: LinearGradient(
+                        colors: isDark 
+                            ? [const Color(0xFF1E1B2E), const Color(0xFF151226)]
+                            : [Colors.white, Colors.white.withOpacity(0.9)],
+                      ),
+                      borderGradient: isDark 
+                          ? AppTheme.borderGradient 
+                          : LinearGradient(colors: [AppTheme.accentOrange.withOpacity(0.2), AppTheme.accentOrange.withOpacity(0.1)]),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: _courses.take(3).map((course) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _buildProgressItem(
+                                context,
+                                course.title,
+                                course.progress,
+                                AppTheme.accentOrange,
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -261,7 +303,7 @@ class ProfileScreen extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: () async {
                         await authService.logout();
-                        if (context.mounted) {
+                        if (mounted) {
                           Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(builder: (_) => const AuthScreen()),
                             (route) => false,
@@ -469,3 +511,4 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
+

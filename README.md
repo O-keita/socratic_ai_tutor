@@ -18,9 +18,32 @@ By combining on-device LLM inference (GGUF) with a cloud-fallback API, it provid
 
 ---
 
+## � Video Demo
+Explore the Socratic AI Tutor in action! This video demonstrates the core functionalities, including the offline/online engine switching, the Socratic pedagogical guardrails, and the integrated course logic.
+
+[![Socratic AI Tutor Video Demo](https://img.shields.io/badge/Video-Demo--Watch--on--Drive-red?style=for-the-badge&logo=googledrive)](https://drive.google.com/file/d/19JzQTVYXiXWFX9ukc7zUP-SJ9GWhmDlB/view?usp=sharing)
+
+*   **Duration**: ~10 Minutes
+*   **Key Focus**: Demonstrates real-time Socratic dialogue, engine status indicators, and offline DS/ML learning path.
+
+---
+
 ## 🎨 Designs & Architecture
 
-### 📱 App Interfaces
+### 🛠️ Logic & Architecture (System Diagram)
+The following diagram represents the core logic flow (equivalent to a circuit diagram for this AI-driven system), showing how prompts are routed between local/remote engines and passed through pedagogical guardrails.
+
+```mermaid
+graph TD
+    A[User Prompt] --> B{Connectivity?}
+    B -- Offline --> C[Local llama_flutter Engine]
+    B -- Online --> D[Remote FastAPI Engine]
+    C --> E[Socratic Guardrails]
+    D --> E
+    E --> F[Guiding Question]
+```
+
+### 📱 App Interfaces (Screenshots)
 
 | Splash Screen | Login | Register |
 | :---: | :---: | :---: |
@@ -33,17 +56,6 @@ By combining on-device LLM inference (GGUF) with a cloud-fallback API, it provid
 | Profile | Settings |
 | :---: | :---: |
 | ![Profile](screenshots/profilr.png) | ![Settings](screenshots/settings.png) |
-
-### 🛠️ System Architecture (Flow Diagram)
-```mermaid
-graph TD
-    A[User Prompt] --> B{Connectivity?}
-    B -- Offline --> C[Local llama_flutter Engine]
-    B -- Online --> D[Remote FastAPI Engine]
-    C --> E[Socratic Guardrails]
-    D --> E
-    E --> F[Guiding Question]
-```
 
 ---
 
@@ -179,21 +191,22 @@ Currently, the system is designed for small, quantized models (~300MB).
 
 ## 🚢 Deployment Plan
 
-### ☁️ Remote Backend
-- **Host**: Any standard Linux VPS (4GB RAM minimum).
-- **Containerization**: Use the provided `Dockerfile` and `docker-compose.yml`.
-- **SSL/Production**: Recommended to use a reverse proxy (like Nginx) for HTTPS.
+### ☁️ Remote Backend (Cloud Fallback)
+The backend is optimized for deployment on Linux-based VPS or Cloud instances (AWS, Google Cloud, Azure).
+- **Scale**: Containerized with Docker for easy orchestration.
+- **Inference**: High-performance CPU/GPU inference via `llama-cpp-python`.
+- **Connectivity**: Serves as a high-precision fallback for devices with limited local resources.
 - **Orchestration**:
   ```bash
   docker compose up --build -d
   ```
 
 ### 📱 Mobile Application (Android/iOS)
-1. **Model Delivery**: The ~300MB model file is hosted on a file server or model hub (e.g. Hugging Face).
-2. **Post-Install Download**: Due to the file size (~300MB), the app is designed to download the model to local storage on first launch or during setup.
+1. **Model Hosting**: The 350MB GGUF engine model is hosted on a high-availability Model Hub (Hugging Face).
+2. **Dynamic Onboarding**: Users are guided through a one-time "Local Intelligence" setup process to download the engine.
 3. **Distribution**: 
-   - **Android**: Distribution via APK or App Bundle.
-   - **iOS**: Distribution via TestFlight or App Store.
+   - **Android**: Release-ready APKs with split-ABI support (ARM64 priority).
+   - **iOS**: Available via TestFlight with native Accelerate/Metal framework support for LLM speed.
 
 ---
 
@@ -202,14 +215,15 @@ The application is strictly programmed to follow these pedagogical rules:
 1. **No Direct Answers**: The AI identifies when it is being asked for a solution and pivots to a guiding question.
 2. **Scaffolding**: Complex problems are broken down into smaller, manageable inquiries.
 3. **Logic Verification**: The AI analyzes student reasoning to identify knowledge gaps and adapts dynamically.
-4. **Visible Reasoning**: The model uses `<think>` tags to internalize pedagogical strategy before generating its response.
+4. **Visible Reasoning**: The model uses the Socratic method to lead students towards discovery rather than rote memorization.
 
 ---
 
-## 📈 ML Development
-The project includes specialized notebooks for model development:
-- **`training/Qwen3_0_6B.ipynb`**: Process for fine-tuning the base model on Socratic dialogue examples using LoRA.
-- **`quantization/gguf_quantization.ipynb`**: Techniques used to compress LLMs down to ~300MB for mobile performance.
+## 👨‍💻 Project Submission Details (Capstone)
+This repository contains the complete technical implementation for the Socratic AI Tutor Capstone.
+- **Methodology**: Discovery Learning via Socratic Dialogue.
+- **Innovation**: Hybrid Edge-Cloud LLM orchestration for low-resource environments.
+- **Research focus**: Enhancing ML education through pedagogical AI guardrails.
 
 ## 📚 Content Library
 The tutor's intelligence is supplemented by a structured curriculum centered on **Data Science and AI**:

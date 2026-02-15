@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
-import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/chat_screen.dart';
 import 'services/hybrid_tutor_service.dart';
 import 'services/theme_service.dart';
 import 'services/model_download_service.dart';
 import 'services/auth_service.dart';
-import 'screens/auth_screen.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {

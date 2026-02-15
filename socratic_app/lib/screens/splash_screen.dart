@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../services/model_download_service.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 import 'auth_screen.dart';
+import 'model_setup_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,7 +47,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     }
     
     if (authService.isAuthenticated) {
-      Navigator.of(context).pushReplacementNamed('/home');
+      // Check if model exists before going to home
+      final downloader = ModelDownloadService();
+      final hasModel = await downloader.isModelDownloaded('socratic-q4_k_m.gguf');
+      
+      if (mounted) {
+        if (hasModel) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const ModelSetupScreen()),
+          );
+        }
+      }
     } else {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const AuthScreen()),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../services/model_download_service.dart';
 import '../theme/app_theme.dart';
 import 'onboarding_screen.dart';
+import 'model_setup_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -32,7 +34,17 @@ class _AuthScreenState extends State<AuthScreen> {
           _passwordController.text,
         );
         if (success && mounted) {
-          Navigator.of(context).pushReplacementNamed('/home');
+          // Check if model is downloaded after login
+          final hasModel = await ModelDownloadService().isModelDownloaded('socratic-q4_k_m.gguf');
+          if (mounted) {
+            if (hasModel) {
+              Navigator.of(context).pushReplacementNamed('/home');
+            } else {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const ModelSetupScreen()),
+              );
+            }
+          }
         } else {
           errorMessage = 'Login failed. Please check your credentials.';
         }

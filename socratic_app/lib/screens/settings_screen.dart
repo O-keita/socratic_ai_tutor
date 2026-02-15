@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
 import '../services/hybrid_tutor_service.dart';
 import '../theme/app_theme.dart';
+import 'model_setup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -60,6 +61,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onChanged: (value) => themeService.toggleTheme(),
                     secondary: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
                   ),
+                ),
+                const SizedBox(height: 24),
+                _buildSectionHeader('Offline Capabilities'),
+                _buildSettingsTile(
+                  'Manage Local Model',
+                  'Download or update the offline Socratic engine',
+                  Icons.download_for_offline,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ModelSetupScreen()),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 _buildSectionHeader('General'),
