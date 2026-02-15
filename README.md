@@ -21,9 +21,18 @@ By combining on-device LLM inference (GGUF) with a cloud-fallback API, it provid
 ## 🎨 Designs & Architecture
 
 ### 📱 App Interfaces
-| Onboarding | Chat Interface | Course Library |
+
+| Splash Screen | Login | Register |
 | :---: | :---: | :---: |
-| ![Onboarding Placeholder](https://via.placeholder.com/200x400?text=Onboarding) | ![Chat Placeholder](https://via.placeholder.com/200x400?text=Socratic+Chat) | ![Library Placeholder](https://via.placeholder.com/200x400?text=Courses) |
+| ![Splash](screenshots/splash.png) | ![Login](screenshots/login.png) | ![Register](screenshots/register.png) |
+
+| Home (Courses) | AI Tutor | Chat |
+| :---: | :---: | :---: |
+| ![Home](screenshots/home.png) | ![AI Tutor](screenshots/ai_tutor_home.png) | ![Chat](screenshots/chat.png) |
+
+| Profile | Settings |
+| :---: | :---: |
+| ![Profile](screenshots/profilr.png) | ![Settings](screenshots/settings.png) |
 
 ### 🛠️ System Architecture (Flow Diagram)
 ```mermaid

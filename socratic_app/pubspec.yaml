@@ -39,7 +39,7 @@ dependencies:
   # State management and utilities
   provider: ^6.1.2
   shared_preferences: ^2.2.3
-  path_provider: ^2.1.2
+  path_provider: ^2.1.5
   path: ^1.9.0
 
   # LLM Inference - Android-only optimized plugin
@@ -51,6 +51,12 @@ dependencies:
 
   # Markdown rendering
   flutter_markdown: ^0.6.22
+  flutter_secure_storage: ^10.0.0
+  sqflite: ^2.4.2
+  sqflite_common_ffi: ^2.3.6
+  sqlite3_flutter_libs: ^0.5.24
+  crypto: ^3.0.7
+  uuid: ^4.5.2
 
 dev_dependencies:
   flutter_test:
@@ -76,6 +82,8 @@ flutter:
 
   # Course content assets
   assets:
+    - assets/images/
+    - assets/images/logo.png
     - assets/courses/
     - assets/courses/courses.json
     - assets/courses/ml-data-science/

@@ -31,12 +31,11 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
   }
 
   void _checkEmulator() {
-    // Check if we are on Android
-    if (Theme.of(context).platform == TargetPlatform.android) {
-        setState(() {
-          _isLikelyEmulator = true; 
-        });
-    }
+    // Show tip for all users - the app works on all devices
+    // Local engine is optional, online mode works everywhere
+    setState(() {
+      _isLikelyEmulator = false; // Don't exclude any devices
+    });
   }
 
   Future<void> _checkStatus() async {
@@ -100,11 +99,11 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20),
+                        Icon(Icons.tips_and_updates, color: Colors.amber, size: 20),
                         SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'X86 Emulator detected. Local engine requires ARM64. Please use Skip for now.',
+                            'All devices can use the tutor online. The local engine is optimized for mobile hardware.',
                             style: TextStyle(fontSize: 12, color: Colors.amber, fontWeight: FontWeight.w500),
                           ),
                         ),
@@ -157,15 +156,26 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildDownloadButton(downloader),
-                ] else ...[
-                  _buildDownloadButton(downloader),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: _navigateToHome,
-                    child: Text(
-                      'Skip for now (Online only)',
-                      style: TextStyle(
-                        color: isDark ? AppTheme.textMuted : AppTheme.lightTextMuted,
+                  if (downloader.status == DownloadStatus.notStarted || downloader.status == DownloadStatus.error) ...[
+                    _buildDownloadButton(downloader),
+                    const SizedBox(height: 16),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _navigateToHome,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: BorderSide(color: AppTheme.accentOrange.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: const Text(
+                        'Continue to App',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.accentOrange,
+                        ),
                       ),
                     ),
                   ),

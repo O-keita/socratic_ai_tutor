@@ -8,6 +8,9 @@ import 'screens/chat_screen.dart';
 import 'services/hybrid_tutor_service.dart';
 import 'services/theme_service.dart';
 import 'services/model_download_service.dart';
+import 'services/auth_service.dart';
+import 'screens/auth_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +26,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => ModelDownloadService()),
+        ChangeNotifierProvider(create: (_) => AuthService()),
       ],
       child: const SocraticTutorApp(),
     ),
@@ -51,7 +55,7 @@ class SocraticTutorApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeService.themeMode,
-          home: const OnboardingScreen(),
+          home: const SplashScreen(),
           routes: {
             '/home': (context) => const HomeScreen(),
             '/chat': (context) => ChatScreen(

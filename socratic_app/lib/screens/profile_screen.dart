@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../services/theme_service.dart';
+import '../services/auth_service.dart';
 import '../widgets/gradient_card.dart';
+import 'auth_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -11,6 +13,8 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeService>().isDarkMode;
     final colorScheme = Theme.of(context).colorScheme;
+    final authService = context.watch<AuthService>();
+    final user = authService.currentUser;
 
     return Container(
       decoration: BoxDecoration(
@@ -25,8 +29,14 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Text(
+                        'Profile',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       IconButton(
                         icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
                         onPressed: () => context.read<ThemeService>().toggleTheme(),
@@ -34,7 +44,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   
                   // Profile Picture
                   Container(
@@ -51,24 +61,29 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Colors.white,
+                    child: Center(
+                      child: Text(
+                        (user?.username ?? 'U')[0].toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                   
                   const SizedBox(height: 16),
                   
                   Text(
-                    'Student',
+                    user?.username ?? 'Learner',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   
                   const SizedBox(height: 4),
                   
                   Text(
-                    'Learning enthusiast',
+                    user?.email ?? 'Learning enthusiast',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary,
                     ),
@@ -236,6 +251,33 @@ class ProfileScreen extends StatelessWidget {
                     Icons.info_outline,
                     'About',
                     'App version and info',
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await authService.logout();
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const AuthScreen()),
+                            (route) => false,
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.logout, color: Colors.redAccent),
+                      label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.redAccent),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
                   ),
                   
                   const SizedBox(height: 100),

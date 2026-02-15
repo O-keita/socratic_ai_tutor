@@ -26,6 +26,7 @@ class CourseService {
       return _cachedCourses!;
     }
 
+    print('CourseService: Loading courses...');
     List<Course> courses = [];
     
     // 1. Try to load from assets (bundled courses)
@@ -33,42 +34,49 @@ class CourseService {
       final String jsonString = await rootBundle.loadString('assets/courses/courses.json');
       final Map<String, dynamic> data = json.decode(jsonString);
       final List<dynamic> assetCourses = data['courses'];
+      print('CourseService: Found ${assetCourses.length} courses in assets');
       
       for (var info in assetCourses) {
         final course = await loadCourse(info['id']);
-        if (course != null) courses.add(course);
+        if (course != null) {
+          courses.add(course);
+          print('CourseService: Successfully loaded asset course: ${course.title}');
+        } else {
+          print('CourseService: ⚠️ Failed to load asset course details for: ${info['id']}');
+        }
       }
     } catch (e) {
       print('CourseService: Error loading asset courses: $e');
     }
 
     // 2. Try to fetch remote manifest for updates/new courses
-    try {
-      final response = await http.get(Uri.parse(manifestUrl)).timeout(const Duration(seconds: 2));
-      if (response.statusCode == 200) {
-        final manifest = json.decode(response.body);
-        final List<dynamic> remoteCourses = manifest['courses'];
-        
-        for (var remoteInfo in remoteCourses) {
-          // If we already have this course from assets, we might want to update it
-          // For prototype, we just Ensure it's in our list if not already there
-          if (!courses.any((c) => c.id == remoteInfo['id'])) {
-            // New remote course discovered
-            courses.add(Course(
-              id: remoteInfo['id'],
-              title: remoteInfo['title'],
-              description: remoteInfo['description'],
-              thumbnail: remoteInfo['thumbnail'] ?? '',
-              totalLessons: remoteInfo['totalLessons'] ?? 0,
-              difficulty: remoteInfo['difficulty'] ?? 'Online',
-              duration: remoteInfo['duration'] ?? '-',
-              modules: [],
-            ));
+    if (courses.isEmpty) {
+      print('CourseService: ⚠️ Asset courses failed, trying remote manifest as fallback...');
+      try {
+        final response = await http.get(Uri.parse(manifestUrl)).timeout(const Duration(seconds: 3));
+        if (response.statusCode == 200) {
+          final manifest = json.decode(response.body);
+          final List<dynamic> remoteCourses = manifest['courses'];
+          
+          for (var remoteInfo in remoteCourses) {
+            if (!courses.any((c) => c.id == remoteInfo['id'])) {
+              courses.add(Course(
+                id: remoteInfo['id'],
+                title: remoteInfo['title'],
+                description: remoteInfo['description'],
+                thumbnail: remoteInfo['thumbnail'] ?? '',
+                totalLessons: remoteInfo['totalLessons'] ?? 0,
+                difficulty: remoteInfo['difficulty'] ?? 'Online',
+                duration: remoteInfo['duration'] ?? '-',
+                modules: [],
+              ));
+            }
           }
+          print('CourseService: Loaded ${courses.length} courses from remote');
         }
+      } catch (e) {
+        print('CourseService: Skipping remote manifest (Backend might be offline): $e');
       }
-    } catch (e) {
-      print('CourseService: Skipping remote manifest (Backend might be offline): $e');
     }
 
     _cachedCourses = courses;

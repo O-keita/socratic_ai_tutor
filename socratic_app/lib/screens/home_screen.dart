@@ -6,6 +6,10 @@ import '../services/course_service.dart';
 import '../services/theme_service.dart';
 import 'course_detail_screen.dart';
 import 'chat_screen.dart';
+import 'settings_screen.dart';
+import 'profile_screen.dart';
+import '../services/hybrid_tutor_service.dart';
+import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   bool _isLoading = true;
   final CourseService _courseService = CourseService();
+  final HybridTutorService _hybridService = HybridTutorService();
 
   @override
   void initState() {
@@ -34,9 +39,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoading = true);
     
     try {
-      // Add a strict timeout to ensure we don't hang if platform channels are broken
+      // Give more time for courses to load
       final courses = await _courseService.getCourses().timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 15),
         onTimeout: () {
           debugPrint('HomeScreen: ⚠️ Course loading timed out. Attempting fallback UI.');
           return [];
@@ -77,11 +82,26 @@ class _HomeScreenState extends State<HomeScreen> {
           gradient: isDark ? AppTheme.backgroundGradient : AppTheme.lightBackgroundGradient,
         ),
         child: SafeArea(
-          child: _currentIndex == 0 ? _buildCoursesTab() : _buildChatTab(),
+          child: _buildCurrentTab(),
         ),
       ),
       bottomNavigationBar: _buildBottomNav(isDark),
     );
+  }
+
+  Widget _buildCurrentTab() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildCoursesTab();
+      case 1:
+        return _buildChatTab();
+      case 2:
+        return const ProfileScreen();
+      case 3:
+        return const SettingsScreen();
+      default:
+        return _buildCoursesTab();
+    }
   }
 
   Widget _buildBottomNav(bool isDark) {
@@ -102,6 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = index;
           });
         },
+        type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.transparent,
         elevation: 0,
         selectedItemColor: AppTheme.accentOrange,
@@ -116,6 +137,16 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.chat_bubble_outline),
             activeIcon: Icon(Icons.chat_bubble),
             label: 'AI Tutor',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
@@ -173,24 +204,65 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    _getGreeting(),
-                    style: Theme.of(context).textTheme.bodyLarge,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getGreeting(),
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      Consumer<AuthService>(
+                        builder: (context, auth, _) => Text(
+                          auth.currentUser?.username ?? 'Learner',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: Icon(
-                      context.watch<ThemeService>().isDarkMode
-                          ? Icons.light_mode
-                          : Icons.dark_mode,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                    onPressed: () {
-                      context.read<ThemeService>().toggleTheme();
+                  StreamBuilder<EngineStatus>(
+                    stream: _hybridService.statusStream,
+                    initialData: _hybridService.currentStatus,
+                    builder: (context, snapshot) {
+                      final status = snapshot.data ?? EngineStatus.offline;
+                      final isOnline = status == EngineStatus.online;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isOnline
+                              ? Colors.green.withOpacity(0.15)
+                              : Colors.orange.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isOnline ? Colors.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isOnline ? Icons.cloud_done : Icons.cloud_off,
+                              size: 16,
+                              color: isOnline ? Colors.green : Colors.orange,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isOnline ? 'Online' : 'Offline',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isOnline ? Colors.green : Colors.orange,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Text(
                 'Continue Learning',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(

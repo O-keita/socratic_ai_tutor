@@ -20,90 +20,116 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isDark = themeService.isDarkMode;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: isDark ? AppTheme.backgroundGradient : AppTheme.lightBackgroundGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(context, colorScheme),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    _buildSectionHeader('Intelligence Engine'),
-                    _buildModeTile(
-                      'Auto (Network-Aware)',
-                      'Smart switching between Online/Offline',
-                      TutorMode.auto,
-                      Icons.auto_awesome,
-                    ),
-                    _buildModeTile(
-                      'Force Online',
-                      'Always use Remote Qwen3-0.6B',
-                      TutorMode.online,
-                      Icons.cloud_outlined,
-                    ),
-                    _buildModeTile(
-                      'Force Offline',
-                      'Always use Local GGUF',
-                      TutorMode.offline,
-                      Icons.sd_storage_outlined,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSectionHeader('Appearance'),
-                    Card(
-                      child: SwitchListTile(
-                        title: const Text('Dark Mode'),
-                        subtitle: Text(isDark ? 'Professional Dark Slate' : 'Clean Light Mode'),
-                        value: isDark,
-                        onChanged: (value) => themeService.toggleTheme(),
-                        secondary: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSectionHeader('General'),
-                    _buildSettingsTile(
-                      'Reset Model',
-                      'Re-initialize local engine',
-                      Icons.refresh,
-                      onTap: () async {
-                        final ok = await _hybridService.initialize();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(ok ? 'Model re-initialized!' : 'Initialization failed')),
-                          );
-                        }
-                      },
-                    ),
-                  ],
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isDark ? AppTheme.backgroundGradient : AppTheme.lightBackgroundGradient,
+      ),
+      child: Column(
+        children: [
+          _buildHeader(context, colorScheme, isDark),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildSectionHeader('Intelligence Engine'),
+                _buildModeTile(
+                  'Auto (Network-Aware)',
+                  'Smart switching between Online/Offline',
+                  TutorMode.auto,
+                  Icons.auto_awesome,
                 ),
-              ),
-            ],
+                _buildModeTile(
+                  'Force Online',
+                  'Always use Remote Qwen3-0.6B',
+                  TutorMode.online,
+                  Icons.cloud_outlined,
+                ),
+                _buildModeTile(
+                  'Force Offline',
+                  'Always use Local GGUF',
+                  TutorMode.offline,
+                  Icons.sd_storage_outlined,
+                ),
+                const SizedBox(height: 24),
+                _buildSectionHeader('Appearance'),
+                Card(
+                  child: SwitchListTile(
+                    title: const Text('Dark Mode'),
+                    subtitle: Text(isDark ? 'Professional Dark Slate' : 'Clean Light Mode'),
+                    value: isDark,
+                    onChanged: (value) => themeService.toggleTheme(),
+                    secondary: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildSectionHeader('General'),
+                _buildSettingsTile(
+                  'Reset Model',
+                  'Re-initialize local engine',
+                  Icons.refresh,
+                  onTap: () async {
+                    final ok = await _hybridService.initialize();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ok ? 'Model re-initialized!' : 'Initialization failed')),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildAppBar(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildHeader(BuildContext context, ColorScheme colorScheme, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-            onPressed: () => Navigator.pop(context),
-            color: colorScheme.onSurface,
-          ),
           Text(
             'Settings',
             style: TextStyle(
               color: colorScheme.onSurface,
-              fontSize: 20,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: _hybridService.currentStatus == EngineStatus.online
+                  ? Colors.green.withOpacity(0.2)
+                  : Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _hybridService.currentStatus == EngineStatus.online
+                      ? Icons.cloud_done
+                      : Icons.cloud_off,
+                  size: 16,
+                  color: _hybridService.currentStatus == EngineStatus.online
+                      ? Colors.green
+                      : Colors.orange,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _hybridService.currentStatus == EngineStatus.online ? 'Online' : 'Offline',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _hybridService.currentStatus == EngineStatus.online
+                        ? Colors.green
+                        : Colors.orange,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

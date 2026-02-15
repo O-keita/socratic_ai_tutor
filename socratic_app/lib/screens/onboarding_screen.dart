@@ -42,7 +42,6 @@ class OnboardingScreen extends StatelessWidget {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: AppTheme.primaryGradient,
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.accentOrange.withOpacity(0.4),
@@ -51,10 +50,24 @@ class OnboardingScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.psychology,
-                    size: 50,
-                    color: Colors.white,
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: AppTheme.primaryGradient,
+                        ),
+                        child: const Icon(
+                          Icons.psychology,
+                          size: 50,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 
