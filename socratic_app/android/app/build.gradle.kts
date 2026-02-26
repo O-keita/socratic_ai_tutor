@@ -31,9 +31,19 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Only bundle x86_64 libs for debug builds — the emulator is x86_64.
+            // llamadart bundles ~120 MB of GPU libs per ABI; filtering to one
+            // ABI cuts the debug APK from ~173 MB to ~55 MB → much faster installs.
+            ndk {
+                abiFilters += "x86_64"
+            }
+        }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Physical Android devices are ARM64 — exclude x86_64 from releases.
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
             signingConfig = signingConfigs.getByName("debug")
         }
     }
