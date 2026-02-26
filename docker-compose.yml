@@ -7,7 +7,7 @@ services:
     ports:
       # Port 80 is Cloudflare's proxied HTTP port.
       # Cloudflare terminates TLS — the origin only needs plain HTTP.
-      - "80:80"
+      - "80:81"
     volumes:
       # GGUF model — place the file at ./models/ on the host before starting
       - ./models:/app/models
@@ -17,7 +17,7 @@ services:
       - ./content:/app/content
     environment:
       - ENVIRONMENT=production
-      - PORT=80
+      - PORT=81
       # Override any of these in your .env file on the server
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - CORS_ORIGINS=${CORS_ORIGINS}

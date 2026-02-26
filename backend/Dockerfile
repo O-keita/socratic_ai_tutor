@@ -19,7 +19,7 @@ COPY . .
 # Runtime directories (overridden by volume mounts in docker-compose)
 RUN mkdir -p /app/models /app/data /app/content
 
-EXPOSE 80
+EXPOSE 81
 
 # PORT defaults to 80; docker-compose sets it explicitly via environment
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-80} --workers 1"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-81} --workers 1"]
