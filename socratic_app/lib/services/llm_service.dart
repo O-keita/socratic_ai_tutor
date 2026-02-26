@@ -118,9 +118,10 @@ class SocraticLlmService implements TutorEngine {
     double repeatPenalty = 1.1,
   }) async* {
     if (!_isInitialized || _engine == null) {
+      // If initialization previously failed, reset and retry — the model may
+      // have been downloaded since the last attempt.
       if (_initializationFailed) {
-        yield 'Model not ready: $_initializationError';
-        return;
+        resetInitializationFailure();
       }
       final ok = await initialize();
       if (!ok) {

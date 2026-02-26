@@ -7,12 +7,19 @@ import 'screens/chat_screen.dart';
 import 'services/hybrid_tutor_service.dart';
 import 'services/theme_service.dart';
 import 'services/model_download_service.dart';
+import 'services/llm_service.dart';
 import 'services/auth_service.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Refresh model download status from filesystem so Settings shows the correct
+  // state after a restart (in-memory DownloadStatus resets to notStarted).
+  ModelDownloadService()
+      .refreshStatus(SocraticLlmService.modelFileName)
+      .ignore();
+
   // Initialize Hybrid Tutor service in the background
   Future.delayed(const Duration(seconds: 1), () {
     final hybridService = HybridTutorService();

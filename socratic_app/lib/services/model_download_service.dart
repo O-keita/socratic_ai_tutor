@@ -43,6 +43,38 @@ class ModelDownloadService extends ChangeNotifier {
     }
   }
 
+  /// Refresh the in-memory [status] by checking the filesystem.
+  ///
+  /// Call this on app start so the Settings tile shows the correct state even
+  /// after a restart (since [_status] resets to [notStarted] in-memory).
+  Future<void> refreshStatus(String fileName) async {
+    // Don't interrupt an active download.
+    if (_status == DownloadStatus.downloading ||
+        _status == DownloadStatus.connecting) {
+      return;
+    }
+    try {
+      final dir = await getApplicationSupportDirectory()
+          .timeout(const Duration(seconds: 2));
+      final finalFile = File(p.join(dir.path, fileName));
+      if (await finalFile.exists()) {
+        _status = DownloadStatus.completed;
+        _progress = 1.0;
+        _hasPartial = false;
+      } else {
+        final tmpFile = File('${p.join(dir.path, fileName)}.tmp');
+        _hasPartial = await tmpFile.exists() && await tmpFile.length() > 0;
+        if (_status == DownloadStatus.completed) {
+          // Final file was deleted externally — reset.
+          _status = DownloadStatus.notStarted;
+        }
+      }
+    } catch (_) {
+      // Path provider unavailable — leave status as-is.
+    }
+    notifyListeners();
+  }
+
   /// Probe whether a partial `.tmp` file exists for [fileName].
   /// Call this on app start or after a cancel so the UI button label is correct.
   Future<void> checkPartialDownload(String fileName) async {
