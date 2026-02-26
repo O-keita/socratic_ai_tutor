@@ -5,8 +5,13 @@ import logging
 import shutil
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime as _dt
 from pathlib import Path
 from typing import Optional, List, Dict
+
+# ── Server-wide counters (reset on restart) ──────────────────────────────────
+_server_start: _dt = _dt.utcnow()
+_chat_request_count: int = 0
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Header, Request, Depends
@@ -22,6 +27,7 @@ from slowapi.errors import RateLimitExceeded
 _inference_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
 from ml.inference_engine import inference_engine
+from ml.model_loader import model_loader
 from core.auth import (
     UserRegister,
     UserLogin,
@@ -31,6 +37,8 @@ from core.auth import (
     create_access_token,
     get_current_user,
     update_user_progress,
+    users_db,
+    save_users,
 )
 from core.admin_auth import (
     authenticate_admin,
@@ -234,6 +242,8 @@ async def health():
 @app.post("/chat", response_model=ChatResponse)
 @limiter.limit("20/minute")
 async def chat(payload: ChatRequest, request: Request, user: dict = Depends(_get_auth_user)):
+    global _chat_request_count
+    _chat_request_count += 1
     logger.info("Chat request from %s: %.80s...", user.get("username", "?"), payload.message)
     try:
         loop = asyncio.get_event_loop()
@@ -359,6 +369,85 @@ async def content_lesson(course_id: str, filename: str):
 # ---------------------------------------------------------------------------
 # Admin content CRUD  (require session token)
 # ---------------------------------------------------------------------------
+@app.get("/admin/api/stats")
+async def admin_stats(x_admin_token: Optional[str] = Header(default=None)):
+    _require_admin(x_admin_token)
+    uptime_secs = int((_dt.utcnow() - _server_start).total_seconds())
+    total_courses, total_lessons = 0, 0
+    for course_dir in sorted(_CONTENT_DIR.iterdir()):
+        if course_dir.is_dir() and (course_dir / "course.json").exists():
+            total_courses += 1
+            lessons_dir = course_dir / "lessons"
+            if lessons_dir.exists():
+                total_lessons += len(list(lessons_dir.glob("*.md")))
+    all_users = sorted(
+        [
+            {
+                "id": u.get("id", ""),
+                "username": u.get("username", ""),
+                "email": email,
+                "created_at": u.get("created_at", ""),
+            }
+            for email, u in users_db.items()
+        ],
+        key=lambda u: u.get("created_at", ""),
+        reverse=True,
+    )
+    return {
+        "total_users": len(users_db),
+        "chats_since_restart": _chat_request_count,
+        "model_loaded": inference_engine.model is not None,
+        "model_name": model_loader.filename,
+        "model_path": str(model_loader.model_path),
+        "model_hf_url": f"https://huggingface.co/{model_loader.repo_id}",
+        "n_ctx": model_loader.n_ctx,
+        "n_threads": model_loader.n_threads,
+        "n_gpu_layers": model_loader.n_gpu_layers,
+        "temperature": inference_engine.temperature,
+        "max_tokens": inference_engine.default_max_tokens,
+        "top_p": inference_engine.top_p,
+        "top_k": inference_engine.top_k,
+        "repeat_penalty": inference_engine.repeat_penalty,
+        "uptime_seconds": uptime_secs,
+        "total_courses": total_courses,
+        "total_lessons": total_lessons,
+        "recent_users": all_users[:5],
+    }
+
+
+@app.get("/admin/api/users")
+async def admin_list_users(x_admin_token: Optional[str] = Header(default=None)):
+    _require_admin(x_admin_token)
+    users = [
+        {
+            "id": u.get("id", ""),
+            "username": u.get("username", ""),
+            "email": u.get("email", email),
+            "created_at": u.get("created_at", ""),
+        }
+        for email, u in users_db.items()
+    ]
+    users.sort(key=lambda u: u.get("created_at", ""), reverse=True)
+    return {"users": users, "total": len(users)}
+
+
+@app.delete("/admin/api/users/{user_id}", status_code=200)
+async def admin_delete_user(
+    user_id: str,
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    _require_admin(x_admin_token)
+    key_to_delete = next(
+        (k for k, u in users_db.items() if u.get("id") == user_id), None
+    )
+    if key_to_delete is None:
+        raise HTTPException(status_code=404, detail="User not found.")
+    del users_db[key_to_delete]
+    save_users()
+    logger.info("Admin: deleted user %s", user_id)
+    return {"status": "ok"}
+
+
 @app.get("/admin/api/courses")
 async def admin_list_courses(x_admin_token: Optional[str] = Header(default=None)):
     _require_admin(x_admin_token)

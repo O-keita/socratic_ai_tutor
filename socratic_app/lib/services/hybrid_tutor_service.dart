@@ -133,8 +133,9 @@ class HybridTutorService implements TutorEngine {
     List<Message>? history,
     int maxTokens = 150,
   }) async* {
-    await _updateStatus();
     final engine = await _getBestEngine();
+    _currentStatus = engine is RemoteLlmService ? EngineStatus.online : EngineStatus.offline;
+    _statusController.add(_currentStatus);
     yield* engine.generateResponse(prompt, history: history, maxTokens: maxTokens);
   }
 
@@ -144,8 +145,9 @@ class HybridTutorService implements TutorEngine {
     List<Message>? history,
     int maxTokens = 150,
   }) async {
-    await _updateStatus();
     final engine = await _getBestEngine();
+    _currentStatus = engine is RemoteLlmService ? EngineStatus.online : EngineStatus.offline;
+    _statusController.add(_currentStatus);
     return engine.generateSocraticResponse(
       prompt,
       history: history,
