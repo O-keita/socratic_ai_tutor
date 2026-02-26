@@ -12,8 +12,8 @@ import 'package:flutter/foundation.dart';
 class AppConfig {
   AppConfig._();
 
-  /// Production Heroku URL
-  static const String productionUrl = 'https://socratic-ai-tutor-api-7f5ba58f5ff8.herokuapp.com';
+  /// Production URL
+  static const String productionUrl = 'https://api.omar.scratic.hx-ai.org';
 
   /// The base URL for the FastAPI backend.
   /// Priority: --dart-define=BACKEND_URL > release mode > platform default
