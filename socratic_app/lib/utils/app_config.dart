@@ -13,7 +13,7 @@ class AppConfig {
   AppConfig._();
 
   /// Production URL
-  static const String productionUrl = 'https://api.omar.scratic.hx-ai.org';
+  static const String productionUrl = 'https://socratic.hx-ai.org';
 
   /// The base URL for the FastAPI backend.
   /// Priority: --dart-define=BACKEND_URL > release mode > platform default
