@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
 import '../services/hybrid_tutor_service.dart';
+import '../services/model_download_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_snackbar.dart';
 import 'model_setup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -64,13 +66,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 24),
                 _buildSectionHeader('Offline Capabilities'),
-                _buildSettingsTile(
-                  'Manage Local Model',
-                  'Download or update the offline Socratic engine',
-                  Icons.download_for_offline,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ModelSetupScreen()),
+                Consumer<ModelDownloadService>(
+                  builder: (context, dl, _) {
+                    final isDownloading =
+                        dl.status == DownloadStatus.downloading ||
+                        dl.status == DownloadStatus.connecting;
+                    final isComplete = dl.status == DownloadStatus.completed;
+
+                    final subtitle = isComplete
+                        ? '✓ Model ready — tap to manage'
+                        : isDownloading
+                            ? 'Downloading… ${(dl.progress * 100).toInt()}%'
+                            : dl.status == DownloadStatus.error
+                                ? 'Download failed — tap to retry'
+                                : 'Download or update the offline Socratic engine';
+
+                    return Card(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ListTile(
+                            title: const Text('Manage Local Model'),
+                            subtitle: Text(subtitle),
+                            leading: Icon(
+                              isComplete
+                                  ? Icons.check_circle_outline
+                                  : Icons.download_for_offline,
+                              color: isComplete ? AppTheme.success : null,
+                            ),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const ModelSetupScreen()),
+                            ),
+                          ),
+                          if (isDownloading)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: LinearProgressIndicator(
+                                  value: dl.progress > 0 ? dl.progress : null,
+                                  backgroundColor: AppTheme.accentOrange
+                                      .withValues(alpha: 0.15),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                          AppTheme.accentOrange),
+                                  minHeight: 3,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -83,9 +129,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () async {
                     final ok = await _hybridService.initialize();
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(ok ? 'Model re-initialized!' : 'Initialization failed')),
-                      );
+                      if (ok) {
+                        AppSnackBar.success(context, 'Model re-initialized successfully!');
+                      } else {
+                        AppSnackBar.error(context, 'Initialization failed. Check the model file.');
+                      }
                     }
                   },
                 ),
@@ -115,8 +163,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: _hybridService.currentStatus == EngineStatus.online
-                  ? Colors.green.withOpacity(0.2)
-                  : Colors.orange.withOpacity(0.2),
+                  ? Colors.green.withValues(alpha: 0.2)
+                  : Colors.orange.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(

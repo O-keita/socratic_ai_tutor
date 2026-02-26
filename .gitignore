@@ -61,3 +61,4 @@ backend/evaluation/logs/*.json
 
 # Figma/Graphics files
 *.fig
+socratic_app/android/app/src/main/assets/models/*.gguf

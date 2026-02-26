@@ -1,9 +1,8 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import '../models/message.dart';
 import '../models/session.dart';
+import '../utils/app_config.dart';
 
 /// Service for communicating with the Socratic Tutor backend API.
 /// 
@@ -24,21 +23,8 @@ class ApiService {
   ApiService({
     String? baseUrl,
     http.Client? client,
-  }) : baseUrl = baseUrl ?? _getDefaultBaseUrl(),
+  }) : baseUrl = baseUrl ?? AppConfig.backendUrl,
        _client = client ?? http.Client();
-  
-  /// Get the appropriate base URL based on platform
-  static String _getDefaultBaseUrl() {
-    if (kIsWeb) {
-      return 'http://localhost:8000';
-    }
-    try {
-      if (Platform.isAndroid) {
-        return 'http://10.0.2.2:8000'; // Android emulator localhost
-      }
-    } catch (_) {}
-    return 'http://localhost:8000';
-  }
 
   /// Headers for API requests
   Map<String, String> get _headers => {

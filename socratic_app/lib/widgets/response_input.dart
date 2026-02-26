@@ -20,7 +20,7 @@ class ResponseInput extends StatelessWidget {
         color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -39,7 +39,7 @@ class ResponseInput extends StatelessWidget {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.grey.withOpacity(0.1),
+                fillColor: Colors.grey.withValues(alpha: 0.1),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
             ),

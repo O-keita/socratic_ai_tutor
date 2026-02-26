@@ -1,0 +1,10 @@
+{
+  "quizzes": [
+    {
+      "id": "machine-learning",
+      "title": "Machine Learning Fundamentals",
+      "description": "Test your knowledge on ML algorithms, overfitting, and bias-variance tradeoff.",
+      "topic": "Machine Learning"
+    }
+  ]
+}

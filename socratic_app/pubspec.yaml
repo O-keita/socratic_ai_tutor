@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -42,32 +43,37 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.0
 
-  # LLM Inference - Android-only optimized plugin
-  llama_flutter_android: ^0.1.1
+  # LLM Inference - cross-platform (Android, iOS, desktop, emulators)
+  llamadart: ^0.6.3
 
   # Network and utilities
   dio: ^5.7.0
   connectivity_plus: ^6.1.1
 
+  # Typography
+  google_fonts: ^6.2.1
+
   # Markdown rendering
   flutter_markdown: ^0.6.22
   flutter_secure_storage: ^10.0.0
-  sqflite: ^2.4.2
-  sqflite_common_ffi: ^2.3.6
-  sqlite3_flutter_libs: ^0.5.24
+
+  # Python Playground – WebView runtime
+  webview_flutter: ^4.0.0
   crypto: ^3.0.7
   uuid: ^4.5.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -82,6 +88,11 @@ flutter:
 
   # Course content assets
   assets:
+    - assets/quizzes/
+    - assets/quizzes/quizzes.json
+    - assets/quizzes/machine-learning/
+    - assets/quizzes/machine-learning/quiz.json
+    - assets/glossary/
     - assets/images/
     - assets/images/logo.png
     - assets/courses/
@@ -95,6 +106,7 @@ flutter:
     - assets/courses/critical-thinking/
     - assets/courses/critical-thinking/course.json
     - assets/courses/critical-thinking/lessons/
+    - assets/playground/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

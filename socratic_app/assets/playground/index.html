@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Python Playground</title>
+
+  <!-- Speed up CDN connections (resolved before scripts start fetching) -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: #1a1a2e;
+      color: #e2e8f0;
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── Toolbar ─────────────────────────────────────────────── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: #16213e;
+      border-bottom: 1px solid #0f3460;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      padding: 7px 14px;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+    .btn:not(:disabled):active { opacity: 0.75; }
+
+    #runBtn   { background: #f97316; color: #fff; }
+    #pkgBtn   { background: #6366f1; color: #fff; }
+    #clearBtn { background: #334155; color: #e2e8f0; }
+
+    #status {
+      margin-left: auto;
+      font-size: 11px;
+      color: #64748b;
+      white-space: nowrap;
+    }
+    .s-ready   { color: #10b981 !important; }
+    .s-running { color: #f97316 !important; }
+    .s-error   { color: #ef4444 !important; }
+
+    /* ── Editor ──────────────────────────────────────────────── */
+    #editor-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .CodeMirror {
+      height: 100% !important;
+      font-size: 13.5px;
+      font-family: 'Courier New', Consolas, monospace;
+      line-height: 1.55;
+    }
+    .CodeMirror-scroll { overflow-y: auto !important; }
+
+    /* ── Output panel ────────────────────────────────────────── */
+    #output-panel {
+      height: 38%;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      border-top: 2px solid #0f3460;
+      flex-shrink: 0;
+    }
+
+    #output-bar {
+      display: flex;
+      align-items: center;
+      padding: 4px 10px;
+      background: #16213e;
+      font-size: 11px;
+      color: #64748b;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    #output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px;
+      background: #0d1117;
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    #output:empty::before {
+      content: 'Run your code to see output here…';
+      color: #374151;
+      font-style: italic;
+    }
+
+    .l-stdout  { color: #e2e8f0; }
+    .l-stderr  { color: #fca5a5; }
+    .l-error   { color: #ef4444; font-weight: 600; }
+    .l-info    { color: #60a5fa; font-style: italic; }
+    .l-success { color: #34d399; }
+
+    /* ── Install modal ───────────────────────────────────────── */
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    #overlay.open { display: flex; }
+
+    #modal {
+      background: #16213e;
+      border: 1px solid #1e3a5f;
+      border-radius: 14px;
+      padding: 20px;
+      width: min(300px, 88vw);
+    }
+    #modal h3 { font-size: 14px; margin-bottom: 12px; color: #e2e8f0; }
+
+    #pkg-input {
+      width: 100%;
+      padding: 9px 11px;
+      background: #0d1117;
+      border: 1px solid #334155;
+      border-radius: 7px;
+      color: #e2e8f0;
+      font-size: 13px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    #pkg-input:focus { border-color: #6366f1; }
+    .modal-row { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Boot splash ─────────────────────────────────────────── */
+    #boot {
+      position: fixed;
+      inset: 0;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      z-index: 100;
+      transition: opacity 0.35s;
+    }
+    #boot.done { opacity: 0; pointer-events: none; }
+
+    .spin {
+      width: 38px; height: 38px;
+      border: 3px solid #1e293b;
+      border-top-color: #f97316;
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #boot-label { font-size: 13px; color: #64748b; }
+    #boot-sub   { font-size: 11px; color: #334155; }
+
+    /* progress bar */
+    #boot-bar-wrap {
+      width: 160px;
+      height: 3px;
+      background: #1e293b;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #boot-bar {
+      height: 100%;
+      width: 0%;
+      background: #f97316;
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Boot splash (dismissed once Pyodide is ready) -->
+<div id="boot">
+  <div class="spin"></div>
+  <p id="boot-label">Connecting…</p>
+  <div id="boot-bar-wrap"><div id="boot-bar"></div></div>
+  <p id="boot-sub">First load fetches ~8 MB — subsequent opens are instant</p>
+</div>
+
+<div id="app">
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <button id="runBtn"   class="btn" onclick="runCode()"   disabled>&#9654; Run</button>
+    <button id="pkgBtn"   class="btn" onclick="openModal()" disabled>&#8595; Install</button>
+    <button id="clearBtn" class="btn" onclick="clearOutput()">&#x2715; Clear</button>
+    <span id="status">Loading…</span>
+  </div>
+
+  <!-- Code editor -->
+  <div id="editor-wrap">
+    <textarea id="code"># Python Playground — Ctrl+Enter or ▶ Run to execute
+
+print("Hello, World!")
+
+# List comprehension
+squares = [x**2 for x in range(1, 6)]
+print("Squares:", squares)
+
+import sys
+print("Python", sys.version)
+</textarea>
+  </div>
+
+  <!-- Output panel -->
+  <div id="output-panel">
+    <div id="output-bar">&#9658; Output</div>
+    <div id="output"></div>
+  </div>
+</div>
+
+<!-- Install package modal -->
+<div id="overlay">
+  <div id="modal">
+    <h3>Install Python Package</h3>
+    <input id="pkg-input" type="text"
+           placeholder="e.g. numpy, pandas"
+           onkeydown="if(event.key==='Enter') installPackage()">
+    <div class="modal-row">
+      <button class="btn" onclick="closeModal()"
+              style="background:#334155;color:#e2e8f0">Cancel</button>
+      <button class="btn" onclick="installPackage()"
+              style="background:#6366f1;color:#fff">Install</button>
+    </div>
+  </div>
+</div>
+
+<!-- CodeMirror — loaded before Pyodide so editor is interactive immediately -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<!-- Pyodide — loaded async so it doesn't block the editor from rendering -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js" async></script>
+
+<script>
+'use strict';
+
+// ── CodeMirror (initialised immediately — editor is usable while Python loads)
+const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+  mode: 'python',
+  theme: 'dracula',
+  lineNumbers: true,
+  indentUnit: 4,
+  tabSize: 4,
+  indentWithTabs: false,
+  matchBrackets: true,
+  autoCloseBrackets: true,
+  lineWrapping: true,
+  extraKeys: {
+    'Tab':        (cm) => cm.replaceSelection('    ', 'end'),
+    'Ctrl-Enter': () => runCode(),
+    'Cmd-Enter':  () => runCode(),
+  },
+});
+
+// ── State ─────────────────────────────────────────────────────────────────
+let pyodide     = null;
+let running     = false;
+let micropip    = null; // lazily loaded on first install
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function setStatus(msg, cls) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = cls ? 's-' + cls : '';
+}
+
+function setBootProgress(label, pct) {
+  document.getElementById('boot-label').textContent = label;
+  document.getElementById('boot-bar').style.width = pct + '%';
+}
+
+function appendLine(text, cls) {
+  const out = document.getElementById('output');
+  String(text).split('\n').forEach(line => {
+    const div = document.createElement('div');
+    div.className = 'l-' + cls;
+    div.textContent = line;
+    out.appendChild(div);
+  });
+  out.scrollTop = out.scrollHeight;
+}
+
+function clearOutput() {
+  document.getElementById('output').innerHTML = '';
+}
+
+// ── Boot Pyodide ──────────────────────────────────────────────────────────
+// Key optimisations vs the previous version:
+//   1. fullStdLib: false  — stdlib packages loaded on-demand, not upfront
+//   2. No micropip preload — loaded lazily only when "Install" is tapped
+//   3. Pyodide script tag is `async` so CodeMirror renders first
+async function boot() {
+  try {
+    // Wait for the async Pyodide script to finish loading if needed
+    setBootProgress('Downloading Python runtime…', 10);
+
+    // Poll until loadPyodide is available (async script may still be fetching)
+    while (typeof loadPyodide === 'undefined') {
+      await new Promise(r => setTimeout(r, 80));
+    }
+
+    setBootProgress('Starting Python interpreter…', 40);
+
+    pyodide = await loadPyodide({
+      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/',
+      fullStdLib: false,   // ← defers stdlib package downloads to first import
+    });
+
+    setBootProgress('Configuring I/O…', 85);
+
+    pyodide.setStdout({ batched: (s) => appendLine(s, 'stdout') });
+    pyodide.setStderr({ batched: (s) => appendLine(s, 'stderr') });
+
+    setBootProgress('Ready!', 100);
+
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('pkgBtn').disabled = false;
+    setStatus('Python ready', 'ready');
+
+    // Notify Flutter shell that Python is ready (used by the native loading overlay)
+    try { window.Playground && window.Playground.postMessage('ready'); } catch (_) {}
+
+  } catch (e) {
+    setStatus('Load failed', 'error');
+    appendLine('Failed to load Python runtime: ' + e.message, 'error');
+    try { window.Playground && window.Playground.postMessage('error'); } catch (_) {}
+  } finally {
+    const bootEl = document.getElementById('boot');
+    bootEl.classList.add('done');
+    setTimeout(() => bootEl.remove(), 400);
+  }
+}
+
+// ── Run code ──────────────────────────────────────────────────────────────
+async function runCode() {
+  if (!pyodide || running) return;
+  running = true;
+  document.getElementById('runBtn').disabled = true;
+  setStatus('Running…', 'running');
+  clearOutput();
+
+  try {
+    await pyodide.runPythonAsync(editor.getValue());
+    setStatus('Done', 'ready');
+  } catch (e) {
+    appendLine(e.message || String(e), 'error');
+    setStatus('Error', 'error');
+  } finally {
+    running = false;
+    document.getElementById('runBtn').disabled = false;
+  }
+}
+
+// ── Install package (micropip loaded lazily on first use) ─────────────────
+async function ensureMicropip() {
+  if (!micropip) {
+    appendLine('Loading package installer…', 'info');
+    await pyodide.loadPackage('micropip');
+    micropip = pyodide.pyimport('micropip');
+  }
+  return micropip;
+}
+
+function openModal() {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('pkg-input').value = '';
+  setTimeout(() => document.getElementById('pkg-input').focus(), 80);
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+async function installPackage() {
+  const pkg = document.getElementById('pkg-input').value.trim();
+  if (!pkg || !pyodide) return;
+  closeModal();
+  appendLine('Installing "' + pkg + '"…', 'info');
+  setStatus('Installing…', 'running');
+  try {
+    const mp = await ensureMicropip();
+    await mp.install(pkg);
+    appendLine('✓ "' + pkg + '" installed!', 'success');
+    setStatus('Python ready', 'ready');
+  } catch (e) {
+    appendLine('✗ Failed to install "' + pkg + '": ' + e.message, 'error');
+    setStatus('Python ready', 'ready');
+  }
+}
+
+// ── Start ─────────────────────────────────────────────────────────────────
+boot();
+</script>
+</body>
+</html>

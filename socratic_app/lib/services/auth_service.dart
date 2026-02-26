@@ -1,13 +1,12 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
 import 'package:dio/dio.dart';
 
 import '../models/user.dart';
+import '../utils/app_config.dart';
 import 'database_service.dart';
 
 class AuthService extends ChangeNotifier {
@@ -17,16 +16,10 @@ class AuthService extends ChangeNotifier {
     connectTimeout: const Duration(seconds: 5),
     receiveTimeout: const Duration(seconds: 5),
   ));
-  
-  // Use the same base URL logic as ApiService
-  String get _baseUrl {
-    if (kIsWeb) return 'http://localhost:8000';
-    try {
-      if (Platform.isAndroid) return 'http://10.0.2.2:8000';
-    } catch (_) {}
-    return 'http://localhost:8000';
-  }
-  
+
+  // Single source of truth for backend URL
+  String get _baseUrl => AppConfig.backendUrl;
+
   User? _currentUser;
   bool _isLoading = false;
   bool _isInitialized = false;
@@ -47,7 +40,24 @@ class AuthService extends ChangeNotifier {
     try {
       final userId = await _storage.read(key: 'user_id');
       if (userId != null) {
-        _currentUser = await _dbService.getUser(userId);
+        // Try database first
+        try {
+          _currentUser = await _dbService.getUser(userId);
+        } catch (e) {
+          debugPrint('DB session load failed, trying secure storage: $e');
+        }
+        // Fall back to secure storage backup
+        if (_currentUser == null) {
+          final userJson = await _storage.read(key: 'offline_user_json');
+          if (userJson != null) {
+            try {
+              _currentUser = User.fromMap(
+                  jsonDecode(userJson) as Map<String, dynamic>);
+            } catch (e) {
+              debugPrint('Secure storage session restore failed: $e');
+            }
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error loading session: $e');
@@ -59,8 +69,37 @@ class AuthService extends ChangeNotifier {
   }
 
   String _hashPassword(String password) {
-    var bytes = utf8.encode(password);
+    final bytes = utf8.encode(password);
     return sha256.convert(bytes).toString();
+  }
+
+  /// Persist credentials to secure storage as a reliable offline fallback.
+  /// This is used when sqflite is unavailable (e.g. plugin not linked).
+  Future<void> _saveCredentialsSecurely(User user, String passwordHash) async {
+    try {
+      await _storage.write(key: 'offline_user_json', value: jsonEncode(user.toMap()));
+      await _storage.write(key: 'offline_password_hash', value: passwordHash);
+    } catch (e) {
+      debugPrint('Secure credential backup failed (non-fatal): $e');
+    }
+  }
+
+  Future<Map<String, dynamic>?> _getCredentialsFromSecureStorage(
+      String identifier) async {
+    try {
+      final userJson = await _storage.read(key: 'offline_user_json');
+      final hash = await _storage.read(key: 'offline_password_hash');
+      if (userJson == null || hash == null) return null;
+      final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+      final email = (userMap['email'] as String? ?? '').toLowerCase();
+      final username = (userMap['username'] as String? ?? '').toLowerCase();
+      if (identifier == email || identifier == username) {
+        return {...userMap, 'passwordHash': hash};
+      }
+    } catch (e) {
+      debugPrint('Secure credential read failed: $e');
+    }
+    return null;
   }
 
   Future<bool> register(String username, String email, String password) async {
@@ -69,33 +108,35 @@ class AuthService extends ChangeNotifier {
 
     try {
       String? remoteId;
-      
+
       // Try online registration first
       try {
-        final response = await _dio.post('$_baseUrl/register', data: {
-          'username': username,
-          'email': email,
-          'password': password,
-        }).timeout(const Duration(seconds: 10)); // Total timeout for registration
-        
+        final response = await _dio
+            .post('$_baseUrl/register', data: {
+              'username': username,
+              'email': email,
+              'password': password,
+            })
+            .timeout(const Duration(seconds: 10));
+
         remoteId = response.data['id'];
         debugPrint('Remote registration successful: $remoteId');
       } on DioException catch (e) {
         final message = e.response?.data?['detail'] ?? e.message;
         debugPrint('Remote registration failed/unavailable: $message');
-        
+
         // If it's a conflict (400) or validation (422), stop and inform user
         if (e.response?.statusCode == 400 || e.response?.statusCode == 422) {
           _isLoading = false;
           notifyListeners();
           throw Exception(message);
         }
-        // Other network errors: we'll fallback to local registration
+        // Other network errors: fall back to local registration
       } catch (e) {
         debugPrint('Non-Dio error during remote registration: $e');
       }
 
-      // Local Implementation
+      // Local implementation
       final userId = remoteId ?? const Uuid().v4();
       final newUser = User(
         id: userId,
@@ -105,16 +146,17 @@ class AuthService extends ChangeNotifier {
         isSynced: remoteId != null,
       );
 
-      final passwordHash = _hashPassword(password);
+      final pwHash = _hashPassword(password);
       try {
-        await _dbService.saveUser(newUser, passwordHash: passwordHash);
+        await _dbService.saveUser(newUser, passwordHash: pwHash);
       } catch (e) {
         debugPrint('Error saving user locally (non-fatal): $e');
       }
-      
+      await _saveCredentialsSecurely(newUser, pwHash);
+
       _currentUser = newUser;
       await _storage.write(key: 'user_id', value: userId);
-      
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -133,64 +175,67 @@ class AuthService extends ChangeNotifier {
     debugPrint('Login attempt for: $sanitizedIdentifier');
 
     try {
-      // 1. Try Online First
-      final loginUrl = '$_baseUrl/login';
-      debugPrint('Attempting online login to $loginUrl');
-      
+      // 1. Try online first
       try {
-        final response = await _dio.post(loginUrl, data: {
+        final response = await _dio.post('$_baseUrl/login', data: {
           'email': sanitizedIdentifier,
           'password': password,
         });
-        
+
         final loginData = response.data;
         debugPrint('Online login successful: ${loginData['username']}');
         await _storage.write(key: 'auth_token', value: loginData['token']);
-        
+
         final newUser = User(
           id: loginData['id'],
           username: loginData['username'],
-          email: sanitizedIdentifier.contains('@') ? sanitizedIdentifier : 'synced@user.com',
+          email: sanitizedIdentifier.contains('@')
+              ? sanitizedIdentifier
+              : 'synced@user.com',
           createdAt: DateTime.now(),
           isSynced: true,
         );
-        
+
+        final pwHash = _hashPassword(password);
         try {
-          await _dbService.saveUser(newUser, passwordHash: _hashPassword(password));
+          await _dbService.saveUser(newUser, passwordHash: pwHash);
         } catch (e) {
           debugPrint('Error saving user locally (non-fatal): $e');
         }
-        
+        await _saveCredentialsSecurely(newUser, pwHash);
+
         _currentUser = newUser;
         await _storage.write(key: 'user_id', value: newUser.id);
-        
+
         _isLoading = false;
         notifyListeners();
         return true;
       } on DioException catch (e) {
         final message = e.response?.data?['detail'] ?? e.message;
         debugPrint('Remote login unavailable or failed: $message');
-        
-        // If it's an explicit auth error (400, 401, 403), don't fallback to local
+
+        // Explicit auth errors (401, 403) — don't fall back to local
         if (e.response?.statusCode != null) {
           _isLoading = false;
           notifyListeners();
           throw Exception(message);
         }
-        // If it's a connection problem, proceed to local fallback
-        debugPrint('Network error during online login, attempting local fallback...');
+        // Connection problem — proceed to local fallback
+        debugPrint('Network error, attempting local login fallback...');
       } catch (e) {
         debugPrint('Unexpected error during online login: $e');
       }
 
-      // 2. Local fallback
-      debugPrint('Attempting local login fallback for $sanitizedIdentifier');
+      // 2. Local fallback — try database first, then secure storage backup
+      debugPrint('Attempting local login for $sanitizedIdentifier');
       Map<String, dynamic>? localCreds;
       try {
         localCreds = await _dbService.getLocalCredentials(sanitizedIdentifier);
       } catch (e) {
         debugPrint('Local database query failed: $e');
       }
+      // If database failed or had no record, check secure storage backup
+      localCreds ??= await _getCredentialsFromSecureStorage(sanitizedIdentifier);
 
       if (localCreds != null) {
         final storedHash = localCreds['passwordHash'];
@@ -209,19 +254,27 @@ class AuthService extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
-      
-      // If we reach here, neither online nor local login worked
       throw Exception('Account not found. Please check your credentials or register.');
     } catch (e) {
-      debugPrint('Auth login error final catch: $e');
+      debugPrint('Auth login error: $e');
       _isLoading = false;
       notifyListeners();
       rethrow;
     }
   }
 
+  /// Returns the stored JWT, or null if not logged in / token missing.
+  Future<String?> getToken() async {
+    try {
+      return await _storage.read(key: 'auth_token');
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> logout() async {
     await _storage.delete(key: 'user_id');
+    await _storage.delete(key: 'auth_token');
     _currentUser = null;
     notifyListeners();
   }

@@ -70,6 +70,7 @@ Use the Socratic method to guide the student. Ask questions to help them discove
 
   @override
   void dispose() {
+    _typingController.stop();
     _typingController.dispose();
     _controller.dispose();
     _scrollController.dispose();
@@ -211,7 +212,7 @@ Use the Socratic method to guide the student. Ask questions to help them discove
                             boxShadow: [
                               if (status != EngineStatus.offline)
                                 BoxShadow(
-                                  color: (status == EngineStatus.online ? Colors.green : Colors.orange).withOpacity(0.5),
+                                  color: (status == EngineStatus.online ? Colors.green : Colors.orange).withValues(alpha: 0.5),
                                   blurRadius: 4,
                                   spreadRadius: 1,
                                 ),
@@ -278,7 +279,7 @@ Use the Socratic method to guide the student. Ask questions to help them discove
                     color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isDark ? AppTheme.primaryLight.withOpacity(0.5) : Colors.grey.withOpacity(0.2),
+                      color: isDark ? AppTheme.primaryLight.withValues(alpha: 0.5) : Colors.grey.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Text(
@@ -329,8 +330,8 @@ Use the Socratic method to guide the student. Ask questions to help them discove
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: (isDarkInner ? AppTheme.textMuted : AppTheme.lightTextMuted).withOpacity(
-                              0.5 + (_typingController.value * 0.5),
+                            color: (isDarkInner ? AppTheme.textMuted : AppTheme.lightTextMuted).withValues(
+                              alpha: 0.5 + (_typingController.value * 0.5),
                             ),
                             shape: BoxShape.circle,
                           ),

@@ -1,113 +1,101 @@
-# model_loader.py
-# Loads compressed LLM for offline inference
-
-import json
 import os
+import json
+import requests
 from pathlib import Path
-from typing import Optional
+from llama_cpp import Llama
+from tqdm import tqdm
 
-# Try to import llama-cpp-python
-try:
-    from llama_cpp import Llama
-    LLAMA_AVAILABLE = True
-except ImportError:
-    LLAMA_AVAILABLE = False
-    print("Warning: llama-cpp-python not installed. Install with: pip install llama-cpp-python")
+# ---------------------------------------------------------------------------
+# Config helper — shared by model_loader and inference_engine
+# ---------------------------------------------------------------------------
+_CONFIG_PATH = Path(__file__).parent.parent / "data" / "config.json"
+
+
+def load_config() -> dict:
+    """Load backend/data/config.json. Returns an empty dict if not found."""
+    try:
+        with open(_CONFIG_PATH, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[model_loader] Could not read config.json: {e}. Using defaults.")
+        return {}
 
 
 class ModelLoader:
-    """Loads and manages the quantized GGUF model for Socratic tutoring."""
-    
-    _instance: Optional['ModelLoader'] = None
-    _model: Optional['Llama'] = None
-    
-    def __new__(cls):
-        """Singleton pattern to ensure only one model instance."""
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-    
     def __init__(self):
-        self.config = self._load_config()
-        # Allow environment variable to override config path
-        self.model_path = os.getenv('MODEL_PATH', self.config.get('model', {}).get('path', ''))
-        self.is_loaded = False
-    
-    def _load_config(self) -> dict:
-        """Load configuration from config.json."""
-        config_path = Path(__file__).parent.parent / 'data' / 'config.json'
-        try:
-            with open(config_path, 'r') as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Warning: Could not load config: {e}")
-            return {}
-    
-    def _resolve_model_path(self, path: str) -> str:
-        """Resolve model path, handling relative paths."""
-        if os.path.isabs(path):
-            return path
-        # Relative to backend directory
-        backend_dir = Path(__file__).parent.parent
-        return str(backend_dir / path)
-    
-    def load_model(self) -> bool:
-        """Load the GGUF model into memory."""
-        if not LLAMA_AVAILABLE:
-            print("llama-cpp-python is not available")
-            return False
-        
-        if self._model is not None:
-            print("Model already loaded")
-            return True
-        
-        resolved_path = self._resolve_model_path(self.model_path)
-        if not os.path.exists(resolved_path):
-            print(f"Model file not found: {resolved_path}")
-            return False
-        
-        try:
-            model_config = self.config.get('model', {})
-            print(f"Loading model from: {resolved_path}")
-            
-            # Allow environment variable overrides for hardware optimization
-            n_ctx = int(os.getenv('N_CTX', model_config.get('n_ctx', 4096)))
-            n_threads = int(os.getenv('N_THREADS', model_config.get('n_threads', 4)))
-            n_gpu_layers = int(os.getenv('N_GPU_LAYERS', model_config.get('n_gpu_layers', 0)))
+        cfg = load_config().get("model", {})
 
-            ModelLoader._model = Llama(
-                model_path=resolved_path,
-                n_ctx=n_ctx,
-                n_threads=n_threads,
-                n_gpu_layers=n_gpu_layers,
-                verbose=False
+        # Corrected repo ID — the old one had a typo ("Socatic" → "Socratic")
+        self.repo_id = "Omar-keita/DSML-Socratic-qwen3-0.6B"
+        self.filename = "Socratic-Qwen3-0.6-Merged-Quality_Data-752M-Q4_K_M (1).gguf"
+
+        # Allow full override via environment variable (useful in Docker)
+        env_path = os.environ.get("MODEL_PATH", "")
+        self.model_path = (
+            Path(env_path)
+            if env_path
+            else Path(__file__).parent.parent / "models" / self.filename
+        )
+
+        # Model parameters: env var > config.json > hardcoded defaults
+        self.n_ctx = int(os.environ.get("N_CTX", cfg.get("n_ctx", 4096)))
+        self.n_threads = int(os.environ.get("N_THREADS", cfg.get("n_threads", 4)))
+        self.n_gpu_layers = int(os.environ.get("N_GPU_LAYERS", cfg.get("n_gpu_layers", 0)))
+
+        self.model = None
+
+    def download_model(self) -> bool:
+        if self.model_path.exists():
+            return True
+
+        print("[model_loader] Downloading model from Hugging Face...")
+        self.model_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Primary repo URL
+        url = f"https://huggingface.co/{self.repo_id}/resolve/main/{self.filename}"
+        response = requests.get(url, stream=True)
+
+        # Fallback: try the typo'd repo name in case the file lives there
+        if response.status_code != 200:
+            fallback_repo = self.repo_id.replace("Socratic", "Socatic")
+            fallback_url = f"https://huggingface.co/{fallback_repo}/resolve/main/{self.filename}"
+            print(f"[model_loader] Primary URL failed (HTTP {response.status_code}). Trying fallback...")
+            response = requests.get(fallback_url, stream=True)
+
+        if response.status_code != 200:
+            print(f"[model_loader] Error: Failed to download model (HTTP {response.status_code}).")
+            return False
+
+        total_size = int(response.headers.get("content-length", 0))
+        with open(self.model_path, "wb") as f, tqdm(
+            total=total_size, unit="B", unit_scale=True, desc=self.filename
+        ) as pbar:
+            for chunk in response.iter_content(chunk_size=1024):
+                size = f.write(chunk)
+                pbar.update(size)
+
+        print("[model_loader] Download complete.")
+        return True
+
+    def load_model(self) -> Llama:
+        if self.model is None:
+            if not self.download_model():
+                raise RuntimeError("Could not download or locate model file.")
+
+            print(
+                f"[model_loader] Loading model from {self.model_path} "
+                f"(n_ctx={self.n_ctx}, n_threads={self.n_threads}, n_gpu_layers={self.n_gpu_layers})..."
             )
-            
-            self.is_loaded = True
-            print("Model loaded successfully!")
-            return True
-            
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            return False
-    
-    def get_model(self) -> Optional['Llama']:
-        """Get the loaded model instance."""
-        if not self.is_loaded:
-            self.load_model()
-        return ModelLoader._model
-    
-    def unload_model(self):
-        """Unload the model from memory."""
-        ModelLoader._model = None
-        self.is_loaded = False
-        print("Model unloaded")
-    
-    @property
-    def model(self) -> Optional['Llama']:
-        """Property to access the model."""
-        return self.get_model()
+            self.model = Llama(
+                model_path=str(self.model_path),
+                n_ctx=self.n_ctx,
+                n_threads=self.n_threads,
+                n_gpu_layers=self.n_gpu_layers,
+                chat_format="chatml",
+                verbose=False,
+            )
+            print("[model_loader] Model loaded.")
+        return self.model
 
 
-# Global model loader instance
 model_loader = ModelLoader()

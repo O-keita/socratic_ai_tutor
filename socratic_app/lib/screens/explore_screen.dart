@@ -89,7 +89,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       color: AppTheme.surfaceCard,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppTheme.primaryLight.withOpacity(0.2),
+                        color: AppTheme.primaryLight.withValues(alpha: 0.2),
                       ),
                     ),
                     child: TextField(
@@ -131,7 +131,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               border: Border.all(
                                 color: isSelected 
                                   ? AppTheme.accentOrange 
-                                  : AppTheme.primaryLight.withOpacity(0.2),
+                                  : AppTheme.primaryLight.withValues(alpha: 0.2),
                               ),
                             ),
                             alignment: Alignment.center,
@@ -186,8 +186,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
         borderGradient: LinearGradient(
           colors: [
-            (topic['color'] as Color).withOpacity(0.5),
-            (topic['color'] as Color).withOpacity(0.1),
+            (topic['color'] as Color).withValues(alpha: 0.5),
+            (topic['color'] as Color).withValues(alpha: 0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -204,7 +204,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: (topic['color'] as Color).withOpacity(0.15),
+                    color: (topic['color'] as Color).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
@@ -297,7 +297,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: (topic['color'] as Color).withOpacity(0.15),
+                      color: (topic['color'] as Color).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
@@ -345,7 +345,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryLight.withOpacity(0.2),
+                        color: AppTheme.primaryLight.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ListTile(

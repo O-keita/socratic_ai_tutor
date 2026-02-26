@@ -1,402 +1,450 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-from datetime import datetime
-import uvicorn
+import asyncio
+import concurrent.futures
 import json
 import logging
-from pathlib import Path
+import shutil
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Optional, List, Dict
 
-# Configure logging
-log_dir = Path(__file__).parent / 'logs'
-log_dir.mkdir(exist_ok=True)
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(log_dir / "registration.log")
-    ]
-)
-logger = logging.getLogger("registration")
+import uvicorn
+from fastapi import FastAPI, HTTPException, Header, Request, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
+from pydantic import BaseModel, Field
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+# Thread pool for running synchronous inference without blocking the event loop
+_inference_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
 from ml.inference_engine import inference_engine
-from ml.model_loader import model_loader
-from evaluation.metrics import AdaptiveMetrics
-from core.auth import UserRegister, UserLogin, UserResponse, users_db, get_password_hash, save_users
-
-# Load config
-def load_config():
-    config_path = Path(__file__).parent / 'data' / 'config.json'
-    try:
-        with open(config_path, 'r') as f:
-            return json.load(f)
-    except:
-        return {"server": {"host": "0.0.0.0", "port": 8000, "cors_origins": ["*"]}}
-
-config = load_config()
-
-# Lifespan context manager for startup/shutdown
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup: Load the model
-    print("🚀 Starting Socratic AI Tutor Backend...")
-    model_loaded = model_loader.load_model()
-    if model_loaded:
-        print("✅ Model loaded successfully!")
-    else:
-        print("⚠️ Model not loaded - using fallback responses")
-    yield
-    # Shutdown: Clean up
-    print("👋 Shutting down...")
-    model_loader.unload_model()
-
-app = FastAPI(
-    title="Socratic AI Tutor",
-    description="An AI-powered Socratic tutoring system",
-    version="1.0.0",
-    lifespan=lifespan
+from core.auth import (
+    UserRegister,
+    UserLogin,
+    UserResponse,
+    register_user,
+    authenticate_user,
+    create_access_token,
+    get_current_user,
+    update_user_progress,
+)
+from core.admin_auth import (
+    authenticate_admin,
+    create_session,
+    verify_session,
+    delete_session,
 )
 
-@app.middleware("http")
-async def log_requests(request, call_next):
-    import time
-    start_time = time.time()
-    path = request.url.path
-    method = request.method
-    logger.info(f">>> Request: {method} {path}")
-    response = await call_next(request)
-    duration = time.time() - start_time
-    logger.info(f"<<< Response: {method} {path} - Status: {response.status_code} - Duration: {duration:.4f}s")
-    return response
+# ---------------------------------------------------------------------------
+# Rate Limiting
+# ---------------------------------------------------------------------------
+limiter = Limiter(key_func=get_remote_address)
 
-# Add CORS middleware
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Load config
+# ---------------------------------------------------------------------------
+_CONFIG_PATH = Path(__file__).parent / "data" / "config.json"
+
+
+def _load_config() -> dict:
+    try:
+        with open(_CONFIG_PATH) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+_cfg = _load_config()
+_server_cfg = _cfg.get("server", {})
+
+# CORS origins — set CORS_ORIGINS env var in production (comma-separated)
+_cors_origins: List[str] = os.environ.get("CORS_ORIGINS", "").split(",")
+if not _cors_origins or _cors_origins == [""]:
+    _cors_origins = _server_cfg.get("cors_origins", ["*"])
+
+
+def _safe_path(base: Path, *parts: str) -> Path:
+    """Resolve a path from user-supplied parts and ensure it stays inside base.
+
+    Raises HTTP 400 if the resolved path escapes the base directory
+    (path traversal guard).
+    """
+    try:
+        resolved = (base / Path(*parts)).resolve()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid path.")
+    if not str(resolved).startswith(str(base.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid path.")
+    return resolved
+
+# Content directory — runtime data, not source code
+_CONTENT_DIR = Path(__file__).parent / "content"
+_CONTENT_DIR.mkdir(exist_ok=True)
+
+# Paths for static assets served to the admin panel
+_ADMIN_HTML = Path(__file__).parent / "admin.html"
+_LOGO_PATH = Path(__file__).parent / "logo.png"  # Fallback for containerized deployment
+if not _LOGO_PATH.exists():
+    # Attempt to find it relative to workspace if running locally
+    _WS_LOGO = Path(__file__).parent.parent / "socratic_app" / "assets" / "images" / "logo.png"
+    if _WS_LOGO.exists():
+        _LOGO_PATH = _WS_LOGO
+
+# ---------------------------------------------------------------------------
+# App lifespan — startup checks
+# ---------------------------------------------------------------------------
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """Warn about insecure configuration; crash in production (ENVIRONMENT=production)."""
+    is_prod = os.environ.get("ENVIRONMENT", "").lower() == "production"
+    required = {
+        "JWT_SECRET_KEY": "Signs JWT tokens — must be a long random string",
+        "CORS_ORIGINS": "Comma-separated list of allowed browser origins",
+        "ADMIN_EMAIL": "Admin panel login email",
+        "ADMIN_PASSWORD": "Admin panel login password",
+    }
+    missing = {k: v for k, v in required.items() if not os.environ.get(k)}
+    if missing:
+        msg = "Missing environment variables:\n" + "\n".join(
+            f"  {k}: {v}" for k, v in missing.items()
+        )
+        if is_prod:
+            raise RuntimeError(msg)
+        logger.warning(msg)
+    yield  # application runs here
+
+
+# ---------------------------------------------------------------------------
+# App
+# ---------------------------------------------------------------------------
+app = FastAPI(title="Socratic AI Tutor", lifespan=_lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+if "*" in _cors_origins:
+    logger.warning(
+        "CORS is configured with wildcard origin. "
+        "Set CORS_ORIGINS env var to restrict origins in production."
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=config.get('server', {}).get('cors_origins', ['*']),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_origins,
+    allow_credentials=False,  # Auth uses header tokens, not cookies — no need for credentials
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Admin-Token"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
-# Request/Response Models
+# ---------------------------------------------------------------------------
+# Request / Response models
+# ---------------------------------------------------------------------------
 class ChatRequest(BaseModel):
-    message: str
-    session_id: Optional[str] = None
-    difficulty: Optional[str] = "intermediate"
-    topic: Optional[str] = None
-    max_tokens: Optional[int] = 150
-    history: Optional[List[Dict[str, Any]]] = None
+    message: str = Field(..., min_length=1, max_length=2000)
+    history: Optional[List[Dict[str, str]]] = None
+    max_tokens: Optional[int] = Field(None, ge=1, le=512)
 
 
 class ChatResponse(BaseModel):
     response: str
-    session_id: Optional[str] = None
+    socratic_index: float
+    scaffolding_level: str
+    sentiment: str
 
 
-class SessionStartRequest(BaseModel):
-    topic: Optional[str] = None
-    difficulty: Optional[str] = "intermediate"
+# ---------------------------------------------------------------------------
+# Helper — auth dependencies
+# ---------------------------------------------------------------------------
+async def _get_auth_user(authorization: Optional[str] = Header(None)) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token.")
+    
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid session.")
+    return user
 
 
-class HintRequest(BaseModel):
-    session_id: Optional[str] = None
-    context: Optional[str] = None
+def _require_admin(x_admin_token: Optional[str]) -> dict:
+    admin = verify_session(x_admin_token)
+    if not admin:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    return admin
 
 
-class HintResponse(BaseModel):
-    hint: str
-
-
-# Store for session data (in production, use Redis or database)
-sessions: Dict[str, Dict] = {}
-
-
-# Routes
+# ---------------------------------------------------------------------------
+# App routes
+# ---------------------------------------------------------------------------
 @app.get("/")
 async def root():
-    return {
-        "message": "Socratic AI Tutor Backend is running",
-        "model_loaded": model_loader.is_loaded,
-        "version": "1.0.0"
-    }
+    return {"message": "Socratic AI Tutor API is running"}
 
 
-# Auth Routes
-@app.post("/register", response_model=UserResponse)
-async def register(user: UserRegister):
-    email_lower = user.email.lower()
-    username_lower = user.username.lower()
-    logger.info(f"--- Registration Attempt ---")
-    logger.info(f"Username: {user.username} (normalized: {username_lower})")
-    logger.info(f"Email: {user.email} (normalized: {email_lower})")
-    logger.info(f"Current users in DB keys: {list(users_db.keys())}")
-    
-    if email_lower in users_db:
-        logger.warning(f"Conflict: Email {email_lower} already exists")
-        existing_user = users_db[email_lower]
-        password_matches = existing_user["password_hash"] == get_password_hash(user.password)
-        logger.info(f"Password matches existing record: {password_matches}")
-        
-        if password_matches:
-            logger.info(f"Auto-returning existing user info for matching credentials")
-            return UserResponse(**existing_user)
-            
-        logger.error(f"Registration REJECTED: Email {email_lower} taken and password mismatch")
-        raise HTTPException(status_code=400, detail="Email already registered with a different password")
-    
-    # Check if username is already taken
-    for existing_email, existing_data in users_db.items():
-        if existing_data["username"].lower() == username_lower:
-            logger.warning(f"Conflict: Username {username_lower} already taken by {existing_email}")
-            raise HTTPException(status_code=400, detail="Username already taken")
-
-    import uuid
-    user_id = str(uuid.uuid4())
-    user_data = {
-        "id": user_id,
-        "username": user.username,
-        "email": email_lower,
-        "password_hash": get_password_hash(user.password),
-        "created_at": datetime.now()
-    }
-    users_db[email_lower] = user_data
-    save_users()
-    logger.info(f"SUCCESS: Created user {user.username} with ID {user_id}")
-    return UserResponse(**user_data)
+@app.post("/register", response_model=UserResponse, status_code=201)
+@limiter.limit("5/minute")
+async def register(payload: UserRegister, request: Request):
+    logger.info("Register attempt: username=%s email=%s", payload.username, payload.email)
+    try:
+        user = register_user(payload.username, payload.email, payload.password)
+        return UserResponse(
+            id=user["id"],
+            username=user["username"],
+            email=user["email"],
+            created_at=user["created_at"],
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Registration error: %s", e)
+        raise HTTPException(status_code=500, detail="Registration failed.")
 
 
 @app.post("/login")
-async def login(user: UserLogin):
-    identifier_lower = user.email.lower()
-    logger.info(f"--- Login Attempt ---")
-    logger.info(f"Identifier provided: {identifier_lower}")
-    logger.info(f"Targeting logic: searching in {len(users_db)} keys: {list(users_db.keys())}")
-    
-    target_user = None
-    # Search by email (direct key)
-    if identifier_lower in users_db:
-        target_user = users_db[identifier_lower]
-        logger.info("User found by email key match")
-    else:
-        # Search by username
-        for u in users_db.values():
-            if u["username"].lower() == identifier_lower:
-                target_user = u
-                logger.info(f"User found by username match: {u['username']}")
-                break
-            
-    if not target_user:
-        logger.warning(f"Login FAILED: User '{identifier_lower}' not found")
-        raise HTTPException(status_code=400, detail="User account not found")
-        
-    if target_user["password_hash"] != get_password_hash(user.password):
-        logger.warning(f"Login FAILED: Password mismatch for {identifier_lower}")
-        raise HTTPException(status_code=400, detail="Incorrect password")
-    
-    logger.info(f"SUCCESS: {target_user['username']} logged in")
-    return {
-        "id": target_user["id"],
-        "username": target_user["username"],
-        "token": f"mock-token-{target_user['id']}"
-    }
-
-
-@app.get("/download/model")
-async def download_model():
-    """Serve the GGUF model file for mobile download."""
-    model_path = Path(__file__).parent / config.get('model', {}).get('path', 'models/socratic-q4_k_m.gguf')
-    if not model_path.exists():
-        # For prototype purposes, let's create a placeholder if it doesn't exist
-        # to prevent 404s during development of the download UI
-        model_path.parent.mkdir(parents=True, exist_ok=True)
-        if not model_path.exists():
-            with open(model_path, 'wb') as f:
-                f.write(b"Placeholder for GGUF model content - Qwen3-0.6B")
-    
-    return FileResponse(
-        path=model_path,
-        filename="socratic-q4_k_m.gguf",
-        media_type="application/octet-stream"
-    )
-
-
-@app.get("/content/manifest")
-async def get_content_manifest():
-    """Serve the central content manifest for course discovery."""
-    manifest_path = Path(__file__).parent / 'data' / 'content_manifest.json'
-    if not manifest_path.exists():
-        raise HTTPException(status_code=404, detail="Manifest not found")
-    
-    with open(manifest_path, 'r') as f:
-        return json.load(f)
-
-
-@app.get("/content/{course_id}/course.json")
-async def get_course_data(course_id: str):
-    """Serve full course JSON data."""
-    # Try backend specific content first
-    backend_path = Path(__file__).parent / 'data' / 'courses' / course_id / 'course.json'
-    if backend_path.exists():
-        with open(backend_path, 'r') as f:
-            return json.load(f)
-
-    # Fallback to frontend assets
-    frontend_path = Path(__file__).parent.parent / 'frontend' / 'assets' / 'courses' / course_id / 'course.json'
-    if frontend_path.exists():
-        with open(frontend_path, 'r') as f:
-            return json.load(f)
-    
-    raise HTTPException(status_code=404, detail=f"Course {course_id} not found")
-
-
-@app.get("/content/{course_id}/lessons/{lesson_file}")
-async def get_lesson_content(course_id: str, lesson_file: str):
-    """Serve lesson markdown content."""
-    # Check backend first
-    backend_path = Path(__file__).parent / 'data' / 'courses' / course_id / 'lessons' / lesson_file
-    if backend_path.exists():
-        return FileResponse(backend_path)
-
-    # Fallback to frontend assets
-    frontend_path = Path(__file__).parent.parent / 'frontend' / 'assets' / 'courses' / course_id / 'lessons' / lesson_file
-    if frontend_path.exists():
-        return FileResponse(frontend_path)
-    
-    raise HTTPException(status_code=404, detail="Lesson not found")
+@limiter.limit("10/minute")
+async def login(payload: UserLogin, request: Request):
+    logger.info("Login attempt: identifier=%s", payload.email)
+    user = authenticate_user(payload.email, payload.password)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    token = create_access_token({"sub": user["id"], "username": user["username"]})
+    logger.info("Login successful: %s", user["username"])
+    return {"id": user["id"], "username": user["username"], "token": token}
 
 
 @app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "model_loaded": model_loader.is_loaded
-    }
+async def health():
+    return {"status": "ok", "model_loaded": inference_engine.model is not None}
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    """Send a message and receive a Socratic response."""
+@limiter.limit("20/minute")
+async def chat(payload: ChatRequest, request: Request, user: dict = Depends(_get_auth_user)):
+    logger.info("Chat request from %s: %.80s...", user.get("username", "?"), payload.message)
     try:
-        # If history is provided, we use it (stateless)
-        # Otherwise use the engine's internal history
-        formatted_history = []
-        if request.history:
-            # Prepare history in the format expected by prompt builder
-            # Converting from Flutter Message JSON to simple role/content pairs
-            for msg in request.history:
-                formatted_history.append({
-                    "role": "user" if msg.get("isUser") else "assistant",
-                    "content": msg.get("text", "")
+        loop = asyncio.get_event_loop()
+        data = await asyncio.wait_for(
+            loop.run_in_executor(
+                _inference_executor,
+                lambda: inference_engine.generate_response(
+                    user_message=payload.message,
+                    history=payload.history,
+                    max_tokens=payload.max_tokens,
+                ),
+            ),
+            timeout=60.0,
+        )
+        logger.info("Chat response: %.80s...", data["response"])
+        return ChatResponse(**data)
+    except asyncio.TimeoutError:
+        logger.error("Chat timeout for user %s", user.get("username", "?"))
+        raise HTTPException(status_code=503, detail="The AI is taking too long. Please try again.")
+    except Exception:
+        logger.exception("Chat error for user %s", user.get("username", "?"))
+        raise HTTPException(status_code=500, detail="An error occurred. Please try again.")
+
+
+@app.get("/user/progress")
+async def get_progress(user: dict = Depends(_get_auth_user)):
+    return user.get("progress", {})
+
+
+@app.post("/user/progress")
+async def sync_progress(data: dict, user: dict = Depends(_get_auth_user)):
+    success = update_user_progress(user["id"], data)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to sync progress.")
+    return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Admin web UI
+# ---------------------------------------------------------------------------
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_ui():
+    if not _ADMIN_HTML.exists():
+        raise HTTPException(status_code=503, detail="Admin panel not available.")
+    return HTMLResponse(_ADMIN_HTML.read_text())
+
+
+@app.get("/admin/logo")
+async def admin_logo():
+    if _LOGO_PATH.exists():
+        return FileResponse(str(_LOGO_PATH), media_type="image/png")
+    raise HTTPException(status_code=404)
+
+
+# ---------------------------------------------------------------------------
+# Admin auth endpoints
+# ---------------------------------------------------------------------------
+@app.post("/admin/api/login")
+async def admin_login(request: Request):
+    body = await request.json()
+    admin = authenticate_admin(body.get("email", ""), body.get("password", ""))
+    if not admin:
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+    token = create_session(admin["id"])
+    logger.info("Admin login: %s", admin["email"])
+    return {"token": token, "name": admin["name"], "email": admin["email"]}
+
+
+@app.post("/admin/api/logout")
+async def admin_logout(x_admin_token: Optional[str] = Header(default=None)):
+    if x_admin_token:
+        delete_session(x_admin_token)
+    return {"status": "ok"}
+
+
+@app.get("/admin/api/me")
+async def admin_me(x_admin_token: Optional[str] = Header(default=None)):
+    admin = _require_admin(x_admin_token)
+    return {"id": admin["id"], "name": admin["name"], "email": admin["email"]}
+
+
+# ---------------------------------------------------------------------------
+# Public content routes  (used by the Flutter app)
+# ---------------------------------------------------------------------------
+@app.get("/content/manifest")
+async def content_manifest():
+    courses = []
+    for course_dir in sorted(_CONTENT_DIR.iterdir()):
+        course_json = course_dir / "course.json"
+        if course_dir.is_dir() and course_json.exists():
+            try:
+                data = json.loads(course_json.read_text())
+                courses.append({
+                    "id": data.get("id", course_dir.name),
+                    "title": data.get("title", ""),
+                    "description": data.get("description", ""),
+                    "thumbnail": data.get("thumbnail", ""),
+                    "difficulty": data.get("difficulty", ""),
+                    "duration": data.get("duration", ""),
+                    "totalLessons": data.get("totalLessons", 0),
                 })
-            inference_engine.conversation_history = formatted_history
-
-        # ADAPTIVE DIFFICULTY: If history exists, recommend level
-        difficulty = request.difficulty or "intermediate"
-        if formatted_history and len(formatted_history) >= 2:
-            adaptive_level = AdaptiveMetrics.recommend_scaffolding_level(formatted_history)
-            if difficulty == "intermediate": # Only auto-adjust if at default
-                difficulty = adaptive_level
-
-        response = inference_engine.generate_response(
-            user_message=request.message,
-            difficulty=difficulty,
-            topic=request.topic
-        )
-        
-        return ChatResponse(
-            response=response,
-            session_id=request.session_id
-        )
-    except Exception as e:
-        print(f"Error in chat endpoint: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+            except Exception:
+                pass
+    return {"courses": courses}
 
 
-@app.post("/session/start")
-async def start_session(request: SessionStartRequest):
-    """Start a new learning session."""
-    import uuid
-    session_id = str(uuid.uuid4())
-    
-    sessions[session_id] = {
-        "topic": request.topic,
-        "difficulty": request.difficulty,
-        "started_at": str(__import__('datetime').datetime.now()),
-        "messages": []
-    }
-    
-    # Clear previous conversation history for fresh start
-    inference_engine.clear_history()
-    
-    return {
-        "session_id": session_id,
-        "topic": request.topic,
-        "difficulty": request.difficulty,
-        "message": "Session started successfully"
-    }
+@app.get("/content/{course_id}/course.json")
+async def content_course(course_id: str):
+    course_json = _safe_path(_CONTENT_DIR, course_id, "course.json")
+    if not course_json.exists():
+        raise HTTPException(status_code=404, detail="Course not found.")
+    return json.loads(course_json.read_text())
 
 
-@app.post("/session/end")
-async def end_session(session_id: str):
-    """End a learning session and get summary."""
-    if session_id in sessions:
-        session = sessions.pop(session_id)
-        history = inference_engine.get_history()
-        
-        return {
-            "session_id": session_id,
-            "topic": session.get("topic"),
-            "message_count": len(history),
-            "summary": "Session ended successfully"
-        }
-    
-    return {"message": "Session not found or already ended"}
+@app.get("/content/{course_id}/lessons/{filename}")
+async def content_lesson(course_id: str, filename: str):
+    lesson_file = _safe_path(_CONTENT_DIR, course_id, "lessons", filename)
+    if not lesson_file.exists():
+        raise HTTPException(status_code=404, detail="Lesson not found.")
+    return PlainTextResponse(lesson_file.read_text())
 
 
-@app.post("/hint", response_model=HintResponse)
-async def get_hint(request: HintRequest):
-    """Get a hint for the current discussion."""
-    hint = inference_engine.generate_hint(context=request.context)
-    return HintResponse(hint=hint)
+# ---------------------------------------------------------------------------
+# Admin content CRUD  (require session token)
+# ---------------------------------------------------------------------------
+@app.get("/admin/api/courses")
+async def admin_list_courses(x_admin_token: Optional[str] = Header(default=None)):
+    _require_admin(x_admin_token)
+    courses = []
+    for course_dir in sorted(_CONTENT_DIR.iterdir()):
+        course_json = course_dir / "course.json"
+        if course_dir.is_dir() and course_json.exists():
+            try:
+                courses.append(json.loads(course_json.read_text()))
+            except Exception:
+                pass
+    return {"courses": courses}
 
 
-@app.get("/sessions")
-async def get_sessions():
-    """Get list of active sessions."""
-    return {"sessions": list(sessions.keys())}
+@app.post("/admin/api/courses/{course_id}", status_code=201)
+async def admin_save_course(
+    course_id: str,
+    request: Request,
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    _require_admin(x_admin_token)
+    course_dir = _safe_path(_CONTENT_DIR, course_id)
+    course_dir.mkdir(parents=True, exist_ok=True)
+    (course_dir / "lessons").mkdir(exist_ok=True)
+    body = await request.json()
+    body["id"] = course_id
+    (course_dir / "course.json").write_text(json.dumps(body, indent=2, ensure_ascii=False))
+    logger.info("Admin: saved course %s", course_id)
+    return {"status": "ok", "id": course_id}
 
 
-@app.get("/metrics")
-async def get_metrics():
-    """Get usage metrics (placeholder for analytics)."""
-    return {
-        "total_sessions": len(sessions),
-        "model_loaded": model_loader.is_loaded,
-        "model_path": model_loader.model_path
-    }
+@app.delete("/admin/api/courses/{course_id}")
+async def admin_delete_course(
+    course_id: str,
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    _require_admin(x_admin_token)
+    course_dir = _safe_path(_CONTENT_DIR, course_id)
+    if not course_dir.exists():
+        raise HTTPException(status_code=404, detail="Course not found.")
+    shutil.rmtree(course_dir)
+    logger.info("Admin: deleted course %s", course_id)
+    return {"status": "ok"}
 
 
-@app.post("/difficulty")
-async def set_difficulty(difficulty: str):
-    """Update the difficulty level."""
-    valid_levels = ["beginner", "intermediate", "advanced"]
-    if difficulty not in valid_levels:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid difficulty. Must be one of: {valid_levels}"
-        )
-    return {"difficulty": difficulty, "message": "Difficulty updated"}
+@app.post("/admin/api/courses/{course_id}/lessons/{filename}", status_code=201)
+async def admin_save_lesson(
+    course_id: str,
+    filename: str,
+    request: Request,
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    _require_admin(x_admin_token)
+    lesson_file = _safe_path(_CONTENT_DIR, course_id, "lessons", filename)
+    lesson_file.parent.mkdir(parents=True, exist_ok=True)
+    content = (await request.body()).decode("utf-8")
+    lesson_file.write_text(content)
+    logger.info("Admin: saved lesson %s/%s", course_id, filename)
+    return {"status": "ok"}
 
 
+@app.delete("/admin/api/courses/{course_id}/lessons/{filename}")
+async def admin_delete_lesson(
+    course_id: str,
+    filename: str,
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    _require_admin(x_admin_token)
+    lesson_file = _safe_path(_CONTENT_DIR, course_id, "lessons", filename)
+    if not lesson_file.exists():
+        raise HTTPException(status_code=404, detail="Lesson not found.")
+    lesson_file.unlink()
+    logger.info("Admin: deleted lesson %s/%s", course_id, filename)
+    return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    server_config = config.get('server', {})
-    uvicorn.run(
-        app,
-        host=server_config.get('host', '0.0.0.0'),
-        port=server_config.get('port', 8000)
-    )
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
+
+    host = _server_cfg.get("host", "0.0.0.0")
+    port = _server_cfg.get("port", 8000)
+    uvicorn.run(app, host=host, port=port)

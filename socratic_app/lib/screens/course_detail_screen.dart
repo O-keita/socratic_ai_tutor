@@ -182,8 +182,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark 
-              ? AppTheme.primaryLight.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.2),
+              ? AppTheme.primaryLight.withValues(alpha: 0.3)
+              : Colors.grey.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -203,7 +203,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: isDark ? AppTheme.primaryLight : Colors.grey.withOpacity(0.2),
+                    backgroundColor: isDark ? AppTheme.primaryLight : Colors.grey.withValues(alpha: 0.2),
                     valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
                     minHeight: 8,
                   ),
@@ -270,7 +270,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         border: Border.all(
           color: isExpanded 
               ? colorScheme.primary
-              : (isDark ? AppTheme.primaryLight.withOpacity(0.3) : Colors.grey.withOpacity(0.2)),
+              : (isDark ? AppTheme.primaryLight.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.2)),
         ),
       ),
       child: Column(
@@ -292,7 +292,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     height: 40,
                     decoration: BoxDecoration(
                       color: module.isCompleted 
-                          ? AppTheme.success.withOpacity(0.2)
+                          ? AppTheme.success.withValues(alpha: 0.2)
                           : (isDark ? AppTheme.primaryLight : AppTheme.tagBackground),
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -339,7 +339,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             ),
           ),
           if (isExpanded) ...[
-            Divider(height: 1, color: isDark ? AppTheme.primaryLight : Colors.grey.withOpacity(0.2)),
+            Divider(height: 1, color: isDark ? AppTheme.primaryLight : Colors.grey.withValues(alpha: 0.2)),
             ...module.chapters.asMap().entries.map((entry) {
               return _buildChapterItem(moduleIndex, entry.key, entry.value);
             }),
@@ -371,8 +371,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   height: 32,
                   decoration: BoxDecoration(
                     color: chapter.isCompleted 
-                        ? AppTheme.success.withOpacity(0.2)
-                        : (isDark ? AppTheme.primaryLight : Colors.grey.withOpacity(0.1)),
+                        ? AppTheme.success.withValues(alpha: 0.2)
+                        : (isDark ? AppTheme.primaryLight : Colors.grey.withValues(alpha: 0.1)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -399,7 +399,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 ),
                 Icon(
                   isExpanded ? Icons.expand_less : Icons.expand_more,
-                  color: isDark ? AppTheme.textMuted : AppTheme.lightTextSecondary.withOpacity(0.6),
+                  color: isDark ? AppTheme.textMuted : AppTheme.lightTextSecondary.withValues(alpha: 0.6),
                   size: 20,
                 ),
               ],
@@ -454,7 +454,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 border: Border.all(
                   color: lesson.isCompleted 
                       ? AppTheme.success
-                      : (isDark ? AppTheme.textMuted : Colors.grey.withOpacity(0.4)),
+                      : (isDark ? AppTheme.textMuted : Colors.grey.withValues(alpha: 0.4)),
                   width: 2,
                 ),
               ),

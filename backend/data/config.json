@@ -4,11 +4,11 @@
     "n_ctx": 4096,
     "n_threads": 4,
     "n_gpu_layers": 0,
-    "temperature": 0.4,
+    "temperature": 0.7,
     "max_tokens": 128,
     "top_p": 0.9,
     "top_k": 40,
-    "repeat_penalty": 1.2
+    "repeat_penalty": 1.1
   },
   "tutor": {
     "difficulty_levels": {
@@ -34,5 +34,8 @@
     "host": "0.0.0.0",
     "port": 8000,
     "cors_origins": ["*"]
+  },
+  "admin": {
+    "name": "Admin"
   }
 }

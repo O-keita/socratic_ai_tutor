@@ -77,7 +77,7 @@ class _TutorScreenState extends State<TutorScreen> {
                     margin: const EdgeInsets.fromLTRB(64, 4, 16, 4),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.teal.withOpacity(0.1),
+                      color: Colors.teal.withValues(alpha: 0.1),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16),

@@ -13,8 +13,11 @@ class ModelSetupScreen extends StatefulWidget {
 }
 
 class _ModelSetupScreenState extends State<ModelSetupScreen> {
-  static const String modelFileName = 'socratic-q4_k_m.gguf';
-  static const String downloadUrl = 'https://huggingface.co/Omar-keita/DSML-Socatic-qwen3-0.6B/resolve/main/socratic-q4_k_m.gguf';
+  // Must match SocraticLlmService.modelFileName
+  static const String modelFileName = 'socratic-model.gguf';
+  // Direct download from HuggingFace (resolve/main/ gives the raw file)
+  static const String downloadUrl =
+      'https://huggingface.co/Omar-keita/DSML-Socatic-qwen3-0.6B/resolve/main/Socratic-Qwen3-0.6-Merged-Quality_Data-752M-Q4_K_M%20(1).gguf';
 
   bool _isLikelyEmulator = false;
 
@@ -43,7 +46,10 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
     final exists = await downloader.isModelDownloaded(modelFileName);
     if (exists && mounted) {
       _navigateToHome();
+      return;
     }
+    // Update hasPartialDownload so button label shows "Resume" if applicable
+    await downloader.checkPartialDownload(modelFileName);
   }
 
   void _navigateToHome() {
@@ -104,9 +110,9 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.1),
+                      color: Colors.amber.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                     ),
                     child: const Row(
                       children: [
@@ -133,44 +139,61 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
                 const SizedBox(height: 48),
                 if (downloader.status == DownloadStatus.notStarted) ...[
                   _buildDownloadButton(downloader),
+                  if (downloader.hasPartialDownload) ...[
+                    const SizedBox(height: 10),
+                    _buildStartFreshButton(downloader),
+                  ],
                   const SizedBox(height: 16),
                   _buildSkipButton(),
                 ] else if (downloader.status == DownloadStatus.connecting) ...[
                   const CircularProgressIndicator(color: AppTheme.accentOrange),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Connecting to server...',
-                    style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.bold),
+                  Text(
+                    downloader.hasPartialDownload
+                        ? 'Reconnecting to resume…'
+                        : 'Connecting to server…',
+                    style: const TextStyle(
+                        color: AppTheme.accentOrange, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 32),
                   TextButton(
                     onPressed: () => downloader.cancelDownload(),
-                    child: const Text('Cancel', style: TextStyle(color: Colors.redAccent)),
+                    child: const Text('Cancel',
+                        style: TextStyle(color: Colors.redAccent)),
                   ),
                 ] else if (downloader.status == DownloadStatus.downloading) ...[
-                  LinearProgressIndicator(
-                    value: downloader.progress,
-                    backgroundColor: Colors.grey.withOpacity(0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: downloader.progress,
+                      backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppTheme.accentOrange),
+                      minHeight: 6,
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
                     '${(downloader.progress * 100).toStringAsFixed(1)}%',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentOrange),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.accentOrange),
                   ),
                   const SizedBox(height: 32),
                   TextButton(
                     onPressed: () => downloader.cancelDownload(),
-                    child: const Text('Cancel Download', style: TextStyle(color: Colors.redAccent)),
+                    child: const Text('Cancel Download',
+                        style: TextStyle(color: Colors.redAccent)),
                   ),
                 ] else if (downloader.status == DownloadStatus.error) ...[
-                  Text(
-                    'Error: ${downloader.errorMessage}',
-                    style: const TextStyle(color: Colors.redAccent),
-                    textAlign: TextAlign.center,
-                  ),
+                  _buildErrorCard(
+                      downloader.errorMessage ?? 'An unexpected error occurred.'),
                   const SizedBox(height: 24),
                   _buildDownloadButton(downloader),
+                  if (downloader.hasPartialDownload) ...[
+                    const SizedBox(height: 10),
+                    _buildStartFreshButton(downloader),
+                  ],
                   const SizedBox(height: 16),
                   _buildSkipButton(),
                 ],
@@ -182,6 +205,49 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
     );
   }
 
+  Widget _buildErrorCard(String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              color: Color(0xFFEF4444), size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Download failed',
+                  style: TextStyle(
+                    color: Color(0xFFEF4444),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    color: Color(0xFFEF4444),
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSkipButton() {
     return SizedBox(
       width: double.infinity,
@@ -189,7 +255,7 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
         onPressed: _navigateToHome,
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          side: BorderSide(color: AppTheme.accentOrange.withOpacity(0.5)),
+          side: BorderSide(color: AppTheme.accentOrange.withValues(alpha: 0.5)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         child: const Text(
@@ -204,7 +270,25 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
     );
   }
 
+  Widget _buildStartFreshButton(ModelDownloadService downloader) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton.icon(
+        onPressed: () async {
+          await downloader.clearPartialDownload(modelFileName);
+        },
+        icon: const Icon(Icons.delete_outline_rounded,
+            size: 16, color: Colors.redAccent),
+        label: const Text(
+          'Start fresh (discard partial download)',
+          style: TextStyle(fontSize: 13, color: Colors.redAccent),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDownloadButton(ModelDownloadService downloader) {
+    final isResume = downloader.hasPartialDownload;
     return SizedBox(
       width: double.infinity,
       child: Container(
@@ -212,17 +296,23 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
           gradient: AppTheme.buttonGradient,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: ElevatedButton(
+        child: ElevatedButton.icon(
           onPressed: () => downloader.downloadModel(downloadUrl, modelFileName),
+          icon: Icon(
+            isResume ? Icons.play_arrow_rounded : Icons.download_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
-          child: const Text(
-            'Download Engine (350MB)',
-            style: TextStyle(
+          label: Text(
+            isResume ? 'Resume Download' : 'Download Engine (~350 MB)',
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.white,

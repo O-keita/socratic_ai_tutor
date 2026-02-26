@@ -19,7 +19,7 @@ By combining on-device LLM inference (GGUF) with a cloud-fallback API, it provid
 ---
 
 ## � Video Demo
-Explore the Socratic AI Tutor in action! This video demonstrates the core functionalities
+Explore the Socratic AI Tutor in action! This video demonstrates the core functionalitiesz
 
 **Socratic AI Tutor Video Demo** : [https://drive.google.com/file/d/19JzQTVYXiXWFX9ukc7zUP-SJ9GWhmDlB/view?usp=sharing](https://drive.google.com/file/d/19JzQTVYXiXWFX9ukc7zUP-SJ9GWhmDlB/view?usp=sharing)
 

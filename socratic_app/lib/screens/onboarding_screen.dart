@@ -44,7 +44,7 @@ class OnboardingScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.accentOrange.withOpacity(0.4),
+                        color: AppTheme.accentOrange.withValues(alpha: 0.4),
                         blurRadius: 30,
                         spreadRadius: 5,
                       ),
@@ -104,7 +104,7 @@ class OnboardingScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.accentOrange.withOpacity(0.4),
+                          color: AppTheme.accentOrange.withValues(alpha: 0.4),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),

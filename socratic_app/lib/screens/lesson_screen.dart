@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../models/course.dart';
 import '../services/progress_service.dart';
+import '../utils/app_snackbar.dart';
 import '../services/course_service.dart';
 import '../services/theme_service.dart';
 import 'lesson_chat_screen.dart';
@@ -101,13 +102,7 @@ class _LessonScreenState extends State<LessonScreen> {
       widget.lesson.isCompleted = true;
     });
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Lesson completed! 🎉'),
-          backgroundColor: AppTheme.success,
-          duration: Duration(seconds: 2),
-        ),
-      );
+      AppSnackBar.success(context, 'Lesson completed! Great work.');
     }
   }
 
@@ -249,7 +244,7 @@ class _LessonScreenState extends State<LessonScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppTheme.success.withOpacity(0.2),
+                color: AppTheme.success.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Row(
@@ -357,10 +352,10 @@ class _LessonScreenState extends State<LessonScreen> {
             fontFamily: 'monospace',
           ),
           codeblockDecoration: BoxDecoration(
-            color: isDark ? AppTheme.surfaceCard : Colors.grey.withOpacity(0.1),
+            color: isDark ? AppTheme.surfaceCard : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isDark ? AppTheme.primaryLight.withOpacity(0.3) : Colors.grey.withOpacity(0.2),
+              color: isDark ? AppTheme.primaryLight.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.2),
             ),
           ),
           codeblockPadding: const EdgeInsets.all(16),
@@ -388,7 +383,7 @@ class _LessonScreenState extends State<LessonScreen> {
             color: isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary,
           ),
           tableBorder: TableBorder.all(
-            color: isDark ? AppTheme.primaryLight.withOpacity(0.3) : Colors.grey.withOpacity(0.2),
+            color: isDark ? AppTheme.primaryLight.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.2),
           ),
           tableHeadAlign: TextAlign.center,
           tableCellsPadding: const EdgeInsets.all(8),
@@ -408,7 +403,7 @@ class _LessonScreenState extends State<LessonScreen> {
         color: isDark ? AppTheme.surfaceCard : AppTheme.lightSurfaceCard,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppTheme.primaryLight.withOpacity(0.5) : AppTheme.tagBackground,
+          color: isDark ? AppTheme.primaryLight.withValues(alpha: 0.5) : AppTheme.tagBackground,
         ),
       ),
       child: Column(
@@ -453,7 +448,7 @@ class _LessonScreenState extends State<LessonScreen> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppTheme.primaryLight.withOpacity(0.3) : Colors.grey.withOpacity(0.2),
+          color: isDark ? AppTheme.primaryLight.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -477,7 +472,7 @@ class _LessonScreenState extends State<LessonScreen> {
           Text(
             'Think about these questions. Ask the AI Tutor for guidance!',
             style: TextStyle(
-              color: isDark ? AppTheme.textMuted : AppTheme.lightTextSecondary.withOpacity(0.7),
+              color: isDark ? AppTheme.textMuted : AppTheme.lightTextSecondary.withValues(alpha: 0.7),
               fontSize: 12,
             ),
           ),
@@ -530,7 +525,7 @@ class _LessonScreenState extends State<LessonScreen> {
                   gradient: _hasReachedEnd 
                       ? AppTheme.buttonGradient
                       : null,
-                  color: _hasReachedEnd ? null : (isDark ? AppTheme.primaryLight : Colors.grey.withOpacity(0.2)),
+                  color: _hasReachedEnd ? null : (isDark ? AppTheme.primaryLight : Colors.grey.withValues(alpha: 0.2)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ElevatedButton(
@@ -548,7 +543,7 @@ class _LessonScreenState extends State<LessonScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: _hasReachedEnd ? Colors.white : (isDark ? AppTheme.textMuted : AppTheme.lightTextSecondary.withOpacity(0.5)),
+                      color: _hasReachedEnd ? Colors.white : (isDark ? AppTheme.textMuted : AppTheme.lightTextSecondary.withValues(alpha: 0.5)),
                     ),
                   ),
                 ),
@@ -571,7 +566,7 @@ class _LessonScreenState extends State<LessonScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary,
                         side: BorderSide(
-                          color: isDark ? AppTheme.primaryLight.withOpacity(0.5) : Colors.grey.withOpacity(0.3),
+                          color: isDark ? AppTheme.primaryLight.withValues(alpha: 0.5) : Colors.grey.withValues(alpha: 0.3),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -614,10 +609,10 @@ class _LessonScreenState extends State<LessonScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
-                        color: AppTheme.success.withOpacity(0.2),
+                        color: AppTheme.success.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppTheme.success.withOpacity(0.5),
+                          color: AppTheme.success.withValues(alpha: 0.5),
                         ),
                       ),
                       child: const Row(
@@ -646,7 +641,7 @@ class _LessonScreenState extends State<LessonScreen> {
               child: Text(
                 'Lesson ${widget.currentIndex! + 1} of ${widget.allLessons!.length}',
                 style: TextStyle(
-                  color: isDark ? AppTheme.textMuted : AppTheme.lightTextSecondary.withOpacity(0.5),
+                  color: isDark ? AppTheme.textMuted : AppTheme.lightTextSecondary.withValues(alpha: 0.5),
                   fontSize: 12,
                 ),
               ),

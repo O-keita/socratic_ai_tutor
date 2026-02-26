@@ -10,9 +10,15 @@ import '../widgets/chat_input.dart';
 
 class ChatScreen extends StatefulWidget {
   final String? initialTopic;
-  final String? sessionId; // Added sessionId support
-  
-  const ChatScreen({super.key, this.initialTopic, this.sessionId});
+  final String? sessionId;
+  final String? initialMessage;
+
+  const ChatScreen({
+    super.key,
+    this.initialTopic,
+    this.sessionId,
+    this.initialMessage,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -22,7 +28,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final List<Message> _messages = [];
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final TutorBridge _tutorBridge = TutorBridge(); // Changed from ApiService
+  final TutorBridge _tutorBridge = TutorBridge();
   bool _isLoading = false;
   late AnimationController _typingController;
 
@@ -33,34 +39,57 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..repeat(reverse: true);
-    
+
     _initSession();
   }
-  
+
   Future<void> _initSession() async {
+    // CRITICAL FIX: initialize() is now called inside startSession(),
+    // so the engine is guaranteed to be ready before any message is sent.
     await _tutorBridge.startSession(
-      id: widget.sessionId, 
-      topic: widget.initialTopic
+      id: widget.sessionId,
+      topic: widget.initialTopic,
     );
-    
+
     if (!mounted) return;
     setState(() {
-      if (_tutorBridge.currentSession != null && _tutorBridge.currentSession!.messages.isNotEmpty) {
+      if (_tutorBridge.currentSession != null &&
+          _tutorBridge.currentSession!.messages.isNotEmpty) {
         _messages.addAll(_tutorBridge.currentSession!.messages);
       } else {
         _messages.add(Message(
-          text: 'Hi! I\'m your Socratic tutor.\n\nAsk me anything and I\'ll guide you to discover the answer through questions.',
+          text:
+          'Hi! I\'m your Socratic tutor.\n\nAsk me anything and I\'ll guide you to discover the answer through questions.',
           isUser: false,
           timestamp: DateTime.now(),
         ));
       }
     });
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
+    // CRITICAL FIX: Check initialMessage AFTER setState so _messages is
+    // populated. Use the actual welcome-message count (1) as the threshold,
+    // not the total message count which may vary when loading history.
+    if (widget.initialMessage != null) {
+      final hasOnlyWelcome =
+          _messages.length == 1 && !_messages.first.isUser;
+      if (hasOnlyWelcome) {
+        _autoSendMsg(widget.initialMessage!);
+      }
+    }
+  }
+
+  void _autoSendMsg(String text) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    _controller.text = text;
+    _handleSend();
   }
 
   @override
   void dispose() {
+    _typingController.stop();
     _typingController.dispose();
     _controller.dispose();
     _scrollController.dispose();
@@ -87,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _isLoading = true;
     });
     _controller.clear();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     final response = await _tutorBridge.sendMessage(text);
@@ -97,54 +126,53 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _messages.add(response);
       _isLoading = false;
     });
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
+  /// CRITICAL FIX: Hint now goes through the real LLM via TutorBridge
+  /// instead of returning a hardcoded static string.
   void _requestHint() async {
     if (_isLoading) return;
-    
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
 
-    // Fallback hint for local tutor if requestHint is not in TutorBridge
-    final hint = Message(
-      text: "I want to help you figure this out. What part of the current step seems most tricky to you?",
-      isUser: false,
-      timestamp: DateTime.now(),
-    );
-    
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    // Build a meta-prompt that asks the tutor to guide without revealing.
+    const hintPrompt =
+        '[The student is stuck. Give a Socratic hint — ask one guiding question to help them think through the last topic, without revealing the answer.]';
+
+    final hint = await _tutorBridge.sendMessage(hintPrompt);
+
     if (!mounted) return;
     setState(() {
       _messages.add(hint);
       _isLoading = false;
     });
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeService>().isDarkMode;
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: isDark ? AppTheme.backgroundGradient : AppTheme.lightBackgroundGradient,
+          gradient: isDark
+              ? AppTheme.backgroundGradient
+              : AppTheme.lightBackgroundGradient,
         ),
         child: SafeArea(
           child: Column(
             children: [
-              // Simple App Bar
               _buildAppBar(),
-              
-              // Messages
               Expanded(
                 child: ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: _messages.length + (_isLoading ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == _messages.length && _isLoading) {
@@ -152,13 +180,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     }
                     return ChatBubble(
                       message: _messages[index],
-                      onHintRequested: !_messages[index].isUser ? _requestHint : null,
+                      onHintRequested:
+                      !_messages[index].isUser ? _requestHint : null,
                     );
                   },
                 ),
               ),
-              
-              // Input
               ChatInput(
                 controller: _controller,
                 onSend: _handleSend,
@@ -200,49 +227,61 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'Socratic Tutor',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    StreamBuilder<EngineStatus>(
+                      stream: HybridTutorService().statusStream,
+                      initialData: HybridTutorService().currentStatus,
+                      builder: (context, snapshot) {
+                        final status =
+                            snapshot.data ?? EngineStatus.offline;
+                        return Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: status == EngineStatus.online
+                                ? Colors.green
+                                : (status == EngineStatus.connecting
+                                ? Colors.orange
+                                : Colors.grey),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                if (widget.initialTopic != null)
                   Text(
-                    'Socratic Tutor',
+                    widget.initialTopic!,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppTheme.textSecondary
+                          : AppTheme.lightTextSecondary,
+                      fontSize: 10,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  StreamBuilder<EngineStatus>(
-                    stream: HybridTutorService().statusStream,
-                    initialData: HybridTutorService().currentStatus,
-                    builder: (context, snapshot) {
-                      final status = snapshot.data ?? EngineStatus.offline;
-                      return Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: status == EngineStatus.online 
-                              ? Colors.green 
-                              : (status == EngineStatus.connecting ? Colors.orange : Colors.grey),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              if (widget.initialTopic != null)
-                Text(
-                  widget.initialTopic!,
-                  style: TextStyle(
-                    color: isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary,
-                    fontSize: 10,
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
           const Spacer(),
           IconButton(
@@ -250,9 +289,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             onPressed: () => context.read<ThemeService>().toggleTheme(),
             color: colorScheme.onSurface,
           ),
-          // Hint button
           TextButton.icon(
-            onPressed: _requestHint,
+            onPressed: _isLoading ? null : _requestHint,
             icon: const Icon(Icons.lightbulb_outline, size: 18),
             label: const Text('Hint'),
             style: TextButton.styleFrom(
@@ -266,7 +304,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   Widget _buildTypingIndicator() {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
       child: Row(
@@ -288,15 +326,16 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       child: Transform.translate(
                         offset: Offset(
                           0,
-                          -4 * (_typingController.value - 0.5).abs() * 
-                            (index == 1 ? 1 : 0.6),
+                          -4 *
+                              (_typingController.value - 0.5).abs() *
+                              (index == 1 ? 1 : 0.6),
                         ),
                         child: Container(
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(
-                              0.5 + (_typingController.value * 0.5),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.5 + (_typingController.value * 0.5),
                             ),
                             shape: BoxShape.circle,
                           ),

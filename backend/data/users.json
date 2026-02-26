@@ -3,7 +3,21 @@
         "id": "caf6e0b3-5b95-4a3d-b337-a0a52e11b7c3",
         "username": "omar",
         "email": "omarmnk5@gmail.com",
-        "password_hash": "56489cdc3929c5eb104e3adbacb62110245e7fc2dfc67df1c7e82d0b5b932643",
+        "password_hash": "pbkdf2:sha256:260000$a48df69a72b0d1986a4d822189c48137$558ba386bb05a42773247d89e8a6cfa5c4a2847fea8b6b3b1412e931ad001e37",
         "created_at": "2026-02-14T23:35:08.342461"
+    },
+    "omarmk5@gmail.com": {
+        "id": "748e0803-4576-404f-a247-1077ba9fde19",
+        "username": "omark",
+        "email": "omarmk5@gmail.com",
+        "password_hash": "pbkdf2:sha256:260000$10ae65872a6c0cadaf9955fc6b8ead87$0bb5d9f0373741a8183918dd1d5f7b43bd26ac6d1f3f24121157b0bd784903d0",
+        "created_at": "2026-02-21T01:16:51.379962"
+    },
+    "test@example.com": {
+        "id": "5f134d7f-151a-46af-88f5-fe16c6a7e196",
+        "username": "testuser",
+        "email": "test@example.com",
+        "password_hash": "pbkdf2:sha256:260000$bb72c7a2970ae7bb69a944bdb31fe782$f8a9f3cef16a4c2f37570ffe6e14005d9703be6a163b6221cf85dcff1765f904",
+        "created_at": "2026-02-26T00:58:27.601025"
     }
 }

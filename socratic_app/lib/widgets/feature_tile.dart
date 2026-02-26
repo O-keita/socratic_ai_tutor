@@ -27,7 +27,7 @@ class FeatureTile extends StatelessWidget {
           color: AppTheme.surfaceCard,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: gradientColors[0].withOpacity(0.2),
+            color: gradientColors[0].withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -38,8 +38,8 @@ class FeatureTile extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    gradientColors[0].withOpacity(0.2),
-                    gradientColors[1].withOpacity(0.1),
+                    gradientColors[0].withValues(alpha: 0.2),
+                    gradientColors[1].withValues(alpha: 0.1),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(10),

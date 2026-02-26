@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
 import 'tutor_engine.dart';
@@ -14,19 +15,19 @@ enum EngineStatus { online, offline, connecting }
 class HybridTutorService implements TutorEngine {
   final SocraticLlmService _localEngine = SocraticLlmService();
   final RemoteLlmService _remoteEngine = RemoteLlmService();
-  
+
   TutorMode mode = TutorMode.auto;
   EngineStatus _currentStatus = EngineStatus.offline;
-  final StreamController<EngineStatus> _statusController = StreamController<EngineStatus>.broadcast();
-  
+  final StreamController<EngineStatus> _statusController =
+      StreamController<EngineStatus>.broadcast();
+
   Stream<EngineStatus> get statusStream => _statusController.stream;
   EngineStatus get currentStatus => _currentStatus;
-  
+
   static final HybridTutorService _instance = HybridTutorService._internal();
   factory HybridTutorService() => _instance;
   HybridTutorService._internal() {
     _loadMode();
-    // Initial status
     _updateStatus();
   }
 
@@ -35,21 +36,21 @@ class HybridTutorService implements TutorEngine {
       final prefs = await SharedPreferences.getInstance();
       final savedMode = prefs.getString('tutor_mode');
       if (savedMode != null) {
-        mode = TutorMode.values.firstWhere((e) => e.toString() == savedMode);
+        mode = TutorMode.values.firstWhere(
+          (e) => e.toString() == savedMode,
+          orElse: () => TutorMode.auto,
+        );
         _updateStatus();
       }
     } catch (e) {
-      print('HybridTutorService: Error loading mode: $e');
+      debugPrint('HybridTutorService: Error loading mode: $e');
     }
   }
 
   Future<void> _updateStatus() async {
     final engine = await _getBestEngine();
-    if (engine is RemoteLlmService) {
-      _currentStatus = EngineStatus.online;
-    } else {
-      _currentStatus = EngineStatus.offline;
-    }
+    _currentStatus =
+        engine is RemoteLlmService ? EngineStatus.online : EngineStatus.offline;
     _statusController.add(_currentStatus);
   }
 
@@ -57,32 +58,37 @@ class HybridTutorService implements TutorEngine {
   bool get isReady => _localEngine.isReady || _remoteEngine.isReady;
 
   @override
-  bool get isGenerating => _localEngine.isGenerating || _remoteEngine.isGenerating;
+  bool get isGenerating =>
+      _localEngine.isGenerating || _remoteEngine.isGenerating;
 
   @override
   Future<bool> initialize() async {
     _currentStatus = EngineStatus.connecting;
     _statusController.add(_currentStatus);
-    
-    // Initialize both engines in parallel. 
-    // This prevents the local engine (which might hang on incompatible hardware) 
-    // from blocking the remote engine check.
-    final List<bool> results = await Future.wait([
-      _localEngine.initialize().catchError((e) {
-        print('HybridTutorService: Local engine init error: $e');
+
+    // Initialize both engines in parallel so neither blocks the other.
+    // Local engine is capped at 5 seconds — on x86_64 emulators the ARM64-only
+    // native library crashes the plugin channel, causing path_provider retries
+    // that would otherwise hang for ~20 seconds.
+    final results = await Future.wait([
+      _localEngine.initialize().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          debugPrint('HybridTutorService: Local engine init timed out (unsupported architecture?)');
+          return false;
+        },
+      ).catchError((e) {
+        debugPrint('HybridTutorService: Local engine init error: $e');
         return false;
       }),
       _remoteEngine.initialize().catchError((e) {
-        print('HybridTutorService: Remote engine init error: $e');
+        debugPrint('HybridTutorService: Remote engine init error: $e');
         return false;
       }),
     ]);
-    
-    final localOk = results[0];
-    final remoteOk = results[1];
-    
+
     await _updateStatus();
-    return localOk || remoteOk;
+    return results[0] || results[1];
   }
 
   void setMode(TutorMode newMode) {
@@ -96,37 +102,54 @@ class HybridTutorService implements TutorEngine {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('tutor_mode', newMode.toString());
     } catch (e) {
-      print('HybridTutorService: Error saving mode: $e');
+      debugPrint('HybridTutorService: Error saving mode: $e');
     }
   }
 
   Future<TutorEngine> _getBestEngine() async {
+    // llamadart supports all platforms, so no platform restrictions needed.
     if (mode == TutorMode.offline) return _localEngine;
     if (mode == TutorMode.online) return _remoteEngine;
-    
+
     // Auto mode: check connectivity
-    final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult.contains(ConnectivityResult.none)) {
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity.contains(ConnectivityResult.none)) {
       return _localEngine;
     }
-    
-    // If online, try remote, but check if it's actually responding
-    // Using a quick check to avoid hangs
-    final remoteAlive = await _remoteEngine.initialize();
+
+    // Has network — verify the server actually responds (3-second cap)
+    final remoteAlive = await _remoteEngine
+        .initialize()
+        .timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => false,
+        );
     return remoteAlive ? _remoteEngine : _localEngine;
   }
 
   @override
-  Stream<String> generateResponse(String prompt, {List<Message>? history, int maxTokens = 150}) async* {
+  Stream<String> generateResponse(
+    String prompt, {
+    List<Message>? history,
+    int maxTokens = 150,
+  }) async* {
     await _updateStatus();
     final engine = await _getBestEngine();
     yield* engine.generateResponse(prompt, history: history, maxTokens: maxTokens);
   }
 
   @override
-  Future<String> generateSocraticResponse(String prompt, {List<Message>? history, int maxTokens = 150}) async {
+  Future<LLMResponse> generateSocraticResponse(
+    String prompt, {
+    List<Message>? history,
+    int maxTokens = 150,
+  }) async {
     await _updateStatus();
     final engine = await _getBestEngine();
-    return engine.generateSocraticResponse(prompt, history: history, maxTokens: maxTokens);
+    return engine.generateSocraticResponse(
+      prompt,
+      history: history,
+      maxTokens: maxTokens,
+    );
   }
 }

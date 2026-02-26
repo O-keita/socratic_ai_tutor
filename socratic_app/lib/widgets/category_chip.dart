@@ -27,12 +27,12 @@ class CategoryChip extends StatelessWidget {
           border: Border.all(
             color: isSelected 
               ? Colors.transparent 
-              : AppTheme.primaryLight.withOpacity(0.3),
+              : AppTheme.primaryLight.withValues(alpha: 0.3),
           ),
           boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: AppTheme.accentOrange.withOpacity(0.3),
+                  color: AppTheme.accentOrange.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
