@@ -5,9 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: socratic-backend
     ports:
-      # Port 80 is Cloudflare's proxied HTTP port.
-      # Cloudflare terminates TLS — the origin only needs plain HTTP.
-      - "80:81"
+      # Port 8880 — supported by Cloudflare proxy (free tier), not conflicting with other services.
+      - "8880:8880"
     volumes:
       # GGUF model — place the file at ./models/ on the host before starting
       - ./models:/app/models
@@ -17,7 +16,7 @@ services:
       - ./content:/app/content
     environment:
       - ENVIRONMENT=production
-      - PORT=81
+      - PORT=8880
       # Override any of these in your .env file on the server
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - CORS_ORIGINS=${CORS_ORIGINS}
@@ -31,7 +30,7 @@ services:
       - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:81/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8880/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
