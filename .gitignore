@@ -1,37 +1,27 @@
-# .gitignore
-# Ignore Python virtual environments, logs, build artifacts, etc.
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.log
-build/
-dist/
-.eggs/
-*.egg-info/
-.env
-.DS_Store
-.flutter-plugins
-.packages
-.pub-cache
-.idea/
-*.iml
-*.lock
+# ============================================================================
+# .gitignore — Socratic AI Tutor
+# ============================================================================
 
-# Figma/Graphics files
-*.fig
-
-# Local Project Research
-research.txt
-
-# Large AI Models
+# ---------- Large AI Models ----------
 *.gguf
 *.bin
 backend/models/
 socratic_app/assets/models/
 
-# Flutter specific (Root/Sub-project)
+# ---------- llama.cpp source (compiled from source via CMake) ----------
+local_llama_cpp_dart/
+
+# ---------- Python ----------
+.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+backend/evaluation/logs/*.json
+
+# ---------- Flutter / Dart ----------
 socratic_app/build/
 socratic_app/.flutter-plugins
 socratic_app/.flutter-plugins-dependencies
@@ -39,26 +29,26 @@ socratic_app/.packages
 socratic_app/.pub-cache/
 socratic_app/.dart_tool/
 socratic_app/generated/
-socratic_app/test_driver/
-socratic_app/linux/flutter/
-socratic_app/windows/flutter/
 
-# Python specific
-.venv/
-**/__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# ---------- Web App ----------
+webapp/node_modules/
+webapp/dist/
+
+# ---------- Build artifacts ----------
+build/
+dist/
 *.log
-backend/evaluation/logs/*.json
 
-# IDEs and OS
+# ---------- IDEs and OS ----------
 .idea/
 .vscode/
 *.iml
-*.lock
 .DS_Store
+.env
 
-# Figma/Graphics files
+# ---------- Figma / Graphics ----------
 *.fig
-socratic_app/android/app/src/main/assets/models/*.gguf
+
+# ---------- Misc ----------
+research.txt
+*.lock

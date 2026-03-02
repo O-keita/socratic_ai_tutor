@@ -48,9 +48,20 @@ class HybridTutorService implements TutorEngine {
   }
 
   Future<void> _updateStatus() async {
-    final engine = await _getBestEngine();
-    _currentStatus =
-        engine is RemoteLlmService ? EngineStatus.online : EngineStatus.offline;
+    // Lightweight status check — does NOT initialize engines.
+    if (mode == TutorMode.offline) {
+      _currentStatus = EngineStatus.offline;
+    } else if (mode == TutorMode.online) {
+      _currentStatus = EngineStatus.online;
+    } else {
+      // Auto: report based on which engine is currently ready.
+      if (_remoteEngine.isReady) {
+        _currentStatus = EngineStatus.online;
+      } else if (_localEngine.isReady) {
+        _currentStatus = EngineStatus.offline;
+      }
+      // If neither is ready, keep whatever status we had (offline by default).
+    }
     _statusController.add(_currentStatus);
   }
 
@@ -62,33 +73,50 @@ class HybridTutorService implements TutorEngine {
       _localEngine.isGenerating || _remoteEngine.isGenerating;
 
   @override
-  Future<bool> initialize() async {
+  Future<bool> initialize({bool force = false}) async {
     _currentStatus = EngineStatus.connecting;
     _statusController.add(_currentStatus);
 
-    // Initialize both engines in parallel so neither blocks the other.
-    // Local engine is capped at 5 seconds — on x86_64 emulators the ARM64-only
-    // native library crashes the plugin channel, causing path_provider retries
-    // that would otherwise hang for ~20 seconds.
-    final results = await Future.wait([
-      _localEngine.initialize().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          debugPrint('HybridTutorService: Local engine init timed out (unsupported architecture?)');
-          return false;
-        },
-      ).catchError((e) {
-        debugPrint('HybridTutorService: Local engine init error: $e');
-        return false;
-      }),
-      _remoteEngine.initialize().catchError((e) {
+    // Only initialize the engine we actually need.  Loading the local GGUF
+    // model can consume 400-800 MB of RAM — on budget devices this OOM-kills
+    // the app and causes a crash loop.  So we check connectivity first and
+    // only fall back to local when remote isn't reachable.
+
+    if (mode == TutorMode.offline) {
+      // User explicitly wants local — initialize it.
+      final ok = await _initLocalWithTimeout();
+      await _updateStatus();
+      return ok;
+    }
+
+    if (mode == TutorMode.online) {
+      final ok = await _remoteEngine.initialize().catchError((e) {
         debugPrint('HybridTutorService: Remote engine init error: $e');
         return false;
-      }),
-    ]);
+      });
+      await _updateStatus();
+      return ok;
+    }
 
+    // Auto mode: try remote first (cheap — just a ping), only load local
+    // model if remote is unreachable.
+    final remoteOk = await _remoteEngine.initialize().timeout(
+      const Duration(seconds: 3),
+      onTimeout: () => false,
+    ).catchError((e) {
+      debugPrint('HybridTutorService: Remote engine init error: $e');
+      return false;
+    });
+
+    if (remoteOk) {
+      await _updateStatus();
+      return true;
+    }
+
+    // Remote failed — try local as fallback.
+    final localOk = await _initLocalWithTimeout();
     await _updateStatus();
-    return results[0] || results[1];
+    return localOk;
   }
 
   void setMode(TutorMode newMode) {
@@ -107,13 +135,16 @@ class HybridTutorService implements TutorEngine {
   }
 
   Future<TutorEngine> _getBestEngine() async {
-    // llamadart supports all platforms, so no platform restrictions needed.
-    if (mode == TutorMode.offline) return _localEngine;
+    if (mode == TutorMode.offline) {
+      await _ensureLocalInitialized();
+      return _localEngine;
+    }
     if (mode == TutorMode.online) return _remoteEngine;
 
     // Auto mode: check connectivity
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity.contains(ConnectivityResult.none)) {
+      await _ensureLocalInitialized();
       return _localEngine;
     }
 
@@ -124,7 +155,64 @@ class HybridTutorService implements TutorEngine {
           const Duration(seconds: 3),
           onTimeout: () => false,
         );
-    return remoteAlive ? _remoteEngine : _localEngine;
+    if (remoteAlive) return _remoteEngine;
+
+    // Remote unreachable — fall back to local.
+    await _ensureLocalInitialized();
+    return _localEngine;
+  }
+
+  /// Initialize local engine with a timeout.  If the timeout fires, the
+  /// in-progress native `loadModel()` is **aborted** to free memory and
+  /// prevent an OOM crash on budget devices.
+  Future<bool> _initLocalWithTimeout() async {
+    // Don't attempt if a previous OOM crash was detected — the crash flag in
+    // SharedPreferences blocks auto-retry to prevent crash loops on low-RAM
+    // devices.  The user must clear it explicitly via Settings → Reset Model.
+    if (await _localEngine.wasKilledDuringLoad) {
+      debugPrint(
+          'HybridTutorService: Skipping local init — previous OOM crash detected. '
+          'User must retry from Settings.');
+      return false;
+    }
+
+    // Don't attempt if previous inference crashed the process (e.g. SIGILL on
+    // Exynos 1330 mixed-core CPUs).  Fatal signals leave the inference flag set
+    // across the crash.  Route to remote instead.
+    if (await _localEngine.wasKilledDuringInference) {
+      debugPrint(
+          'HybridTutorService: Skipping local init — previous inference crashed '
+          '(SIGILL/fatal signal). Routing to remote engine.');
+      return false;
+    }
+    if (_localEngine.initializationFailed) {
+      _localEngine.resetInitializationFailure();
+    }
+    final ok = await _localEngine.initialize().timeout(
+      const Duration(seconds: 60),
+      onTimeout: () {
+        debugPrint('HybridTutorService: Local engine init timed out (60s) — aborting to free memory');
+        _localEngine.abortLoad();
+        return false;
+      },
+    ).catchError((e) {
+      debugPrint('HybridTutorService: Local engine init error: $e');
+      return false;
+    });
+    return ok;
+  }
+
+  /// Lazily initialize the local engine only when needed.
+  Future<void> _ensureLocalInitialized() async {
+    if (_localEngine.isReady) return;
+    await _initLocalWithTimeout();
+  }
+
+  @override
+  void resetConversation() {
+    // Only the local engine holds native conversation state.
+    // Remote engine is stateless per-request (history sent via JSON).
+    _localEngine.resetConversation();
   }
 
   @override

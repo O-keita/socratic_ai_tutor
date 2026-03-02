@@ -1,0 +1,106 @@
+[
+  {
+    "id": "ml_01",
+    "topic": "Fundamentals",
+    "question": "In a linear regression model, what happens to the model's performance if we add too many irrelevant features?",
+    "options": [
+      "It always improves the accuracy",
+      "It may lead to overfitting",
+      "It reduces the complexity",
+      "It eliminates bias completely"
+    ],
+    "correctIndex": 1,
+    "explanation": "Adding irrelevant features increases the model's flexibility to fit noise in the training data, leading to generalization issues."
+  },
+  {
+    "id": "ml_02",
+    "topic": "Supervised Learning",
+    "question": "Which algorithm is most likely to be used for predicting whether an email is 'Spam' or 'Not Spam'?",
+    "options": [
+      "K-Means Clustering",
+      "Linear Regression",
+      "Logistic Regression",
+      "Principal Component Analysis"
+    ],
+    "correctIndex": 2,
+    "explanation": "Spam detection is a binary classification problem, for which Logistic Regression is a fundamental supervised learning algorithm."
+  },
+  {
+    "id": "ml_03",
+    "topic": "Validation",
+    "question": "What is the primary purpose of a 'test set' in machine learning?",
+    "options": [
+      "To train the model's weights",
+      "To tune the hyperparameters",
+      "To provide an unbiased evaluation of the final model",
+      "To increase the size of the training data"
+    ],
+    "correctIndex": 2,
+    "explanation": "The test set is used to evaluate how well the model generalizes to completely unseen data after training and tuning are complete."
+  },
+  {
+    "id": "ml_04",
+    "topic": "Bias-Variance Tradeoff",
+    "question": "A model that is very simple and fails to capture the underlying trend of the data is said to have:",
+    "options": [
+      "High Variance",
+      "High Bias",
+      "Low Bias",
+      "Zero Error"
+    ],
+    "correctIndex": 1,
+    "explanation": "High bias occurs when the model makes strong assumptions about the data, often leading to underfitting."
+  },
+  {
+    "id": "ml_05",
+    "topic": "Decision Trees",
+    "question": "Which of the following is a common technique used to prevent Decision Trees from overfitting?",
+    "options": [
+      "Exploding the tree",
+      "Pruning",
+      "Increasing the depth infinitely",
+      "Removing labels"
+    ],
+    "correctIndex": 1,
+    "explanation": "Pruning involves removing branches that provide little power to classify instances, thereby simplifying the model."
+  },
+  {
+    "id": "ml_06",
+    "topic": "Unsupervised Learning",
+    "question": "Which technique would you use to group similar customers together in a dataset without pre-existing labels?",
+    "options": [
+      "Random Forest",
+      "K-Means Clustering",
+      "Support Vector Machines",
+      "Gradient Boosting"
+    ],
+    "correctIndex": 1,
+    "explanation": "Clustering is an unsupervised learning task aimed at finding natural groupings in data."
+  },
+  {
+    "id": "ml_07",
+    "topic": "Regularization",
+    "question": "How does L2 regularization (Ridge) help prevent overfitting?",
+    "options": [
+      "By setting some coefficients to zero",
+      "By penalizing the square of the coefficients",
+      "By increasing the learning rate",
+      "By doubling the number of features"
+    ],
+    "correctIndex": 1,
+    "explanation": "L2 regularization adds a penalty term proportional to the square of the magnitude of coefficients, which discourages large weights."
+  },
+  {
+    "id": "ml_08",
+    "topic": "Performance Metrics",
+    "question": "In a highly imbalanced dataset where 99% of entries are 'Class A', which metric is most misleading?",
+    "options": [
+      "Precision",
+      "Recall",
+      "Accuracy",
+      "F1-Score"
+    ],
+    "correctIndex": 2,
+    "explanation": "In imbalanced datasets, a model could be 99% accurate by simply predicting 'Class A' every time, making accuracy a poor indicator of performance."
+  }
+]

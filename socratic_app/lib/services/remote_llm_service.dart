@@ -24,7 +24,7 @@ class RemoteLlmService implements TutorEngine {
   bool get isGenerating => _isGenerating;
 
   @override
-  Future<bool> initialize() async {
+  Future<bool> initialize({bool force = false}) async {
     try {
       final response = await http
           .get(Uri.parse('$baseUrl/'))
@@ -33,6 +33,11 @@ class RemoteLlmService implements TutorEngine {
     } catch (_) {
       return false;
     }
+  }
+
+  @override
+  void resetConversation() {
+    // No-op — remote engine is stateless (history sent per-request via JSON).
   }
 
   @override

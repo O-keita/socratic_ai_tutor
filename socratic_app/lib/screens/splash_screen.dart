@@ -18,39 +18,25 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-
     _controller.forward();
     _checkAuthAndNavigate();
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    // Show splash for at least 800ms for branding but keep it snappy
     await Future.delayed(const Duration(milliseconds: 800));
-    
     if (!mounted) return;
-    
     final authService = Provider.of<AuthService>(context, listen: false);
-    
-    // Wait for AuthService to finish loading the session
     int attempts = 0;
     while (!authService.isInitialized && attempts < 20) {
       await Future.delayed(const Duration(milliseconds: 100));
       attempts++;
     }
-    
     if (authService.isAuthenticated) {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/home');
-      }
+      if (mounted) Navigator.of(context).pushReplacementNamed('/home');
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AuthScreen()),
-      );
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const AuthScreen()));
     }
   }
 
@@ -66,22 +52,33 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
-          gradient: AppTheme.backgroundGradient,
+          gradient: LinearGradient(
+            colors: [Color(0xFFFEE4C4), Color(0xFFFEF6EE), Color(0xFFFFFFFF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo Placeholder - Replace 'assets/images/logo.png' when file is added
               Hero(
                 tag: 'logo',
                 child: Container(
-                  width: 150,
-                  height: 150,
+                  width: 130,
+                  height: 130,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.1),
+                    gradient: AppTheme.primaryGradient,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.accentOrange.withValues(alpha: 0.4),
+                        blurRadius: 40,
+                        spreadRadius: 4,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
                   child: ClipOval(
                     child: Image.asset(
@@ -89,34 +86,40 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.psychology,
-                        size: 80,
-                        color: AppTheme.accentOrange,
+                        size: 64,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              Text(
+              const SizedBox(height: 28),
+              const Text(
                 'Socratic AI Tutor',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Bridging the Digital Reasoning Divide',
                 style: TextStyle(
-                  color: AppTheme.textSecondary,
+                  color: Color(0xFF64748B),
                   fontSize: 14,
                   fontStyle: FontStyle.italic,
                 ),
               ),
               const SizedBox(height: 48),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+              const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+                ),
               ),
             ],
           ),

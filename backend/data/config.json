@@ -1,7 +1,9 @@
 {
   "model": {
+    "repo_id": "Omar-keita/DSML-Socatic-qwen3-0.6B",
+    "filename": "socratic-qwen3-0.5B-Q4_K_M.gguf",
     "path": "models/socratic-q4_k_m.gguf",
-    "n_ctx": 40960,
+    "n_ctx": 4096,
     "n_threads": 4,
     "n_gpu_layers": 0,
     "temperature": 0.6,
@@ -29,6 +31,12 @@
       }
     },
     "default_difficulty": "intermediate"
+  },
+  "mobile_model": {
+    "version": "1.0",
+    "display_name": "Qwen3-0.6B",
+    "download_url": "https://huggingface.co/Omar-keita/DSML-Socatic-qwen3-0.6B/resolve/main/socratic-qwen3-0.5B-Q4_K_M.gguf",
+    "release_notes": "Initial fine-tuned Socratic model"
   },
   "server": {
     "host": "0.0.0.0",

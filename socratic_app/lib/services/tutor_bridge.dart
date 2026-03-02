@@ -23,11 +23,15 @@ class TutorBridge {
   Future<void> initialize() async {
     if (_engineInitialized) return;
     try {
-      await _tutorEngine.initialize();
-      _engineInitialized = true;
-      debugPrint('TutorBridge: ✅ Engine initialized');
+      final ok = await _tutorEngine.initialize();
+      if (ok) {
+        _engineInitialized = true;
+        debugPrint('TutorBridge: Engine initialized');
+      } else {
+        debugPrint('TutorBridge: Engine not ready (will retry on next request)');
+      }
     } catch (e, stack) {
-      debugPrint('TutorBridge: ❌ Engine initialization failed: $e');
+      debugPrint('TutorBridge: Engine initialization failed: $e');
       debugPrint(stack.toString());
       rethrow;
     }
@@ -43,9 +47,19 @@ class TutorBridge {
     }
 
     if (_currentSession == null) {
+      // New conversation — clear native message history and KV cache so the
+      // model doesn't carry over context from a previous chat.
+      _tutorEngine.resetConversation();
       _currentSession = SessionService.createNewSession(topic: topic);
       await SessionService.saveSession(_currentSession!);
     }
+  }
+
+  /// Start a fresh conversation — resets native state and creates a new session.
+  Future<void> startNewChat({String? topic}) async {
+    _tutorEngine.resetConversation();
+    _currentSession = SessionService.createNewSession(topic: topic);
+    await SessionService.saveSession(_currentSession!);
   }
 
   Session? get currentSession => _currentSession;

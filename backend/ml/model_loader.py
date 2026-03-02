@@ -25,9 +25,10 @@ class ModelLoader:
     def __init__(self):
         cfg = load_config().get("model", {})
 
-        # Corrected repo ID — the old one had a typo ("Socatic" → "Socratic")
-        self.repo_id = "Omar-keita/DSML-Socratic-qwen3-0.6B"
-        self.filename = "Socratic-Qwen3-0.6-Merged-Quality_Data-752M-Q4_K_M (1).gguf"
+        # Model identity — read from config.json (single source of truth).
+        # Update config.json when switching to a new model version.
+        self.repo_id = cfg.get("repo_id", "Omar-keita/DSML-Socratic-qwen3-0.6B")
+        self.filename = cfg.get("filename", "Socratic-Qwen3-0.6-Merged-Quality_Data-752M-Q4_K_M (1).gguf")
 
         # Allow full override via environment variable (useful in Docker)
         env_path = os.environ.get("MODEL_PATH", "")

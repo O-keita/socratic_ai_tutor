@@ -239,6 +239,18 @@ async def health():
     return {"status": "ok", "model_loaded": inference_engine.model is not None}
 
 
+@app.get("/model/version")
+async def model_version():
+    """Return the latest mobile model version info for the Flutter app."""
+    mobile = _cfg.get("mobile_model", {})
+    return {
+        "version": mobile.get("version", "1.0"),
+        "display_name": mobile.get("display_name", "Qwen3-0.6B"),
+        "download_url": mobile.get("download_url", ""),
+        "release_notes": mobile.get("release_notes", ""),
+    }
+
+
 @app.post("/chat", response_model=ChatResponse)
 @limiter.limit("20/minute")
 async def chat(payload: ChatRequest, request: Request, user: dict = Depends(_get_auth_user)):

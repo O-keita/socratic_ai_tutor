@@ -19,11 +19,16 @@ abstract class TutorEngine {
   bool get isGenerating;
 
   /// Initialize the engine (load model, connect to socket, etc.)
-  Future<bool> initialize();
+  /// [force] bypasses crash-loop protection for manual retries.
+  Future<bool> initialize({bool force = false});
 
   /// Generate a stream of tokens for a Socratic response
   Stream<String> generateResponse(String prompt, {List<Message>? history, int maxTokens = 150});
 
   /// Generate a full string response (non-streaming)
   Future<LLMResponse> generateSocraticResponse(String prompt, {List<Message>? history, int maxTokens = 150});
+
+  /// Clear conversation state so the next request starts a fresh chat.
+  /// Default no-op — only the local engine needs to reset native state.
+  void resetConversation() {}
 }

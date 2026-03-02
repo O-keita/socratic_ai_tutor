@@ -15,6 +15,23 @@ class AppConfig {
   /// Production URL
   static const String productionUrl = 'https://socratic.hx-ai.org';
 
+  // ── Model configuration (single source of truth) ──────────────────────
+  // Update these when switching to a new model version.
+
+  /// Local filename used to save/load the GGUF model on device.
+  static const String modelFileName = 'socratic-model.gguf';
+
+  /// Direct download URL for the GGUF model file.
+  static const String modelDownloadUrl =
+      'https://huggingface.co/Omar-keita/DSML-Socatic-qwen3-0.6B/resolve/main/socratic-qwen3-0.5B-Q4_K_M.gguf';
+
+  /// Human-readable model name shown in the UI.
+  static const String modelDisplayName = 'Qwen3-0.6B';
+
+  /// Version of the model this app build ships with.
+  /// Seeded into SharedPreferences on first download so update checks work.
+  static const String bundledModelVersion = '1.0';
+
   /// The base URL for the FastAPI backend.
   /// Priority: --dart-define=BACKEND_URL > platform default
   ///

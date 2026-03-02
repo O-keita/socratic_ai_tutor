@@ -27,12 +27,7 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
 
   Future<void> _loadData() async {
     await _glossaryService.loadGlossary();
-    if (mounted) {
-      setState(() {
-        _filteredItems = _glossaryService.items;
-        _isLoading = false;
-      });
-    }
+    if (mounted) setState(() { _filteredItems = _glossaryService.items; _isLoading = false; });
   }
 
   void _filterTerms() {
@@ -40,181 +35,145 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
     if (_selectedCategory != 'All') {
       results = results.where((item) => item.category == _selectedCategory).toList();
     }
-    setState(() {
-      _filteredItems = results;
-    });
+    setState(() { _filteredItems = results; });
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeService>().isDarkMode;
+    final bgColor = isDark ? AppTheme.primaryDark : const Color(0xFFFEF6EE);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Key Terms Glossary'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      extendBodyBehindAppBar: true,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: isDark ? AppTheme.backgroundGradient : AppTheme.lightBackgroundGradient,
-        ),
+        color: bgColor,
         child: SafeArea(
           child: Column(
             children: [
-              _buildSearchAndFilter(isDark),
+              // ── Header ──────────────────────────
+              Container(
+                padding: const EdgeInsets.fromLTRB(8, 8, 20, 16),
+                decoration: BoxDecoration(
+                  gradient: isDark ? AppTheme.headerGradientDark : AppTheme.headerGradientLight,
+                  borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: isDark ? AppTheme.surfaceCard : Colors.white, shape: BoxShape.circle),
+                            child: Icon(Icons.arrow_back_ios_new, size: 16, color: isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Text('Key Terms', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Search bar
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: TextField(
+                        onChanged: (v) { _searchQuery = v; _filterTerms(); },
+                        style: TextStyle(color: isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary, fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Search terms...',
+                          hintStyle: TextStyle(color: isDark ? AppTheme.textMuted : AppTheme.lightTextMuted),
+                          prefixIcon: const Icon(Icons.search, color: AppTheme.accentOrange, size: 20),
+                          filled: true,
+                          fillColor: isDark ? AppTheme.surfaceCard : Colors.white,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Category chips ──────────────────
+              SizedBox(
+                height: 52,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                  itemCount: ['All', ..._glossaryService.getCategories()].length,
+                  itemBuilder: (context, index) {
+                    final categories = ['All', ..._glossaryService.getCategories()];
+                    final cat = categories[index];
+                    final isSel = _selectedCategory == cat;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () => setState(() { _selectedCategory = cat; _filterTerms(); }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel ? AppTheme.accentOrange : (isDark ? AppTheme.surfaceCard : Colors.white),
+                            borderRadius: BorderRadius.circular(20),
+                            border: isSel ? null : Border.all(color: isDark ? AppTheme.primaryLight.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.15)),
+                          ),
+                          child: Text(cat, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isSel ? Colors.white : (isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary))),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // ── Term list ───────────────────────
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppTheme.accentOrange))
-                    : _buildTermList(isDark),
+                    : _filteredItems.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.search_off, size: 56, color: isDark ? AppTheme.textMuted : AppTheme.lightTextMuted),
+                                const SizedBox(height: 12),
+                                Text('No terms found', style: TextStyle(color: isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary, fontSize: 16)),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            itemCount: _filteredItems.length,
+                            itemBuilder: (context, index) {
+                              final item = _filteredItems[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppTheme.surfaceCard : Colors.white,
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                                ),
+                                child: ExpansionTile(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                  collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                  title: Text(item.term, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary)),
+                                  subtitle: Text(item.category, style: const TextStyle(color: AppTheme.accentOrange, fontSize: 12, fontWeight: FontWeight.w500)),
+                                  iconColor: AppTheme.accentOrange,
+                                  collapsedIconColor: isDark ? AppTheme.textMuted : AppTheme.lightTextMuted,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                      child: Text(item.definition, style: TextStyle(fontSize: 14, color: isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary, height: 1.5)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSearchAndFilter(bool isDark) {
-    final categories = ['All', ..._glossaryService.getCategories()];
-    
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          TextField(
-            onChanged: (value) {
-              _searchQuery = value;
-              _filterTerms();
-            },
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: InputDecoration(
-              hintText: 'Search terms...',
-              hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black45),
-              prefixIcon: Icon(Icons.search, color: isDark ? AppTheme.accentOrange : AppTheme.accentOrange),
-              filled: true,
-              fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 40,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final isSelected = _selectedCategory == category;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: FilterChip(
-                    label: Text(category),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = category;
-                        _filterTerms();
-                      });
-                    },
-                    selectedColor: AppTheme.accentOrange.withValues(alpha: 0.2),
-                    checkmarkColor: AppTheme.accentOrange,
-                    labelStyle: TextStyle(
-                      color: isSelected 
-                          ? AppTheme.accentOrange 
-                          : (isDark ? Colors.white70 : Colors.black87),
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                    backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isSelected ? AppTheme.accentOrange : Colors.transparent,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTermList(bool isDark) {
-    if (_filteredItems.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off, size: 64, color: isDark ? Colors.white24 : Colors.black26),
-            const SizedBox(height: 16),
-            Text(
-              'No terms found',
-              style: TextStyle(
-                color: isDark ? Colors.white60 : Colors.black54,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _filteredItems.length,
-      itemBuilder: (context, index) {
-        final item = _filteredItems[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-          elevation: isDark ? 0 : 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: isDark 
-                ? BorderSide(color: Colors.white.withValues(alpha: 0.1)) 
-                : BorderSide.none,
-          ),
-          child: ExpansionTile(
-            title: Text(
-              item.term,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            subtitle: Text(
-              item.category,
-              style: TextStyle(
-                color: AppTheme.accentOrange,
-                fontSize: 12,
-              ),
-            ),
-            iconColor: AppTheme.accentOrange,
-            collapsedIconColor: isDark ? Colors.white54 : Colors.black45,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Text(
-                  item.definition,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: isDark ? Colors.white.withValues(alpha: 0.8) : Colors.black87,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

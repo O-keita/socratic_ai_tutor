@@ -43,8 +43,9 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.0
 
-  # LLM Inference - cross-platform (Android, iOS, desktop, emulators)
-  llamadart: ^0.6.3
+  # dart:ffi is part of the SDK — no extra package needed for native calls.
+  # LLM inference uses our custom libchat.so (compiled via CMake in android/app/).
+  ffi: ^2.1.0
 
   # Network and utilities
   dio: ^5.7.0

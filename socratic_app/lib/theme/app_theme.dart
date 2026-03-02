@@ -40,6 +40,11 @@ class AppTheme {
   static const Color textSecondary = Color(0xFFCBD5E1); // Slate 300
   static const Color textMuted     = Color(0xFF64748B); // Slate 500
 
+  // ── Subtle / soft backgrounds ────────────────────────────────────────────
+  static const Color accentOrangeSubtle = Color(0xFFFFF7ED); // Orange 50
+  static const Color headerWarmLight    = Color(0xFFFEF3E2); // Warm peach tint
+  static const Color heroCardDark       = Color(0xFF2D1B4E); // Deep purple-slate
+
   // ── Status ────────────────────────────────────────────────────────────────
   static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
@@ -87,6 +92,36 @@ class AppTheme {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // ── Header gradients (warm tinted backgrounds) ──────────────────────────
+  static const LinearGradient headerGradientLight = LinearGradient(
+    colors: [Color(0xFFFEF3E2), Color(0xFFFFF7ED)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const LinearGradient headerGradientDark = LinearGradient(
+    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  // ── Hero progress card gradient ─────────────────────────────────────────
+  static const LinearGradient heroCardGradientLight = LinearGradient(
+    colors: [accentOrange, accentOrangeDark],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient heroCardGradientDark = LinearGradient(
+    colors: [Color(0xFF2D1B4E), Color(0xFF1A1035)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // ── Radius constants ────────────────────────────────────────────────────
+  static const double cardRadiusLarge = 24.0;
+  static const double cardRadius = 18.0;
 
   // ── Typography helper — Plus Jakarta Sans ─────────────────────────────────
   // A modern humanist sans-serif that reads beautifully at all sizes.

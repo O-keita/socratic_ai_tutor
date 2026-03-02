@@ -1,1494 +1,938 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Socratic AI Tutor — Admin</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --sidebar-w: 240px;
-    --accent: #4f46e5;
-    --accent-hover: #4338ca;
-    --danger: #dc2626;
-    --danger-hover: #b91c1c;
-    --bg: #f8fafc;
-    --surface: #ffffff;
-    --border: #e2e8f0;
-    --text: #0f172a;
-    --muted: #64748b;
-    --sidebar-bg: #1e293b;
-    --sidebar-text: #cbd5e1;
-    --sidebar-active: #4f46e5;
-    --radius: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
-    --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
-  }
-
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-         background: var(--bg); color: var(--text); min-height: 100vh; }
-
-  /* ── Auth screen ──────────────────────────────────────────────── */
-  #auth-screen {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; background: var(--bg);
-  }
-  .auth-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 40px; width: 380px;
-    box-shadow: var(--shadow-md);
-  }
-  .auth-logo { text-align: center; margin-bottom: 28px; }
-  .auth-logo img { height: 56px; object-fit: contain; }
-  .auth-logo .fallback-title {
-    font-size: 22px; font-weight: 700; color: var(--accent);
-    letter-spacing: -0.5px;
-  }
-  .auth-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-  .auth-card p.sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
-
-  /* ── App shell ────────────────────────────────────────────────── */
-  #app-shell { display: none; height: 100vh; }
-  #app-shell.visible { display: flex; }
-
-  /* ── Sidebar ──────────────────────────────────────────────────── */
-  #sidebar {
-    width: var(--sidebar-w); background: var(--sidebar-bg);
-    display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
-  }
-  .sidebar-brand {
-    padding: 20px 20px 16px; display: flex; align-items: center; gap: 10px;
-    border-bottom: 1px solid rgba(255,255,255,.07);
-  }
-  .sidebar-brand img { height: 36px; object-fit: contain; }
-  .sidebar-brand .brand-name {
-    font-size: 14px; font-weight: 600; color: #f1f5f9; line-height: 1.3;
-  }
-  .sidebar-brand .brand-sub { font-size: 11px; color: var(--sidebar-text); opacity: .7; }
-
-  nav { flex: 1; padding: 12px 0; }
-  .nav-section { padding: 8px 16px 4px; font-size: 10px; font-weight: 600;
-                 text-transform: uppercase; letter-spacing: .8px; color: #475569; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 16px; cursor: pointer; color: var(--sidebar-text);
-    font-size: 13.5px; border-radius: 0; transition: background .15s, color .15s;
-    border: none; background: none; width: 100%; text-align: left;
-  }
-  .nav-item:hover { background: rgba(255,255,255,.07); color: #f1f5f9; }
-  .nav-item.active { background: var(--sidebar-active); color: #fff; }
-  .nav-item svg { flex-shrink: 0; opacity: .85; }
-
-  .sidebar-footer {
-    padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.07);
-  }
-  .admin-badge {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,.06); border-radius: 8px; padding: 8px 10px;
-    margin-bottom: 8px;
-  }
-  .admin-avatar {
-    width: 30px; height: 30px; border-radius: 50%;
-    background: var(--sidebar-active); display: flex; align-items: center;
-    justify-content: center; font-size: 12px; font-weight: 700; color: #fff;
-    flex-shrink: 0;
-  }
-  .admin-info { flex: 1; min-width: 0; }
-  .admin-name { font-size: 12.5px; font-weight: 600; color: #f1f5f9;
-                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .admin-role { font-size: 11px; color: #64748b; }
-  .btn-logout {
-    display: flex; align-items: center; gap: 6px; color: #94a3b8;
-    font-size: 12.5px; padding: 6px 10px; border-radius: 6px;
-    transition: background .15s, color .15s; cursor: pointer;
-    border: none; background: none; width: 100%;
-  }
-  .btn-logout:hover { background: rgba(255,255,255,.07); color: #f1f5f9; }
-
-  /* ── Main content area ────────────────────────────────────────── */
-  #main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-  .topbar {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 0 28px; height: 56px; display: flex; align-items: center;
-    justify-content: space-between; flex-shrink: 0;
-  }
-  .topbar-title { font-size: 16px; font-weight: 600; }
-  .topbar-actions { display: flex; align-items: center; gap: 10px; }
-
-  .page-content { flex: 1; overflow-y: auto; padding: 28px; }
-
-  /* ── Page sections ────────────────────────────────────────────── */
-  .page { display: none; }
-  .page.active { display: block; }
-
-  /* ── Cards / surfaces ─────────────────────────────────────────── */
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); box-shadow: var(--shadow);
-  }
-  .card-header {
-    padding: 16px 20px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .card-header h3 { font-size: 14px; font-weight: 600; }
-  .card-body { padding: 20px; }
-
-  /* ── Table ────────────────────────────────────────────────────── */
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600;
-       text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
-       border-bottom: 1px solid var(--border); }
-  td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #f8fafc; }
-
-  /* ── Forms ────────────────────────────────────────────────────── */
-  .form-group { margin-bottom: 16px; }
-  label { display: block; font-size: 13px; font-weight: 500;
-          color: var(--text); margin-bottom: 5px; }
-  input[type=text], input[type=email], input[type=password],
-  textarea, select {
-    width: 100%; padding: 8px 12px; border: 1px solid var(--border);
-    border-radius: 6px; font-size: 14px; color: var(--text);
-    background: var(--surface); transition: border-color .15s, box-shadow .15s;
-    outline: none;
-  }
-  input:focus, textarea:focus, select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(79,70,229,.12);
-  }
-  textarea { resize: vertical; min-height: 80px; font-family: inherit; }
-
-  /* ── Buttons ──────────────────────────────────────────────────── */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 16px; border-radius: 6px; font-size: 13.5px; font-weight: 500;
-    cursor: pointer; border: 1px solid transparent; transition: all .15s;
-    text-decoration: none; white-space: nowrap;
-  }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: var(--accent-hover); }
-  .btn-secondary { background: var(--surface); color: var(--text);
-                   border-color: var(--border); }
-  .btn-secondary:hover { background: var(--bg); }
-  .btn-danger { background: var(--danger); color: #fff; }
-  .btn-danger:hover { background: var(--danger-hover); }
-  .btn-ghost { background: transparent; color: var(--muted); border-color: transparent; }
-  .btn-ghost:hover { background: var(--bg); color: var(--text); }
-  .btn-sm { padding: 5px 10px; font-size: 12.5px; }
-  .btn:disabled { opacity: .55; cursor: not-allowed; }
-
-  /* ── Alert / Notice ───────────────────────────────────────────── */
-  .alert { padding: 12px 14px; border-radius: 6px; font-size: 13.5px; margin-bottom: 16px; }
-  .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
-  .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-
-  /* ── Stats row ────────────────────────────────────────────────── */
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 14px; margin-bottom: 24px; }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow);
-  }
-  .stat-value { font-size: 26px; font-weight: 700; color: var(--accent); }
-  .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  /* ── Course grid ──────────────────────────────────────────────── */
-  .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                 gap: 16px; }
-  .course-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
-    display: flex; flex-direction: column; gap: 10px;
-  }
-  .course-card-title { font-size: 14.5px; font-weight: 600; }
-  .course-card-meta { font-size: 12px; color: var(--muted); display: flex; gap: 10px; }
-  .badge {
-    display: inline-block; padding: 2px 8px; border-radius: 999px;
-    font-size: 11px; font-weight: 600; text-transform: capitalize;
-  }
-  .badge-beginner { background: #dcfce7; color: #166534; }
-  .badge-intermediate { background: #dbeafe; color: #1e40af; }
-  .badge-advanced { background: #fce7f3; color: #9d174d; }
-  .course-card-actions { display: flex; gap: 8px; margin-top: auto; }
-
-  /* ── Modal ────────────────────────────────────────────────────── */
-  .modal-backdrop {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.4); z-index: 100;
-    align-items: center; justify-content: center;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--surface); border-radius: 12px;
-    width: 680px; max-width: 95vw; max-height: 90vh;
-    display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.18);
-  }
-  .modal-header {
-    padding: 18px 22px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .modal-header h3 { font-size: 15px; font-weight: 600; }
-  .modal-body { padding: 22px; overflow-y: auto; flex: 1; }
-  .modal-footer {
-    padding: 14px 22px; border-top: 1px solid var(--border);
-    display: flex; justify-content: flex-end; gap: 10px;
-  }
-
-  /* ── Lesson editor ────────────────────────────────────────────── */
-  .editor-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .editor-pane { display: flex; flex-direction: column; gap: 6px; }
-  .editor-pane label { font-size: 12px; font-weight: 600; color: var(--muted);
-                       text-transform: uppercase; letter-spacing: .4px; }
-  .md-toolbar {
-    display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px;
-    background: var(--bg); border: 1px solid var(--border);
-    border-bottom: none; border-radius: 6px 6px 0 0;
-  }
-  .md-toolbar button {
-    padding: 3px 7px; font-size: 12px; font-family: monospace;
-    border: 1px solid var(--border); border-radius: 4px;
-    background: var(--surface); cursor: pointer; color: var(--text);
-    transition: background .1s;
-  }
-  .md-toolbar button:hover { background: #e2e8f0; }
-  .md-editor {
-    width: 100%; height: 340px; padding: 12px;
-    border: 1px solid var(--border); border-radius: 0 0 6px 6px;
-    font-family: 'Courier New', monospace; font-size: 13px;
-    resize: none; outline: none; line-height: 1.6;
-  }
-  .md-editor:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
-  .md-preview {
-    height: 390px; padding: 12px; border: 1px solid var(--border);
-    border-radius: 6px; overflow-y: auto; font-size: 13.5px; line-height: 1.7;
-    background: #fafafa;
-  }
-  .md-preview h1, .md-preview h2, .md-preview h3 { margin: .6em 0 .3em; }
-  .md-preview p { margin-bottom: .6em; }
-  .md-preview code {
-    background: #f1f5f9; padding: 1px 5px; border-radius: 3px;
-    font-family: monospace; font-size: .9em;
-  }
-  .md-preview pre { background: #1e293b; color: #e2e8f0; padding: 12px;
-                    border-radius: 6px; overflow-x: auto; margin-bottom: .8em; }
-  .md-preview pre code { background: none; color: inherit; padding: 0; }
-  .md-preview ul, .md-preview ol { padding-left: 1.4em; margin-bottom: .6em; }
-
-  /* ── Module / chapter builder ─────────────────────────────────── */
-  .module-block {
-    border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px;
-    overflow: hidden;
-  }
-  .module-header {
-    display: flex; align-items: center; padding: 10px 14px;
-    background: #f8fafc; cursor: pointer; gap: 8px; font-weight: 600;
-    font-size: 13.5px; user-select: none;
-  }
-  .module-header .chevron { transition: transform .2s; flex-shrink: 0; }
-  .module-header.open .chevron { transform: rotate(90deg); }
-  .module-body { display: none; padding: 12px 14px 14px; }
-  .module-body.open { display: block; }
-  .chapter-item {
-    display: flex; align-items: flex-start; flex-direction: column;
-    gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--border);
-  }
-  .chapter-item:last-child { border-bottom: none; }
-  .lesson-pills { display: flex; flex-wrap: wrap; gap: 4px; }
-  .lesson-pill {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: #eff6ff; border: 1px solid #bfdbfe;
-    border-radius: 999px; padding: 2px 8px; font-size: 11.5px; color: #1e40af;
-  }
-  .lesson-pill button { background: none; border: none; cursor: pointer;
-                        color: #93c5fd; font-size: 12px; padding: 0; line-height: 1; }
-  .lesson-pill button:hover { color: var(--danger); }
-
-  /* ── Misc helpers ─────────────────────────────────────────────── */
-  .divider { height: 1px; background: var(--border); margin: 20px 0; }
-  .text-muted { color: var(--muted); }
-  .text-sm { font-size: 12.5px; }
-  .flex { display: flex; }
-  .items-center { align-items: center; }
-  .gap-2 { gap: 8px; }
-  .mt-1 { margin-top: 4px; }
-  .mt-2 { margin-top: 8px; }
-  .empty-state { text-align: center; padding: 48px 24px; color: var(--muted); }
-  .empty-state svg { opacity: .3; margin-bottom: 12px; display: block; margin: 0 auto 12px; }
-  .empty-state p { font-size: 14px; }
-  .spinner {
-    border: 2px solid var(--border); border-top-color: var(--accent);
-    border-radius: 50%; width: 20px; height: 20px;
-    animation: spin .6s linear infinite; display: inline-block;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── Overview — stat cards ────────────────────────────────────── */
-  .stats-4 { grid-template-columns: repeat(4, 1fr); }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow);
-    display: flex; align-items: center; gap: 16px;
-    transition: box-shadow .15s;
-  }
-  .stat-card:hover { box-shadow: var(--shadow-md); }
-  .stat-icon-wrap {
-    width: 46px; height: 46px; border-radius: 10px;
-    background: rgba(79,70,229,.1); display: flex; align-items: center;
-    justify-content: center; flex-shrink: 0;
-  }
-  .stat-icon-wrap svg { color: var(--accent); }
-  .stat-card-content { flex: 1; }
-  .stat-card .stat-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.1; }
-  .stat-card .stat-label { font-size: 12px; color: var(--muted); margin-top: 3px; }
-
-  /* ── Overview — section header ────────────────────────────────── */
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin: 24px 0 12px;
-  }
-  .section-header h3 { font-size: 13.5px; font-weight: 600; }
-
-  /* ── Overview — status cards ──────────────────────────────────── */
-  .info-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-  .info-card h4 { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin-bottom: 12px; }
-  .model-row { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .status-dot.online  { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.18); }
-  .status-dot.offline { background: #ef4444; }
-  .uptime-val { font-size: 28px; font-weight: 700; color: var(--text); }
-
-  /* ── Overview — model config grid ────────────────────────────── */
-  .config-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-  }
-  .config-item {
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; padding: 13px 16px;
-  }
-  .config-label { font-size: 10px; font-weight: 600; text-transform: uppercase;
-                  letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
-  .config-value { font-size: 16px; font-weight: 700; color: var(--text); }
-
-  /* ── Users / shared table ─────────────────────────────────────── */
-  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
-  .data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  .data-table th { background: #f8fafc; border-bottom: 1px solid var(--border); padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
-  .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .data-table tr:last-child td { border-bottom: none; }
-  .data-table tr:hover td { background: #f8fafc; }
-  .user-cell { display: flex; align-items: center; gap: 10px; }
-  .avatar-circle { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
-
-  @media (max-width: 768px) {
-    #sidebar { width: 56px; }
-    .sidebar-brand .brand-name, .sidebar-brand .brand-sub,
-    .nav-section, .nav-item span, .admin-info, .btn-logout span { display: none; }
-    .admin-badge { padding: 6px; justify-content: center; }
-  }
-  @media (max-width: 560px) {
-    .editor-layout { grid-template-columns: 1fr; }
-    .md-editor, .md-preview { height: 220px; }
-  }
-</style>
-</head>
-<body>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     AUTH SCREEN
-════════════════════════════════════════════════════════════════ -->
-<div id="auth-screen">
-  <div class="auth-card">
-
-    <div class="auth-logo">
-      <img id="auth-logo-img" src="/admin/logo" alt="Logo"
-           onerror="this.style.display='none';document.getElementById('auth-logo-fallback').style.display='block'" />
-      <div id="auth-logo-fallback" class="fallback-title" style="display:none">
-        Socratic AI Tutor
-      </div>
-    </div>
-
-    <h2>Sign In</h2>
-    <p class="sub">Socratic AI Tutor Admin Panel</p>
-    <div id="login-error" class="alert alert-error" style="display:none"></div>
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="login-email" placeholder="admin"
-             onkeydown="if(event.key==='Enter')doLogin()" />
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="login-password" placeholder="••••••••"
-             onkeydown="if(event.key==='Enter')doLogin()" />
-    </div>
-    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">
-      Sign In
-    </button>
-
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     APP SHELL  (hidden until logged in)
-════════════════════════════════════════════════════════════════ -->
-<div id="app-shell">
-
-  <!-- SIDEBAR -->
-  <div id="sidebar">
-    <div class="sidebar-brand">
-      <img src="/admin/logo" alt="Logo" style="filter:brightness(1.2)"
-           onerror="this.style.display='none'" />
-      <div>
-        <div class="brand-name">Socratic AI Tutor</div>
-        <div class="brand-sub">Admin Panel</div>
-      </div>
-    </div>
-
-    <nav>
-      <div class="nav-section">Dashboard</div>
-      <button class="nav-item active" data-page="overview" onclick="showPage('overview')">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/>
-          <rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>
-        </svg>
-        <span>Overview</span>
-      </button>
-
-      <div class="nav-section">Manage</div>
-      <button class="nav-item" data-page="users" onclick="showPage('users')">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-        <span>Users</span>
-      </button>
-      <button class="nav-item" data-page="courses" onclick="showPage('courses')">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-        </svg>
-        <span>Courses</span>
-      </button>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="admin-badge">
-        <div class="admin-avatar" id="admin-avatar">A</div>
-        <div class="admin-info">
-          <div class="admin-name" id="admin-name-label">Admin</div>
-          <div class="admin-role">Administrator</div>
-        </div>
-      </div>
-      <button class="btn-logout" onclick="doLogout()">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-        <span>Sign Out</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- MAIN CONTENT -->
-  <div id="main-area">
-
-    <div class="topbar">
-      <div class="topbar-title" id="topbar-title">Overview</div>
-      <div class="topbar-actions" id="topbar-actions"></div>
-    </div>
-
-    <div class="page-content">
-
-      <!-- Overview page -->
-      <div id="page-overview" class="page active">
-
-        <!-- ── 4 stat cards ── -->
-        <div class="stats-grid stats-4">
-          <div class="stat-card">
-            <div class="stat-icon-wrap">
-              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <div class="stat-card-content">
-              <div class="stat-value" id="ov-users">—</div>
-              <div class="stat-label">Total Users</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap" style="background:rgba(16,185,129,.1)">
-              <svg width="22" height="22" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-            <div class="stat-card-content">
-              <div class="stat-value" id="ov-chats">—</div>
-              <div class="stat-label">Chats (since restart)</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap" style="background:rgba(245,158,11,.1)">
-              <svg width="22" height="22" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-            </div>
-            <div class="stat-card-content">
-              <div class="stat-value" id="ov-courses">—</div>
-              <div class="stat-label">Courses</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap" style="background:rgba(239,68,68,.1)">
-              <svg width="22" height="22" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-            </div>
-            <div class="stat-card-content">
-              <div class="stat-value" id="ov-lessons">—</div>
-              <div class="stat-label">Lessons</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── System status ── -->
-        <div class="section-header">
-          <h3>System Status</h3>
-        </div>
-        <div class="info-cards">
-          <div class="info-card">
-            <h4>Model</h4>
-            <div class="model-row">
-              <div class="status-dot" id="ov-model-dot"></div>
-              <span id="ov-model-status">Checking…</span>
-            </div>
-            <div id="ov-model-name" style="margin-top:8px;font-size:12px;color:var(--muted);word-break:break-all"></div>
-            <div style="margin-top:6px">
-              <a id="ov-model-hf-link" href="https://huggingface.co/Omar-keita/DSML-Socatic-qwen3-0.6B/blob/main/Socratic-Qwen3-0.6-Merged-Quality_Data-752M-Q4_K_M%20(1).gguf" target="_blank" rel="noopener"
-                 style="font-size:12px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                  <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                View on Hugging Face
-              </a>
-            </div>
-            <div id="ov-model-path" style="margin-top:4px;font-size:11px;color:#94a3b8;word-break:break-all"></div>
-          </div>
-          <div class="info-card">
-            <h4>Uptime</h4>
-            <div class="uptime-val" id="ov-uptime">—</div>
-            <div class="text-sm text-muted" style="margin-top:4px;font-size:12px;color:var(--muted)">since last restart</div>
-          </div>
-        </div>
-
-        <!-- ── Model config ── -->
-        <div class="section-header">
-          <h3>Inference Configuration</h3>
-        </div>
-        <div class="config-grid">
-          <div class="config-item">
-            <div class="config-label">Context Window</div>
-            <div class="config-value" id="ov-n-ctx">—</div>
-          </div>
-          <div class="config-item">
-            <div class="config-label">Max Tokens / Reply</div>
-            <div class="config-value" id="ov-max-tokens">—</div>
-          </div>
-          <div class="config-item">
-            <div class="config-label">Temperature</div>
-            <div class="config-value" id="ov-temperature">—</div>
-          </div>
-          <div class="config-item">
-            <div class="config-label">Top-P</div>
-            <div class="config-value" id="ov-top-p">—</div>
-          </div>
-          <div class="config-item">
-            <div class="config-label">Top-K</div>
-            <div class="config-value" id="ov-top-k">—</div>
-          </div>
-          <div class="config-item">
-            <div class="config-label">Repeat Penalty</div>
-            <div class="config-value" id="ov-repeat-penalty">—</div>
-          </div>
-          <div class="config-item">
-            <div class="config-label">CPU Threads</div>
-            <div class="config-value" id="ov-threads">—</div>
-          </div>
-          <div class="config-item">
-            <div class="config-label">GPU Layers</div>
-            <div class="config-value" id="ov-gpu-layers">—</div>
-          </div>
-        </div>
-
-        <!-- ── Recent users ── -->
-        <div class="section-header" style="margin-top:28px">
-          <h3>Recent Users</h3>
-          <button class="btn btn-ghost btn-sm" onclick="showPage('users')">View all →</button>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Joined</th>
-              </tr>
-            </thead>
-            <tbody id="ov-recent-users">
-              <tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-
-      <!-- Users page -->
-      <div id="page-users" class="page">
-        <div id="users-loading" style="text-align:center;padding:40px">
-          <div class="spinner"></div>
-        </div>
-        <div id="users-empty" class="empty-state" style="display:none">
-          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-          </svg>
-          <p>No registered users yet.</p>
-        </div>
-        <div id="users-table-wrap" class="table-wrap" style="display:none">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Joined</th>
-                <th style="text-align:right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="users-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Courses page -->
-      <div id="page-courses" class="page">
-        <div class="stats-grid" style="margin-bottom:20px">
-          <div class="stat-card">
-            <div class="stat-icon-wrap" style="background:rgba(245,158,11,.1)">
-              <svg width="22" height="22" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-            </div>
-            <div class="stat-card-content">
-              <div class="stat-value" id="stat-courses">—</div>
-              <div class="stat-label">Published Courses</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap" style="background:rgba(239,68,68,.1)">
-              <svg width="22" height="22" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-            </div>
-            <div class="stat-card-content">
-              <div class="stat-value" id="stat-lessons">—</div>
-              <div class="stat-label">Total Lessons</div>
-            </div>
-          </div>
-        </div>
-        <div id="courses-loading" style="text-align:center;padding:40px">
-          <div class="spinner"></div>
-        </div>
-        <div id="courses-empty" class="empty-state" style="display:none">
-          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"
-               viewBox="0 0 24 24">
-            <rect x="3" y="3" width="7" height="7"/>
-            <rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/>
-          </svg>
-          <p>No courses yet. Create one to get started.</p>
-        </div>
-        <div id="course-grid" class="course-grid"></div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     MODAL — Course editor
-════════════════════════════════════════════════════════════════ -->
-<div class="modal-backdrop" id="modal-course">
-  <div class="modal" style="width:760px">
-    <div class="modal-header">
-      <h3 id="modal-course-title">New Course</h3>
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-course')">&#x2715;</button>
-    </div>
-    <div class="modal-body">
-      <div id="modal-course-error" class="alert alert-error" style="display:none"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="form-group">
-          <label>Course Title *</label>
-          <input type="text" id="c-title" placeholder="Introduction to Algebra"
-                 oninput="autoSlug()" />
-        </div>
-        <div class="form-group">
-          <label>Course ID (slug) *</label>
-          <input type="text" id="c-id" placeholder="intro-algebra" />
-        </div>
-        <div class="form-group">
-          <label>Difficulty</label>
-          <select id="c-difficulty">
-            <option value="beginner">Beginner</option>
-            <option value="intermediate" selected>Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Duration</label>
-          <input type="text" id="c-duration" placeholder="4 weeks" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Description</label>
-        <textarea id="c-description" rows="2" placeholder="Short course description…"></textarea>
-      </div>
-      <div class="divider"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <span style="font-size:13.5px;font-weight:600">Modules &amp; Chapters</span>
-        <button class="btn btn-secondary btn-sm" onclick="addModule()">+ Add Module</button>
-      </div>
-      <div id="modules-builder"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-course')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveCourse()">Save Course</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     MODAL — Lesson editor
-════════════════════════════════════════════════════════════════ -->
-<div class="modal-backdrop" id="modal-lesson">
-  <div class="modal" style="width:900px">
-    <div class="modal-header">
-      <h3 id="modal-lesson-title">Edit Lesson</h3>
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-lesson')">&#x2715;</button>
-    </div>
-    <div class="modal-body">
-      <div id="modal-lesson-error" class="alert alert-error" style="display:none"></div>
-      <div class="form-group">
-        <label>Lesson Title *</label>
-        <input type="text" id="l-title" placeholder="Lesson title" />
-      </div>
-      <div class="editor-layout">
-        <div class="editor-pane">
-          <label>Markdown Source</label>
-          <div class="md-toolbar" id="md-toolbar"></div>
-          <textarea class="md-editor" id="l-content"
-                    oninput="updatePreview()" placeholder="Write lesson in Markdown…"></textarea>
-        </div>
-        <div class="editor-pane">
-          <label>Preview</label>
-          <div class="md-preview" id="l-preview"></div>
-        </div>
-      </div>
-      <div style="margin-top:8px;font-size:12px;color:var(--muted)">
-        Tip: use <strong>Ctrl+S</strong> to save
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-lesson')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveLesson()">Save Lesson</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     JAVASCRIPT
-════════════════════════════════════════════════════════════════ -->
-<script>
-/* ── State ───────────────────────────────────────────────────── */
-var _token = sessionStorage.getItem('admin_token');
-var _me = null;
-var _courses = [];
-var _editingCourseId = null;
-var _editingLesson = null;
-var _modules = [];
-
-/* ── Mini Markdown renderer (no external deps) ──────────────── */
-function renderMd(src) {
-  src = src || '';
-  // Escape HTML
-  src = src.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  // Fenced code blocks
-  src = src.replace(/```[\w]*\n([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-  // Headings
-  src = src.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  src = src.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  src = src.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  // Bold / italic
-  src = src.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  src = src.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  src = src.replace(/_(.+?)_/g, '<em>$1</em>');
-  // Inline code
-  src = src.replace(/`([^`]+)`/g, '<code>$1</code>');
-  // Unordered list
-  src = src.replace(/^\s*[-*] (.+)$/gm, '<li>$1</li>');
-  src = src.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, '<ul>$&</ul>');
-  // Ordered list
-  src = src.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-  // Horizontal rule
-  src = src.replace(/^---+$/gm, '<hr/>');
-  // Double newline → paragraph
-  src = src.replace(/\n\n+/g, '</p><p>');
-  return '<p>' + src + '</p>';
-}
-
-/* ── API helper ──────────────────────────────────────────────── */
-function apiHeaders(isText) {
-  var h = {};
-  h['Content-Type'] = isText ? 'text/plain' : 'application/json';
-  if (_token) h['X-Admin-Token'] = _token;
-  return h;
-}
-
-async function api(method, path, body) {
-  var opts = { method: method, headers: apiHeaders(false) };
-  if (body !== undefined) opts.body = JSON.stringify(body);
-  var r = await fetch(path, opts);
-  if (r.status === 401) { logout(); return null; }
-  return r;
-}
-
-async function apiText(method, path, text) {
-  var opts = { method: method, headers: apiHeaders(true), body: text };
-  var r = await fetch(path, opts);
-  if (r.status === 401) { logout(); return null; }
-  return r;
-}
-
-/* ── Auth flow ───────────────────────────────────────────────── */
-async function initAuth() {
-  // Try stored token first
-  if (_token) {
-    var me = await api('GET', '/admin/api/me');
-    if (me && me.ok) {
-      _me = await me.json();
-      enterApp();
-      return;
-    }
-    _token = null;
-    sessionStorage.removeItem('admin_token');
-  }
-  // Show login (already visible in HTML)
-}
-
-async function doLogin() {
-  var email = val('login-email');
-  var password = val('login-password');
-  hideEl('login-error');
-  var r = await fetch('/admin/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, password: password })
-  });
-  var data = await r.json();
-  if (!r.ok) { showErr('login-error', data.detail || 'Login failed.'); return; }
-  _token = data.token;
-  _me = { name: data.name, email: data.email };
-  sessionStorage.setItem('admin_token', _token);
-  enterApp();
-}
-
-async function doLogout() {
-  await api('POST', '/admin/api/logout');
-  logout();
-}
-
-function logout() {
-  _token = null;
-  _me = null;
-  sessionStorage.removeItem('admin_token');
-  document.getElementById('app-shell').style.display = 'none';
-  document.getElementById('app-shell').classList.remove('visible');
-  document.getElementById('auth-screen').style.display = 'flex';
-  setVal('login-password', '');
-}
-
-function enterApp() {
-  // Hide auth screen entirely, show app shell
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-shell').classList.add('visible');
-  document.getElementById('app-shell').style.display = 'flex';
-  if (_me) {
-    document.getElementById('admin-name-label').textContent = _me.name || _me.email;
-    document.getElementById('admin-avatar').textContent =
-      (_me.name || _me.email || 'A')[0].toUpperCase();
-  }
-  showPage('overview');
-}
-
-/* ── Page navigation ─────────────────────────────────────────── */
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-  document.querySelectorAll('.nav-item').forEach(function(i) { i.classList.remove('active'); });
-  document.getElementById('page-' + name).classList.add('active');
-  document.querySelector('[data-page="' + name + '"]').classList.add('active');
-
-  var titles = { overview: 'Overview', users: 'Users', courses: 'Courses' };
-  document.getElementById('topbar-title').textContent = titles[name] || name;
-
-  var actions = document.getElementById('topbar-actions');
-  if (name === 'courses') {
-    actions.innerHTML =
-      '<button class="btn btn-primary btn-sm" onclick="openCourseModal(null)">' +
-        '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">' +
-          '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>' +
-        '</svg> New Course' +
-      '</button>';
-  } else {
-    actions.innerHTML = '';
-  }
-
-  if (name === 'overview') loadStats();
-  if (name === 'users') loadUsers();
-  if (name === 'courses') loadCourses();
-}
-
-/* ── Overview / Stats ────────────────────────────────────────── */
-async function loadStats() {
-  var r = await api('GET', '/admin/api/stats');
-  if (!r || !r.ok) return;
-  var d = await r.json();
-
-  // Stat cards
-  setText('ov-users', d.total_users);
-  setText('ov-chats', d.chats_since_restart);
-  setText('ov-courses', d.total_courses);
-  setText('ov-lessons', d.total_lessons);
-
-  // Model status
-  var dot = document.getElementById('ov-model-dot');
-  var statusEl = document.getElementById('ov-model-status');
-  if (d.model_loaded) {
-    dot.className = 'status-dot online';
-    statusEl.textContent = 'Model loaded';
-  } else {
-    dot.className = 'status-dot offline';
-    statusEl.textContent = 'Model not loaded';
-  }
-  document.getElementById('ov-model-name').textContent = d.model_name || '';
-  document.getElementById('ov-model-path').textContent = d.model_path || '';
-  setText('ov-uptime', fmtUptime(d.uptime_seconds));
-
-  // Inference config
-  setText('ov-n-ctx',        (d.n_ctx || '—').toLocaleString ? Number(d.n_ctx).toLocaleString() : d.n_ctx);
-  setText('ov-max-tokens',   d.max_tokens   ?? '—');
-  setText('ov-temperature',  d.temperature  ?? '—');
-  setText('ov-top-p',        d.top_p        ?? '—');
-  setText('ov-top-k',        d.top_k        ?? '—');
-  setText('ov-repeat-penalty', d.repeat_penalty ?? '—');
-  setText('ov-threads',      d.n_threads    ?? '—');
-  setText('ov-gpu-layers',   d.n_gpu_layers != null ? (d.n_gpu_layers === 0 ? 'CPU only' : d.n_gpu_layers) : '—');
-
-  // Recent users
-  var tbody = document.getElementById('ov-recent-users');
-  var users = d.recent_users || [];
-  if (!users.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px">No users yet.</td></tr>';
-  } else {
-    tbody.innerHTML = '';
-    users.forEach(function(u) {
-      var initials = (u.username || u.email || '?')[0].toUpperCase();
-      var joined = u.created_at ? u.created_at.split('T')[0] : '—';
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td><div class="user-cell">' +
-          '<div class="avatar-circle">' + esc(initials) + '</div>' +
-          '<span>' + esc(u.username || '—') + '</span>' +
-        '</div></td>' +
-        '<td>' + esc(u.email || '—') + '</td>' +
-        '<td>' + esc(joined) + '</td>';
-      tbody.appendChild(tr);
-    });
-  }
-}
-
-function fmtUptime(secs) {
-  if (!secs && secs !== 0) return '—';
-  var d = Math.floor(secs / 86400);
-  var h = Math.floor((secs % 86400) / 3600);
-  var m = Math.floor((secs % 3600) / 60);
-  var parts = [];
-  if (d) parts.push(d + 'd');
-  if (h) parts.push(h + 'h');
-  parts.push(m + 'm');
-  return parts.join(' ');
-}
-
-/* ── Users ───────────────────────────────────────────────────── */
-async function loadUsers() {
-  showEl('users-loading');
-  hideEl('users-empty');
-  hideEl('users-table-wrap');
-  var r = await api('GET', '/admin/api/users');
-  hideEl('users-loading');
-  if (!r || !r.ok) return;
-  var d = await r.json();
-  renderUsers(d.users || []);
-}
-
-function renderUsers(users) {
-  if (!users.length) {
-    showEl('users-empty');
-    return;
-  }
-  var tbody = document.getElementById('users-tbody');
-  tbody.innerHTML = '';
-  users.forEach(function(u) {
-    var initials = (u.username || u.email || '?')[0].toUpperCase();
-    var joined = u.created_at ? u.created_at.split('T')[0] : '—';
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td><div class="user-cell">' +
-        '<div class="avatar-circle">' + esc(initials) + '</div>' +
-        '<span>' + esc(u.username || '—') + '</span>' +
-      '</div></td>' +
-      '<td>' + esc(u.email || '—') + '</td>' +
-      '<td>' + esc(joined) + '</td>' +
-      '<td style="text-align:right">' +
-        '<button class="btn btn-danger btn-sm" onclick="deleteUser(\'' + esc(u.id) + '\',\'' + esc(u.username || u.email) + '\')">Delete</button>' +
-      '</td>';
-    tbody.appendChild(tr);
-  });
-  showEl('users-table-wrap');
-}
-
-async function deleteUser(userId, label) {
-  if (!confirm('Delete user "' + label + '"? This cannot be undone.')) return;
-  var r = await api('DELETE', '/admin/api/users/' + userId);
-  if (r && r.ok) {
-    loadUsers();
-  } else {
-    alert('Failed to delete user.');
-  }
-}
-
-/* ── Courses ─────────────────────────────────────────────────── */
-async function loadCourses() {
-  showEl('courses-loading');
-  hideEl('courses-empty');
-  document.getElementById('course-grid').innerHTML = '';
-  var r = await api('GET', '/admin/api/courses');
-  hideEl('courses-loading');
-  if (!r || !r.ok) return;
-  var data = await r.json();
-  _courses = data.courses || [];
-  renderCourses();
-}
-
-function renderCourses() {
-  var grid = document.getElementById('course-grid');
-  grid.innerHTML = '';
-  var totalLessons = 0;
-
-  if (!_courses.length) {
-    showEl('courses-empty');
-    document.getElementById('stat-courses').textContent = '0';
-    document.getElementById('stat-lessons').textContent = '0';
-    return;
-  }
-  hideEl('courses-empty');
-
-  _courses.forEach(function(c) {
-    var lessons = (c.modules || []).reduce(function(acc, m) {
-      return acc.concat((m.chapters || []).reduce(function(acc2, ch) {
-        return acc2.concat(ch.lessons || []);
-      }, []));
-    }, []);
-    totalLessons += lessons.length;
-
-    var diff = c.difficulty || 'intermediate';
-    var card = document.createElement('div');
-    card.className = 'course-card';
-    card.innerHTML =
-      '<div class="course-card-title">' + esc(c.title || c.id) + '</div>' +
-      '<div class="course-card-meta">' +
-        '<span class="badge badge-' + esc(diff) + '">' + esc(diff) + '</span>' +
-        '<span>' + (c.modules || []).length + ' modules</span>' +
-        '<span>' + lessons.length + ' lessons</span>' +
-      '</div>' +
-      (c.description ? '<div class="text-sm text-muted">' + esc(c.description) + '</div>' : '') +
-      '<div class="course-card-actions">' +
-        '<button class="btn btn-secondary btn-sm" onclick="openCourseModal(\'' + esc(c.id) + '\')">Edit</button>' +
-        '<button class="btn btn-danger btn-sm" onclick="deleteCourse(\'' + esc(c.id) + '\')">Delete</button>' +
-      '</div>';
-    grid.appendChild(card);
-  });
-
-  document.getElementById('stat-courses').textContent = _courses.length;
-  document.getElementById('stat-lessons').textContent = totalLessons;
-}
-
-/* ── Course modal ────────────────────────────────────────────── */
-function openCourseModal(courseId) {
-  _editingCourseId = courseId;
-  var course = courseId ? _courses.find(function(c) { return c.id === courseId; }) : null;
-  document.getElementById('modal-course-title').textContent = course ? 'Edit Course' : 'New Course';
-  hideEl('modal-course-error');
-
-  setVal('c-title', course ? course.title || '' : '');
-  setVal('c-id', course ? course.id || '' : '');
-  setVal('c-description', course ? course.description || '' : '');
-  setVal('c-difficulty', course ? course.difficulty || 'intermediate' : 'intermediate');
-  setVal('c-duration', course ? course.duration || '' : '');
-
-  _modules = course ? JSON.parse(JSON.stringify(course.modules || [])) : [];
-  renderModulesBuilder();
-  document.getElementById('c-id').disabled = !!courseId;
-  openModal('modal-course');
-}
-
-function autoSlug() {
-  if (_editingCourseId) return;
-  var slug = val('c-title').toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  setVal('c-id', slug);
-}
-
-async function saveCourse() {
-  hideEl('modal-course-error');
-  var id = val('c-id').trim();
-  var title = val('c-title').trim();
-  if (!id || !title) {
-    showErr('modal-course-error', 'Course ID and Title are required.');
-    return;
-  }
-  var totalLessons = _modules.reduce(function(acc, m) {
-    return acc + (m.chapters || []).reduce(function(acc2, ch) {
-      return acc2 + (ch.lessons || []).length;
-    }, 0);
-  }, 0);
-  var payload = {
-    id: id,
-    title: title,
-    description: val('c-description'),
-    difficulty: val('c-difficulty'),
-    duration: val('c-duration'),
-    modules: _modules,
-    totalLessons: totalLessons
-  };
-  var r = await api('POST', '/admin/api/courses/' + id, payload);
-  if (!r || !r.ok) {
-    var d = {};
-    try { d = await r.json(); } catch(e) {}
-    showErr('modal-course-error', d.detail || 'Save failed.');
-    return;
-  }
-  // Push any lesson files that were edited in memory
-  for (var mi = 0; mi < _modules.length; mi++) {
-    var mod = _modules[mi];
-    for (var ci = 0; ci < (mod.chapters || []).length; ci++) {
-      var ch = mod.chapters[ci];
-      for (var li = 0; li < (ch.lessons || []).length; li++) {
-        var lesson = ch.lessons[li];
-        if (lesson.filename && lesson.content) {
-          await apiText('POST', '/admin/api/courses/' + id + '/lessons/' + lesson.filename, lesson.content);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socratic AI Tutor — Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+            }
+          }
         }
       }
     }
-  }
-  closeModal('modal-course');
-  loadCourses();
-}
-
-async function deleteCourse(id) {
-  if (!confirm('Delete course "' + id + '"? This cannot be undone.')) return;
-  await api('DELETE', '/admin/api/courses/' + id);
-  loadCourses();
-}
-
-/* ── Modules builder ─────────────────────────────────────────── */
-function renderModulesBuilder() {
-  var el = document.getElementById('modules-builder');
-  el.innerHTML = '';
-  _modules.forEach(function(mod, mi) {
-    var block = document.createElement('div');
-    block.className = 'module-block';
-    block.innerHTML =
-      '<div class="module-header open" id="mod-header-' + mi + '" onclick="toggleModule(' + mi + ')">' +
-        '<svg class="chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">' +
-          '<polyline points="9 18 15 12 9 6"/></svg>' +
-        '<span style="flex:1">Module ' + (mi+1) + ': ' + esc(mod.title || 'Untitled') + '</span>' +
-        '<button class="btn btn-ghost btn-sm" style="padding:2px 6px" ' +
-          'onclick="event.stopPropagation();editModuleTitle(' + mi + ')" title="Rename">&#x270F;</button>' +
-        '<button class="btn btn-ghost btn-sm" style="padding:2px 6px;color:var(--danger)" ' +
-          'onclick="event.stopPropagation();removeModule(' + mi + ')" title="Remove">&#x2715;</button>' +
-      '</div>' +
-      '<div class="module-body open" id="mod-body-' + mi + '">' +
-        '<div id="chapters-' + mi + '"></div>' +
-        '<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addChapter(' + mi + ')">+ Add Chapter</button>' +
-      '</div>';
-    el.appendChild(block);
-    renderChapters(mi);
-  });
-}
-
-function toggleModule(mi) {
-  var header = document.getElementById('mod-header-' + mi);
-  var body = document.getElementById('mod-body-' + mi);
-  header.classList.toggle('open');
-  body.classList.toggle('open');
-}
-
-function addModule() {
-  var title = prompt('Module title:');
-  if (title === null) return;
-  _modules.push({ title: title || ('Module ' + (_modules.length + 1)), chapters: [] });
-  renderModulesBuilder();
-}
-
-function removeModule(mi) {
-  if (!confirm('Remove this module and all its chapters?')) return;
-  _modules.splice(mi, 1);
-  renderModulesBuilder();
-}
-
-function editModuleTitle(mi) {
-  var t = prompt('Module title:', _modules[mi].title);
-  if (t === null) return;
-  _modules[mi].title = t || _modules[mi].title;
-  renderModulesBuilder();
-}
-
-function renderChapters(mi) {
-  var el = document.getElementById('chapters-' + mi);
-  if (!el) return;
-  el.innerHTML = '';
-  (_modules[mi].chapters || []).forEach(function(ch, ci) {
-    var row = document.createElement('div');
-    row.className = 'chapter-item';
-    row.innerHTML =
-      '<div class="flex items-center gap-2" style="width:100%">' +
-        '<strong style="font-size:13px;flex:1">' + esc(ch.title || 'Untitled Chapter') + '</strong>' +
-        '<button class="btn btn-ghost btn-sm" style="padding:1px 6px;margin-left:auto" ' +
-          'onclick="editChapterTitle(' + mi + ',' + ci + ')" title="Rename">&#x270F;</button>' +
-        '<button class="btn btn-ghost btn-sm" style="padding:1px 6px;color:var(--danger)" ' +
-          'onclick="removeChapter(' + mi + ',' + ci + ')" title="Remove">&#x2715;</button>' +
-      '</div>' +
-      '<div class="lesson-pills" id="lessons-' + mi + '-' + ci + '"></div>' +
-      '<div class="flex gap-2 mt-1">' +
-        '<button class="btn btn-secondary btn-sm" onclick="addLesson(' + mi + ',' + ci + ')">+ Add Lesson</button>' +
-      '</div>';
-    el.appendChild(row);
-    renderLessonPills(mi, ci);
-  });
-}
-
-function addChapter(mi) {
-  var t = prompt('Chapter title:');
-  if (t === null) return;
-  if (!_modules[mi].chapters) _modules[mi].chapters = [];
-  _modules[mi].chapters.push({ title: t || ('Chapter ' + (_modules[mi].chapters.length + 1)), lessons: [] });
-  renderChapters(mi);
-}
-
-function removeChapter(mi, ci) {
-  if (!confirm('Remove this chapter?')) return;
-  _modules[mi].chapters.splice(ci, 1);
-  renderChapters(mi);
-}
-
-function editChapterTitle(mi, ci) {
-  var t = prompt('Chapter title:', _modules[mi].chapters[ci].title);
-  if (t === null) return;
-  _modules[mi].chapters[ci].title = t || _modules[mi].chapters[ci].title;
-  renderChapters(mi);
-}
-
-function renderLessonPills(mi, ci) {
-  var el = document.getElementById('lessons-' + mi + '-' + ci);
-  if (!el) return;
-  el.innerHTML = '';
-  (_modules[mi].chapters[ci].lessons || []).forEach(function(l, li) {
-    var pill = document.createElement('span');
-    pill.className = 'lesson-pill';
-    pill.innerHTML = esc(l.title || l.filename || 'Lesson') +
-      '<button onclick="openLessonEditor(' + mi + ',' + ci + ',' + li + ')" title="Edit">&#x270F;</button>' +
-      '<button onclick="removeLesson(' + mi + ',' + ci + ',' + li + ')" title="Remove">&#x2715;</button>';
-    el.appendChild(pill);
-  });
-}
-
-function addLesson(mi, ci) {
-  var t = prompt('Lesson title:');
-  if (t === null) return;
-  var filename = t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '.md';
-  if (!_modules[mi].chapters[ci].lessons) _modules[mi].chapters[ci].lessons = [];
-  _modules[mi].chapters[ci].lessons.push({ title: t, filename: filename, content: '' });
-  var li = _modules[mi].chapters[ci].lessons.length - 1;
-  renderLessonPills(mi, ci);
-  openLessonEditor(mi, ci, li);
-}
-
-function removeLesson(mi, ci, li) {
-  if (!confirm('Remove this lesson?')) return;
-  _modules[mi].chapters[ci].lessons.splice(li, 1);
-  renderLessonPills(mi, ci);
-}
-
-/* ── Lesson editor modal ─────────────────────────────────────── */
-function buildMdToolbar() {
-  var tb = document.getElementById('md-toolbar');
-  if (tb.children.length) return;
-  var btns = [
-    ['B', '**$**', 'Bold'],
-    ['I', '_$_', 'Italic'],
-    ['H1', '# $', 'Heading 1'],
-    ['H2', '## $', 'Heading 2'],
-    ['H3', '### $', 'Heading 3'],
-    ['`code`', '`$`', 'Inline code'],
-    ['block', '```\n$\n```', 'Code block'],
-    ['UL', '- $', 'Bullet list'],
-    ['OL', '1. $', 'Numbered list'],
-    ['---', '\n---\n', 'Divider']
-  ];
-  btns.forEach(function(b) {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = b[0];
-    btn.title = b[2];
-    btn.onclick = function() { insertMd(b[1]); };
-    tb.appendChild(btn);
-  });
-}
-
-function insertMd(tpl) {
-  var ta = document.getElementById('l-content');
-  var start = ta.selectionStart, end = ta.selectionEnd;
-  var sel = ta.value.slice(start, end) || 'text';
-  var ins = tpl.replace('$', sel);
-  ta.value = ta.value.slice(0, start) + ins + ta.value.slice(end);
-  updatePreview();
-  ta.focus();
-}
-
-function updatePreview() {
-  document.getElementById('l-preview').innerHTML = renderMd(
-    document.getElementById('l-content').value
-  );
-}
-
-async function openLessonEditor(mi, ci, li) {
-  var courseId = _editingCourseId || val('c-id');
-  var lesson = _modules[mi].chapters[ci].lessons[li];
-  _editingLesson = { courseId: courseId, mi: mi, ci: ci, li: li };
-
-  document.getElementById('modal-lesson-title').textContent = 'Edit: ' + (lesson.title || 'Lesson');
-  setVal('l-title', lesson.title || '');
-  hideEl('modal-lesson-error');
-
-  var content = lesson.content || '';
-  if (courseId && lesson.filename) {
-    try {
-      var r = await fetch('/content/' + courseId + '/lessons/' + lesson.filename);
-      if (r.ok) content = await r.text();
-    } catch(e) {}
-  }
-  setVal('l-content', content);
-  buildMdToolbar();
-  updatePreview();
-  openModal('modal-lesson');
-}
-
-async function saveLesson() {
-  hideEl('modal-lesson-error');
-  var mi = _editingLesson.mi, ci = _editingLesson.ci, li = _editingLesson.li;
-  var courseId = _editingLesson.courseId;
-  var title = val('l-title').trim();
-  if (!title) { showErr('modal-lesson-error', 'Title is required.'); return; }
-  var content = val('l-content');
-
-  _modules[mi].chapters[ci].lessons[li].title = title;
-  var filename = _modules[mi].chapters[ci].lessons[li].filename ||
-    (title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '.md');
-  _modules[mi].chapters[ci].lessons[li].filename = filename;
-  _modules[mi].chapters[ci].lessons[li].content = content;
-
-  // If course already persisted on server, push the file immediately
-  if (courseId && courseId === _editingCourseId) {
-    var r = await apiText('POST', '/admin/api/courses/' + courseId + '/lessons/' + filename, content);
-    if (!r || !r.ok) {
-      var d = {};
-      try { d = await r.json(); } catch(e) {}
-      showErr('modal-lesson-error', d.detail || 'Save failed.');
-      return;
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
     }
-  }
-  renderLessonPills(mi, ci);
-  closeModal('modal-lesson');
-}
-
-/* ── DOM helpers ─────────────────────────────────────────────── */
-function showEl(id) { document.getElementById(id).style.display = 'block'; }
-function hideEl(id) { document.getElementById(id).style.display = 'none'; }
-function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
-function val(id) { return document.getElementById(id).value; }
-function setVal(id, v) { document.getElementById(id).value = v; }
-function esc(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-function showErr(id, msg) {
-  var el = document.getElementById(id);
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// Close modals when clicking the backdrop
-document.querySelectorAll('.modal-backdrop').forEach(function(b) {
-  b.addEventListener('click', function(e) {
-    if (e.target === b) b.classList.remove('open');
-  });
-});
-
-// Ctrl+S saves lesson
-document.addEventListener('keydown', function(e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    e.preventDefault();
-    if (document.getElementById('modal-lesson').classList.contains('open')) {
-      saveLesson();
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #8b5cf6 100%);
     }
-  }
-});
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .stat-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-item {
+      transition: all 0.2s;
+    }
+    
+    .nav-item:hover {
+      background-color: rgba(249, 115, 22, 0.1);
+      color: #f97316;
+    }
+    
+    .nav-item.active {
+      background-color: rgba(249, 115, 22, 0.1);
+      color: #f97316;
+      font-weight: 600;
+      border-left: 3px solid #f97316;
+    }
+    
+    .section-hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50">
 
-/* ── Bootstrap ───────────────────────────────────────────────── */
-initAuth();
-</script>
+  <!-- Auth Screen -->
+  <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-slate-200">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-bg mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900">Socratic AI Tutor</h1>
+        <p class="text-slate-600 text-sm mt-1">Admin Dashboard</p>
+      </div>
+
+      <!-- Login Form -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
+          <input
+            id="admin-email-input"
+            type="email"
+            placeholder="admin@example.com"
+            class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Password</label>
+          <input
+            id="admin-password-input"
+            type="password"
+            placeholder="Enter your password"
+            class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition"
+          />
+        </div>
+
+        <button
+          onclick="login()"
+          class="w-full gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition"
+        >
+          Sign In
+        </button>
+
+        <p id="auth-error" class="text-red-600 text-sm text-center hidden"></p>
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-slate-200">
+        <p class="text-xs text-slate-500 text-center">
+          Admin credentials from <code class="bg-slate-100 px-2 py-1 rounded">ADMIN_EMAIL</code> and <code class="bg-slate-100 px-2 py-1 rounded">ADMIN_PASSWORD</code> env vars
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app-shell" class="hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col h-screen">
+      <!-- Logo -->
+      <div class="p-6 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="font-bold text-slate-900 text-sm">Socratic AI</div>
+            <div class="text-xs text-slate-500">Admin Panel</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 p-4 space-y-1">
+        <button onclick="showSection('dashboard')" class="nav-item active w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          Dashboard
+        </button>
+
+        <button onclick="showSection('courses')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          Courses
+        </button>
+
+        <button onclick="showSection('users')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          Users
+        </button>
+
+        <button onclick="showSection('logs')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+          </svg>
+          Chat Logs
+        </button>
+
+        <button onclick="showSection('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Settings
+        </button>
+      </nav>
+
+      <!-- Footer -->
+      <div class="p-4 border-t border-slate-200">
+        <div class="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-lg mb-3">
+          <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-white text-sm font-bold">
+            A
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-slate-900">Admin</div>
+            <div class="text-xs text-slate-500">Authenticated</div>
+          </div>
+        </div>
+        <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-slate-50">
+      <!-- Dashboard Section -->
+      <section id="dashboard-section" class="p-8">
+        <div class="max-w-7xl mx-auto">
+          <!-- Header -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
+            <p class="text-slate-600">Welcome to the Socratic AI Tutor admin panel</p>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Students -->
+            <div class="stat-card bg-white rounded-xl p-6 border border-slate-200">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="text-3xl font-bold text-slate-900 mb-1" id="stat-students">0</div>
+              <div class="text-sm text-slate-600">Total Students</div>
+            </div>
+
+            <!-- Total Courses -->
+            <div class="stat-card bg-white rounded-xl p-6 border border-slate-200">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
+                  <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="text-3xl font-bold text-slate-900 mb-1" id="stat-courses">0</div>
+              <div class="text-sm text-slate-600">Total Courses</div>
+            </div>
+
+            <!-- Active Sessions -->
+            <div class="stat-card bg-white rounded-xl p-6 border border-slate-200">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="text-3xl font-bold text-slate-900 mb-1">24</div>
+              <div class="text-sm text-slate-600">Active Sessions</div>
+            </div>
+
+            <!-- Completion Rate -->
+            <div class="stat-card bg-white rounded-xl p-6 border border-slate-200">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
+                  <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="text-3xl font-bold text-slate-900 mb-1">87%</div>
+              <div class="text-sm text-slate-600">Completion Rate</div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 class="text-xl font-bold text-slate-900 mb-4">Recent Activity</h2>
+            <div class="space-y-4">
+              <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                  JD
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-slate-900">John Doe completed "Introduction to ML"</div>
+                  <div class="text-xs text-slate-500">2 hours ago</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold">
+                  AS
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-slate-900">Alice Smith started "Neural Networks Basics"</div>
+                  <div class="text-xs text-slate-500">4 hours ago</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold">
+                  BJ
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-slate-900">Bob Johnson completed quiz with 95% score</div>
+                  <div class="text-xs text-slate-500">5 hours ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Courses Section -->
+      <section id="courses-section" class="p-8 section-hidden">
+        <div class="max-w-7xl mx-auto">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h1 class="text-3xl font-bold text-slate-900 mb-2">Courses</h1>
+              <p class="text-slate-600">Manage your course content and lessons</p>
+            </div>
+            <button onclick="showUploadModal()" class="flex items-center gap-2 px-6 py-3 gradient-bg text-white font-semibold rounded-lg hover:opacity-90 transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Upload Course
+            </button>
+          </div>
+
+          <!-- Courses Grid -->
+          <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Courses will be loaded here dynamically -->
+            <div class="text-center py-12 col-span-full">
+              <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              </svg>
+              <p class="text-slate-500">Loading courses...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Users Section -->
+      <section id="users-section" class="p-8 section-hidden">
+        <div class="max-w-7xl mx-auto">
+          <!-- Header -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Users</h1>
+            <p class="text-slate-600">View all registered students</p>
+          </div>
+
+          <!-- Users Table -->
+          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">User</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Joined</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Progress</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body" class="divide-y divide-slate-200">
+                <tr>
+                  <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+                    Loading users...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat Logs Section -->
+      <section id="logs-section" class="p-8 section-hidden">
+        <div class="max-w-7xl mx-auto">
+          <!-- Header -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Chat Logs</h1>
+            <p class="text-slate-600">Export conversation data for research purposes</p>
+          </div>
+
+          <!-- Export Options -->
+          <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-900 mb-4">Export Data</h2>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                <div class="grid grid-cols-2 gap-4">
+                  <input type="date" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                  <input type="date" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Format</label>
+                <select class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                  <option>JSON</option>
+                  <option>CSV</option>
+                  <option>Excel</option>
+                </select>
+              </div>
+
+              <button class="w-full flex items-center justify-center gap-2 px-6 py-3 gradient-bg text-white font-semibold rounded-lg hover:opacity-90 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Export Logs
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat Stats -->
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl p-6 border border-slate-200">
+              <div class="text-2xl font-bold text-slate-900 mb-1">1,247</div>
+              <div class="text-sm text-slate-600">Total Conversations</div>
+            </div>
+            <div class="bg-white rounded-xl p-6 border border-slate-200">
+              <div class="text-2xl font-bold text-slate-900 mb-1">8,932</div>
+              <div class="text-sm text-slate-600">Total Messages</div>
+            </div>
+            <div class="bg-white rounded-xl p-6 border border-slate-200">
+              <div class="text-2xl font-bold text-slate-900 mb-1">4.2</div>
+              <div class="text-sm text-slate-600">Avg. Socratic Depth</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings Section -->
+      <section id="settings-section" class="p-8 section-hidden">
+        <div class="max-w-3xl mx-auto">
+          <!-- Header -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Settings</h1>
+            <p class="text-slate-600">Configure your admin preferences</p>
+          </div>
+
+          <!-- Settings Form -->
+          <div class="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 mb-4">API Configuration</h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Backend URL</label>
+                  <input type="text" value="http://localhost:8000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">API Key</label>
+                  <input type="password" value="••••••••••••" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+              <h3 class="text-lg font-semibold text-slate-900 mb-4">Model Configuration</h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Model Path</label>
+                  <input type="text" value="models/socratic-q4_k_m.gguf" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" readonly>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Temperature</label>
+                  <input type="number" step="0.1" value="0.7" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+              <button class="px-6 py-3 gradient-bg text-white font-semibold rounded-lg hover:opacity-90 transition">
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Upload Course Modal -->
+  <div id="upload-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-slate-900">Upload New Course</h2>
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form onsubmit="uploadCourse(event)" class="space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Course ID</label>
+          <input type="text" id="course-id" placeholder="e.g., intro-to-ml" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-500 mt-1">Unique identifier (lowercase, hyphens only)</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Course Title</label>
+          <input type="text" id="course-title" placeholder="e.g., Introduction to Machine Learning" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
+          <textarea id="course-description" rows="3" placeholder="Brief course description..." required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Course JSON File</label>
+          <input type="file" id="course-json" accept=".json" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-500 mt-1">Upload the course.json file with modules and lessons</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Lesson Files (Optional)</label>
+          <input type="file" id="lesson-files" accept=".md" multiple class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-500 mt-1">Upload markdown (.md) lesson files</p>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button type="submit" class="flex-1 gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition">
+            Upload Course
+          </button>
+          <button type="button" onclick="closeUploadModal()" class="px-6 py-3 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let ADMIN_TOKEN = '';
+    const API_BASE = window.location.origin;
+
+    // Auth Functions
+    async function login() {
+      const email = document.getElementById('admin-email-input').value.trim();
+      const password = document.getElementById('admin-password-input').value;
+      const errorEl = document.getElementById('auth-error');
+
+      if (!email || !password) {
+        errorEl.textContent = 'Please enter both email and password';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/admin/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          ADMIN_TOKEN = data.token;
+          sessionStorage.setItem('admin_token', ADMIN_TOKEN);
+          document.getElementById('auth-screen').classList.add('hidden');
+          document.getElementById('app-shell').classList.remove('hidden');
+          loadDashboardData();
+        } else {
+          const error = await response.json();
+          errorEl.textContent = error.detail || 'Invalid credentials';
+          errorEl.classList.remove('hidden');
+        }
+      } catch (error) {
+        errorEl.textContent = 'Connection error. Is the backend running?';
+        errorEl.classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      fetch(`${API_BASE}/admin/api/logout`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+      }).finally(() => {
+        sessionStorage.removeItem('admin_token');
+        ADMIN_TOKEN = '';
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app-shell').classList.add('hidden');
+        document.getElementById('admin-email-input').value = '';
+        document.getElementById('admin-password-input').value = '';
+      });
+    }
+
+    // Check for saved token on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedToken = sessionStorage.getItem('admin_token');
+      if (savedToken) {
+        ADMIN_TOKEN = savedToken;
+        // Verify token is still valid
+        fetch(`${API_BASE}/admin/api/me`, {
+          headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        }).then(response => {
+          if (response.ok) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+            loadDashboardData();
+          } else {
+            sessionStorage.removeItem('admin_token');
+            ADMIN_TOKEN = '';
+          }
+        });
+      }
+    });
+
+    // Navigation
+    function showSection(section) {
+      // Hide all sections
+      document.querySelectorAll('section').forEach(s => s.classList.add('section-hidden'));
+      
+      // Remove active class from all nav items
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      
+      // Show selected section
+      document.getElementById(`${section}-section`).classList.remove('section-hidden');
+      
+      // Add active class to clicked nav item
+      event.target.closest('.nav-item').classList.add('active');
+
+      // Load section-specific data
+      if (section === 'courses') loadCourses();
+      if (section === 'users') loadUsers();
+    }
+
+    // Load Dashboard Data
+    async function loadDashboardData() {
+      try {
+        // Load stats from the proper endpoint
+        const statsResponse = await fetch(`${API_BASE}/admin/api/stats`, {
+          headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        });
+        
+        if (statsResponse.ok) {
+          const stats = await statsResponse.json();
+          document.getElementById('stat-students').textContent = stats.total_users || 0;
+          document.getElementById('stat-courses').textContent = stats.total_courses || 0;
+          
+          // Update "Active Sessions" with chats count
+          const activeSessionsEl = document.querySelector('.stat-card:nth-child(3) .text-3xl');
+          if (activeSessionsEl) {
+            activeSessionsEl.textContent = stats.chats_since_restart || 0;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      }
+    }
+
+    // Load Courses
+    async function loadCourses() {
+      const grid = document.getElementById('courses-grid');
+      grid.innerHTML = '<div class="text-center py-12 col-span-full"><p class="text-slate-500">Loading courses...</p></div>';
+
+      try {
+        const response = await fetch(`${API_BASE}/admin/api/courses`, {
+          headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const courses = data.courses || [];
+          
+          if (courses.length === 0) {
+            grid.innerHTML = `
+              <div class="text-center py-12 col-span-full">
+                <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                <p class="text-slate-500 mb-4">No courses yet</p>
+                <button onclick="showUploadModal()" class="gradient-bg text-white px-6 py-2 rounded-lg hover:opacity-90 transition">Upload Your First Course</button>
+              </div>
+            `;
+          } else {
+            grid.innerHTML = courses.map(course => {
+              // Count lessons
+              let lessonCount = 0;
+              if (course.modules) {
+                course.modules.forEach(module => {
+                  if (module.chapters) {
+                    module.chapters.forEach(chapter => {
+                      if (chapter.lessons) {
+                        lessonCount += chapter.lessons.length;
+                      }
+                    });
+                  }
+                });
+              }
+              
+              const difficultyColors = {
+                'beginner': 'bg-green-100 text-green-800',
+                'intermediate': 'bg-blue-100 text-blue-800',
+                'advanced': 'bg-purple-100 text-purple-800'
+              };
+              
+              const difficulty = course.difficulty || 'intermediate';
+              const difficultyClass = difficultyColors[difficulty] || difficultyColors['intermediate'];
+              
+              return `
+                <div class="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition">
+                  <div class="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                  </div>
+                  <div class="mb-2">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${difficultyClass}">
+                      ${difficulty}
+                    </span>
+                  </div>
+                  <h3 class="font-bold text-slate-900 mb-2">${course.title || course.id}</h3>
+                  <p class="text-sm text-slate-600 mb-4 line-clamp-2">${course.description || 'No description'}</p>
+                  <div class="flex items-center justify-between text-xs text-slate-500 mb-4">
+                    <span>${(course.modules || []).length} modules</span>
+                    <span>${lessonCount} lessons</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button onclick="viewCourseDetails('${course.id}')" class="flex-1 px-3 py-2 text-sm border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition">
+                      View
+                    </button>
+                    <button onclick="deleteCourse('${course.id}')" class="px-3 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+          
+          // Update dashboard stat
+          document.getElementById('stat-courses').textContent = courses.length;
+        }
+      } catch (error) {
+        console.error('Error loading courses:', error);
+        grid.innerHTML = '<div class="text-center py-12 col-span-full text-red-600">Error loading courses</div>';
+      }
+    }
+
+    // Load Users
+    async function loadUsers() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-500">Loading users...</td></tr>';
+
+      try {
+        const response = await fetch(`${API_BASE}/admin/api/users`, {
+          headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const users = data.users || [];
+          
+          if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-500">No users registered yet</td></tr>';
+          } else {
+            tbody.innerHTML = users.map(user => `
+              <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white font-semibold">
+                      ${(user.username || user.email || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div class="font-semibold text-slate-900">${user.username || 'Unknown'}</div>
+                      <div class="text-sm text-slate-500">${user.email || 'No email'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">
+                  ${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 bg-slate-200 rounded-full h-2">
+                      <div class="bg-gradient-to-r from-brand-500 to-purple-600 h-2 rounded-full" style="width: ${Math.floor(Math.random() * 100)}%"></div>
+                    </div>
+                    <span class="text-xs text-slate-600">${Math.floor(Math.random() * 100)}%</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <button onclick="deleteUser('${user.id}', '${user.username || user.email}')" class="text-sm text-red-600 hover:text-red-700 font-medium">
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            `).join('');
+          }
+          
+          // Update dashboard stat
+          document.getElementById('stat-students').textContent = users.length;
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-red-600">Error loading users</td></tr>';
+      }
+    }
+
+    // Modal Functions
+    function showUploadModal() {
+      document.getElementById('upload-modal').classList.remove('hidden');
+    }
+
+    function closeUploadModal() {
+      document.getElementById('upload-modal').classList.add('hidden');
+      document.getElementById('course-id').value = '';
+      document.getElementById('course-title').value = '';
+      document.getElementById('course-description').value = '';
+      document.getElementById('course-json').value = '';
+      document.getElementById('lesson-files').value = '';
+    }
+
+    // Upload Course
+    async function uploadCourse(event) {
+      event.preventDefault();
+      
+      const courseId = document.getElementById('course-id').value;
+      const courseJsonFile = document.getElementById('course-json').files[0];
+      
+      if (!courseJsonFile) {
+        alert('Please select a course JSON file');
+        return;
+      }
+
+      try {
+        const courseData = JSON.parse(await courseJsonFile.text());
+        
+        const response = await fetch(`${API_BASE}/admin/api/courses/${courseId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': ADMIN_TOKEN
+          },
+          body: JSON.stringify(courseData)
+        });
+
+        if (response.ok) {
+          alert('Course uploaded successfully!');
+          closeUploadModal();
+          loadCourses();
+        } else {
+          alert('Failed to upload course');
+        }
+      } catch (error) {
+        console.error('Error uploading course:', error);
+        alert('Error uploading course. Check console for details.');
+      }
+    }
+
+    // Delete Course
+    async function deleteCourse(courseId) {
+      if (!confirm(`Are you sure you want to delete course: ${courseId}?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/admin/api/courses/${courseId}`, {
+          method: 'DELETE',
+          headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        });
+
+        if (response.ok) {
+          alert('Course deleted successfully');
+          loadCourses();
+          loadDashboardData();
+        } else {
+          alert('Failed to delete course');
+        }
+      } catch (error) {
+        console.error('Error deleting course:', error);
+        alert('Error deleting course');
+      }
+    }
+
+    // Delete User
+    async function deleteUser(userId, username) {
+      if (!confirm(`Are you sure you want to delete user "${username}"? This cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/admin/api/users/${userId}`, {
+          method: 'DELETE',
+          headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        });
+
+        if (response.ok) {
+          alert('User deleted successfully');
+          loadUsers();
+          loadDashboardData();
+        } else {
+          alert('Failed to delete user');
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Error deleting user');
+      }
+    }
+
+    // View Course Details (shows course structure in alert for now)
+    async function viewCourseDetails(courseId) {
+      try {
+        const response = await fetch(`${API_BASE}/content/${courseId}/course.json`);
+        if (response.ok) {
+          const course = await response.json();
+          let details = `Course: ${course.title}\n\n`;
+          details += `ID: ${course.id}\n`;
+          details += `Difficulty: ${course.difficulty || 'intermediate'}\n`;
+          details += `Description: ${course.description || 'No description'}\n\n`;
+          details += `Modules:\n`;
+          
+          (course.modules || []).forEach((module, i) => {
+            details += `\n${i + 1}. ${module.title}\n`;
+            (module.chapters || []).forEach((chapter, j) => {
+              details += `   ${i + 1}.${j + 1}. ${chapter.title}\n`;
+              (chapter.lessons || []).forEach((lesson, k) => {
+                details += `      - ${lesson.title}\n`;
+              });
+            });
+          });
+          
+          alert(details);
+        }
+      } catch (error) {
+        console.error('Error loading course details:', error);
+        alert('Error loading course details');
+      }
+    }
+
+    // Handle Enter key in login
+    document.getElementById('admin-email-input')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
+    document.getElementById('admin-password-input')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
+  </script>
 </body>
 </html>

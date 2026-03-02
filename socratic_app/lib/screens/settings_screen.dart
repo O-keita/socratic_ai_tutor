@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
 import '../services/hybrid_tutor_service.dart';
+import '../services/llm_service.dart';
 import '../services/model_download_service.dart';
+import '../services/model_version_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
 import 'model_setup_screen.dart';
@@ -24,9 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      decoration: BoxDecoration(
-        gradient: isDark ? AppTheme.backgroundGradient : AppTheme.lightBackgroundGradient,
-      ),
+      color: isDark ? AppTheme.primaryDark : const Color(0xFFFEF6EE),
       child: Column(
         children: [
           _buildHeader(context, colorScheme, isDark),
@@ -66,20 +66,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 24),
                 _buildSectionHeader('Offline Capabilities'),
-                Consumer<ModelDownloadService>(
-                  builder: (context, dl, _) {
+                Consumer2<ModelDownloadService, ModelVersionService>(
+                  builder: (context, dl, versionService, _) {
                     final isDownloading =
                         dl.status == DownloadStatus.downloading ||
                         dl.status == DownloadStatus.connecting;
                     final isComplete = dl.status == DownloadStatus.completed;
+                    final hasUpdate = versionService.updateAvailable;
 
-                    final subtitle = isComplete
-                        ? '✓ Model ready — tap to manage'
-                        : isDownloading
-                            ? 'Downloading… ${(dl.progress * 100).toInt()}%'
-                            : dl.status == DownloadStatus.error
-                                ? 'Download failed — tap to retry'
-                                : 'Download or update the offline Socratic engine';
+                    final String subtitle;
+                    if (hasUpdate && isComplete) {
+                      final name = versionService.latestDisplayName ?? 'Model';
+                      final ver = versionService.latestVersion ?? '';
+                      subtitle = 'Update available: $name v$ver';
+                    } else if (isComplete) {
+                      subtitle = '✓ Model ready — tap to manage';
+                    } else if (isDownloading) {
+                      subtitle = 'Downloading… ${(dl.progress * 100).toInt()}%';
+                    } else if (dl.status == DownloadStatus.error) {
+                      subtitle = 'Download failed — tap to retry';
+                    } else {
+                      subtitle = 'Download or update the offline Socratic engine';
+                    }
 
                     return Card(
                       child: Column(
@@ -89,10 +97,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             title: const Text('Manage Local Model'),
                             subtitle: Text(subtitle),
                             leading: Icon(
-                              isComplete
-                                  ? Icons.check_circle_outline
-                                  : Icons.download_for_offline,
-                              color: isComplete ? AppTheme.success : null,
+                              hasUpdate && isComplete
+                                  ? Icons.system_update
+                                  : isComplete
+                                      ? Icons.check_circle_outline
+                                      : Icons.download_for_offline,
+                              color: hasUpdate && isComplete
+                                  ? AppTheme.accentOrange
+                                  : isComplete
+                                      ? AppTheme.success
+                                      : null,
                             ),
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(
@@ -124,15 +138,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSectionHeader('General'),
                 _buildSettingsTile(
                   'Reset Model',
-                  'Re-initialize local engine',
+                  'Clear crash flag and re-initialize engine',
                   Icons.refresh,
                   onTap: () async {
+                    // Clear both the SharedPreferences crash flag AND in-memory
+                    // failure state so initialize() can proceed again.
+                    final llmService = SocraticLlmService();
+                    await llmService.clearCrashFlag();
+                    await llmService.clearInferenceCrashFlag();
+                    llmService.resetInitializationFailure();
+
                     final ok = await _hybridService.initialize();
                     if (context.mounted) {
                       if (ok) {
-                        AppSnackBar.success(context, 'Model re-initialized successfully!');
+                        AppSnackBar.success(context, 'Engine re-initialized successfully!');
                       } else {
-                        AppSnackBar.error(context, 'Initialization failed. Check the model file.');
+                        AppSnackBar.error(
+                          context,
+                          'Initialization failed. Try switching to "Force Online" mode.',
+                        );
                       }
                     }
                   },
@@ -146,15 +170,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildHeader(BuildContext context, ColorScheme colorScheme, bool isDark) {
+    final isOnline = _hybridService.currentStatus == EngineStatus.online;
+    final statusColor = isOnline ? AppTheme.success : AppTheme.warning;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      decoration: BoxDecoration(
+        gradient: isDark
+            ? AppTheme.headerGradientDark
+            : AppTheme.headerGradientLight,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
       child: Row(
         children: [
           Text(
             'Settings',
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: 28,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -162,32 +196,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: _hybridService.currentStatus == EngineStatus.online
-                  ? Colors.green.withValues(alpha: 0.2)
-                  : Colors.orange.withValues(alpha: 0.2),
+              color: statusColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  _hybridService.currentStatus == EngineStatus.online
-                      ? Icons.cloud_done
-                      : Icons.cloud_off,
-                  size: 16,
-                  color: _hybridService.currentStatus == EngineStatus.online
-                      ? Colors.green
-                      : Colors.orange,
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: statusColor),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 Text(
-                  _hybridService.currentStatus == EngineStatus.online ? 'Online' : 'Offline',
+                  isOnline ? 'Online' : 'Offline',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: _hybridService.currentStatus == EngineStatus.online
-                        ? Colors.green
-                        : Colors.orange,
+                    color: statusColor,
                   ),
                 ),
               ],

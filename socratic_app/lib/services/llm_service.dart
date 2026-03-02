@@ -1,29 +1,77 @@
+import 'dart:async';
+import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:llamadart/llamadart.dart';
+import 'package:ffi/ffi.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart' as model;
+import '../utils/app_config.dart';
 import 'tutor_engine.dart';
 
-/// Local LLM inference service using llamadart (llama.cpp).
+// ---------------------------------------------------------------------------
+// FFI type definitions matching libchat.h
+// ---------------------------------------------------------------------------
+
+/// Opaque pointer to the native chat_session struct.
+typedef ChatSessionPtr = Pointer<Void>;
+
+// chat_create(const char * model_path, int n_ctx, int n_threads) -> chat_session *
+typedef _ChatCreateNative = Pointer<Void> Function(
+    Pointer<Utf8>, Int32, Int32);
+typedef _ChatCreateDart = Pointer<Void> Function(
+    Pointer<Utf8>, int, int);
+
+// chat_generate(chat_session *, const char * user_message) -> char *
+typedef _ChatGenerateNative = Pointer<Utf8> Function(
+    Pointer<Void>, Pointer<Utf8>);
+typedef _ChatGenerateDart = Pointer<Utf8> Function(
+    Pointer<Void>, Pointer<Utf8>);
+
+// chat_string_free(char *)
+typedef _ChatStringFreeNative = Void Function(Pointer<Utf8>);
+typedef _ChatStringFreeDart = void Function(Pointer<Utf8>);
+
+// chat_reset(chat_session *)
+typedef _ChatResetNative = Void Function(Pointer<Void>);
+typedef _ChatResetDart = void Function(Pointer<Void>);
+
+// chat_destroy(chat_session *)
+typedef _ChatDestroyNative = Void Function(Pointer<Void>);
+typedef _ChatDestroyDart = void Function(Pointer<Void>);
+
+// ---------------------------------------------------------------------------
+// Isolate message types for running inference off the UI thread
+// ---------------------------------------------------------------------------
+
+class _GenerateRequest {
+  final int sessionAddress;
+  final String userMessage;
+  _GenerateRequest(this.sessionAddress, this.userMessage);
+}
+
+class _GenerateResult {
+  final String? text;
+  final String? error;
+  _GenerateResult({this.text, this.error});
+}
+
+// ---------------------------------------------------------------------------
+// SocraticLlmService
+// ---------------------------------------------------------------------------
+
+/// Local LLM inference service using our custom libchat C API (llama.cpp).
 ///
-/// Works on all platforms: Android ARM64, Android x86_64 (emulators), iOS,
-/// macOS, Linux, Windows. No architecture restrictions.
-///
-/// Flow:
-///   1. App installs without the model (~350 MB GGUF).
-///   2. User downloads the model via Settings → Manage Local Model.
-///   3. [initialize()] loads the GGUF file into [LlamaEngine].
-///   4. [generateResponse()] streams tokens via [LlamaEngine.create()].
+/// The native library is compiled from source via CMake during the Gradle
+/// build and bundled into the APK as `libchat.so`.
 class SocraticLlmService implements TutorEngine {
   static final SocraticLlmService _instance = SocraticLlmService._internal();
   factory SocraticLlmService() => _instance;
   SocraticLlmService._internal();
 
-  /// Local filename for the downloaded model.
-  /// Must match [ModelSetupScreen.modelFileName].
-  static const String modelFileName = 'socratic-model.gguf';
+  static String get modelFileName => AppConfig.modelFileName;
 
   bool _isInitialized = false;
   bool _isGenerating = false;
@@ -31,23 +79,28 @@ class SocraticLlmService implements TutorEngine {
   bool _initializationFailed = false;
   String _initializationError = '';
 
-  LlamaEngine? _engine;
-  String? _modelPath;
+  /// Native session pointer (address stored as int for isolate transfer).
+  int _sessionAddress = 0;
+
+  /// FFI function pointers — resolved once on first init.
+  /// Only chat_create and chat_destroy run on the main isolate.
+  /// chat_generate and chat_string_free are resolved inside the worker isolate.
+  static _ChatCreateDart? _chatCreate;
+  static _ChatResetDart? _chatReset;
+  static _ChatDestroyDart? _chatDestroy;
 
   final String _systemPrompt =
-      'You are a Socratic AI tutor specializing in data science and machine learning. '
-      'Your sole teaching method is guided questioning.\n\n'
-      'STRICT RULES:\n'
-      '- NEVER give direct answers or explanations\n'
-      '- ALWAYS respond with exactly ONE focused guiding question\n'
-      '- Lead the student to discover the answer themselves\n\n'
-      'Example:\n'
-      'User: "What is a neural network?"\n'
-      'Tutor: "What simplified system in nature processes information through '
-      'interconnected nodes, and how might computers replicate that structure?"';
+      'You are a Socratic AI tutor specializing in data science and machine learning.\n\n'
+      'RULES:\n'
+      '1. ALWAYS begin your response with a thinking block containing your reasoning.\n'
+      '2. For conceptual questions: respond with ONE guiding question. NEVER give direct answers. '
+      'If the student is stuck, give a small hint before your question.\n'
+      '3. For code questions: guide the student to write the code themselves through Socratic questioning.\n'
+      '4. For casual messages (greetings, thanks, chitchat): respond warmly and naturally.\n\n'
+      'Always start with a thinking block. This is mandatory.';
 
   @override
-  bool get isReady => _isInitialized && _engine != null && !_isGenerating;
+  bool get isReady => _isInitialized && _sessionAddress != 0 && !_isGenerating;
 
   @override
   bool get isGenerating => _isGenerating;
@@ -55,57 +108,163 @@ class SocraticLlmService implements TutorEngine {
   bool get initializationFailed => _initializationFailed;
   String get initializationError => _initializationError;
 
-  /// Load the GGUF model into memory.
-  ///
-  /// Returns [true] if the engine is ready. Returns [false] (without throwing) if
-  /// the model has not been downloaded or [LlamaEngine.loadModel] fails.
+  static const _prefLoadingKey = 'llm_model_loading';
+  static const _prefInferenceKey = 'llm_inference_running';
+
+  Future<bool> get wasKilledDuringLoad async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_prefLoadingKey) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> clearCrashFlag() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefLoadingKey);
+    } catch (_) {}
+  }
+
+  Future<bool> get wasKilledDuringInference async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_prefInferenceKey) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> clearInferenceCrashFlag() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefInferenceKey);
+    } catch (_) {}
+  }
+
+  /// Resolve the FFI function pointers from libchat.so.
+  void _ensureBindings() {
+    if (_chatCreate != null) return;
+
+    final lib = DynamicLibrary.open('libchat.so');
+
+    _chatCreate = lib
+        .lookupFunction<_ChatCreateNative, _ChatCreateDart>('chat_create');
+    _chatReset = lib
+        .lookupFunction<_ChatResetNative, _ChatResetDart>('chat_reset');
+    _chatDestroy = lib
+        .lookupFunction<_ChatDestroyNative, _ChatDestroyDart>('chat_destroy');
+
+    debugPrint('LLMService: FFI bindings loaded from libchat.so');
+  }
+
   @override
-  Future<bool> initialize() async {
+  Future<bool> initialize({bool force = false}) async {
     if (_isInitialized) return true;
     if (_isInitializing) return false;
     if (_initializationFailed) return false;
 
+    if (!force && await wasKilledDuringLoad) {
+      debugPrint('LLMService: Skipping init — previous load crashed.');
+      _initializationFailed = true;
+      _initializationError =
+          'Model loading previously crashed the app. '
+          'Tap "Retry local model" in Settings, or use Online mode.';
+      return false;
+    }
+
+    if (!force && await wasKilledDuringInference) {
+      debugPrint('LLMService: Skipping init — previous inference crashed.');
+      _initializationFailed = true;
+      _initializationError =
+          'Local inference crashed on this device (incompatible CPU). '
+          'Use Online mode or tap "Reset Model" in Settings.';
+      return false;
+    }
+
     _isInitializing = true;
     try {
+      _ensureBindings();
+
       final dir = await getApplicationSupportDirectory()
           .timeout(const Duration(seconds: 5));
-      _modelPath = p.join(dir.path, modelFileName);
+      final modelPath = p.join(dir.path, modelFileName);
 
-      if (!await File(_modelPath!).exists()) {
+      if (!await File(modelPath).exists()) {
         throw Exception(
-          'Model file not found. Please download it from '
-          'Settings → Manage Local Model.',
+          'Model file not found at $modelPath. '
+          'Please download it from Settings → Manage Local Model.',
         );
       }
 
       final sizeMb =
-          (await File(_modelPath!).length() / 1024 / 1024).toStringAsFixed(1);
-      debugPrint('LLMService: Loading $sizeMb MB model from $_modelPath');
+          (await File(modelPath).length() / 1024 / 1024).toStringAsFixed(1);
+      debugPrint('LLMService: Loading $sizeMb MB model from $modelPath');
 
-      _engine = LlamaEngine(LlamaBackend());
-      await _engine!.loadModel(_modelPath!);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefLoadingKey, true);
+
+      // Load the model (this is CPU-heavy — runs synchronously but is
+      // typically < 3 seconds for a 230 MB Q4 model).
+      final pathPtr = modelPath.toNativeUtf8();
+      final session = _chatCreate!(pathPtr, 2048, 4);
+      malloc.free(pathPtr);
+
+      if (session.address == 0) {
+        throw Exception('Native chat_create returned null');
+      }
+
+      _sessionAddress = session.address;
+
+      await prefs.remove(_prefLoadingKey);
 
       _isInitialized = true;
-      debugPrint('LLMService: ✅ Engine ready');
+      debugPrint('LLMService: Engine ready (libchat)');
       return true;
     } catch (e, stack) {
       _initializationFailed = true;
-      _initializationError = e.toString().split('\n').first;
-      _engine = null;
-      debugPrint('LLMService: ❌ Init failed: $e\n$stack');
+      var errMsg = e.toString().split('\n').first;
+      errMsg = errMsg.replaceAll(RegExp(r'^(Exception:\s*)+'), '');
+      if (errMsg.length > 120) errMsg = '${errMsg.substring(0, 117)}...';
+      _initializationError = errMsg;
+      debugPrint('LLMService: Init failed: $e\n$stack');
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_prefLoadingKey);
+      } catch (_) {}
       return false;
     } finally {
       _isInitializing = false;
     }
   }
 
-  /// Stream a Socratic response token-by-token.
-  ///
-  /// Uses [LlamaEngine.create()] (OpenAI-style stateless API) — the full
-  /// conversation history is passed on every call so the engine has context.
-  ///
-  /// [enableThinking] is set to `false` to suppress Qwen3's think blocks and
-  /// return answers immediately without internal chain-of-thought.
+  /// Run inference in a background isolate so the UI stays responsive.
+  static _GenerateResult _runGenerate(_GenerateRequest req) {
+    try {
+      final lib = DynamicLibrary.open('libchat.so');
+      final generate = lib.lookupFunction<_ChatGenerateNative,
+          _ChatGenerateDart>('chat_generate');
+      final stringFree = lib.lookupFunction<_ChatStringFreeNative,
+          _ChatStringFreeDart>('chat_string_free');
+
+      final session = Pointer<Void>.fromAddress(req.sessionAddress);
+      final msgPtr = req.userMessage.toNativeUtf8();
+      final resultPtr = generate(session, msgPtr);
+      malloc.free(msgPtr);
+
+      if (resultPtr.address == 0) {
+        return _GenerateResult(error: 'Native chat_generate returned null');
+      }
+
+      final text = resultPtr.toDartString();
+      stringFree(resultPtr);
+      return _GenerateResult(text: text);
+    } catch (e) {
+      return _GenerateResult(error: e.toString());
+    }
+  }
+
   @override
   Stream<String> generateResponse(
     String userPrompt, {
@@ -117,11 +276,12 @@ class SocraticLlmService implements TutorEngine {
     int topK = 30,
     double repeatPenalty = 1.1,
   }) async* {
-    if (!_isInitialized || _engine == null) {
-      // If initialization previously failed, reset and retry — the model may
-      // have been downloaded since the last attempt.
+    if (!_isInitialized || _sessionAddress == 0) {
       if (_initializationFailed) {
-        resetInitializationFailure();
+        yield _initializationError.isNotEmpty
+            ? 'Model unavailable: $_initializationError'
+            : 'Model not initialized. Go to Settings → Reset Model or switch to Online mode.';
+        return;
       }
       final ok = await initialize();
       if (!ok) {
@@ -136,64 +296,51 @@ class SocraticLlmService implements TutorEngine {
     }
 
     _isGenerating = true;
+    SharedPreferences? prefs;
     try {
-      // Build the full conversation (system + history + current user message)
-      final messages = <LlamaChatMessage>[
-        LlamaChatMessage.fromText(
-          role: LlamaChatRole.system,
-          text: systemPrompt ?? _systemPrompt,
-        ),
-      ];
+      prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefInferenceKey, true);
 
-      if (history != null && history.isNotEmpty) {
-        // Pass last 6 messages to keep context without overflowing
-        final recent =
-            history.length > 6 ? history.sublist(history.length - 6) : history;
-        for (final msg in recent) {
-          messages.add(
-            LlamaChatMessage.fromText(
-              role: msg.isUser ? LlamaChatRole.user : LlamaChatRole.assistant,
-              text: msg.text,
-            ),
-          );
-        }
+      // Note: conversation history is managed natively inside the chat_session.
+      // For the first message, the model's built-in chat template handles
+      // system prompt injection. For lesson-scoped chats with a custom system
+      // prompt, we prepend it as context in the user message.
+      String prompt = userPrompt;
+      if (systemPrompt != null && systemPrompt != _systemPrompt) {
+        prompt = '[Context: $systemPrompt]\n\n$userPrompt';
       }
-      messages.add(
-        LlamaChatMessage.fromText(
-          role: LlamaChatRole.user,
-          text: userPrompt,
+
+      // Run the blocking FFI call in a background isolate.
+      final result = await Isolate.run(
+        () => _runGenerate(
+          _GenerateRequest(_sessionAddress, prompt),
         ),
       );
 
-      final params = GenerationParams(
-        maxTokens: maxTokens,
-        temp: temperature,
-        topK: topK,
-        topP: topP,
-        penalty: repeatPenalty,
-      );
-
-      // enableThinking: false → suppress Qwen3 <think> blocks for faster responses
-      // delta.content already contains only the answer text (thinking is in delta.thinking)
-      await for (final chunk in _engine!.create(
-        messages,
-        params: params,
-        enableThinking: false,
-      )) {
-        final content = chunk.choices.first.delta.content;
-        if (content != null && content.isNotEmpty) {
-          yield content;
-        }
+      if (result.error != null) {
+        yield '[Error: ${result.error}]';
+      } else if (result.text != null && result.text!.isNotEmpty) {
+        // Strip <think>...</think> reasoning blocks before yielding to UI.
+        final cleaned = result.text!
+            .replaceAll(RegExp(r'<think>[\s\S]*?</think>'), '')
+            .trim();
+        yield cleaned.isNotEmpty ? cleaned : 'What aspects of this topic would you like to explore further?';
+      } else {
+        yield 'What aspects of this topic would you like to explore further?';
       }
+
+      await prefs.remove(_prefInferenceKey);
     } catch (e, stack) {
-      debugPrint('LLMService: ❌ Generation error: $e\n$stack');
+      try {
+        await prefs?.remove(_prefInferenceKey);
+      } catch (_) {}
+      debugPrint('LLMService: Generation error: $e\n$stack');
       yield '[Error during generation. Please try again.]';
     } finally {
       _isGenerating = false;
     }
   }
 
-  /// Non-streaming convenience wrapper — collects the full response.
   @override
   Future<LLMResponse> generateSocraticResponse(
     String userQuestion, {
@@ -216,7 +363,31 @@ class SocraticLlmService implements TutorEngine {
     );
   }
 
-  /// Allow re-attempting initialization after a failure.
+  /// Clear the native conversation history and KV cache.
+  /// The model stays loaded — the next generateResponse() starts a fresh chat.
+  void resetConversation() {
+    if (_sessionAddress == 0) return;
+    _ensureBindings();
+    _chatReset!(Pointer<Void>.fromAddress(_sessionAddress));
+    debugPrint('LLMService: Conversation reset');
+  }
+
+  void abortLoad() {
+    if (!_isInitializing) return;
+    debugPrint('LLMService: Aborting in-progress model load');
+    if (_sessionAddress != 0) {
+      try {
+        _ensureBindings();
+        _chatDestroy!(Pointer<Void>.fromAddress(_sessionAddress));
+      } catch (_) {}
+      _sessionAddress = 0;
+    }
+    _isInitializing = false;
+    _initializationFailed = true;
+    _initializationError = 'Model loading was cancelled (timeout).';
+    clearCrashFlag();
+  }
+
   void resetInitializationFailure() {
     _initializationFailed = false;
     _initializationError = '';
@@ -224,18 +395,19 @@ class SocraticLlmService implements TutorEngine {
     debugPrint('LLMService: Reset. Call initialize() to retry.');
   }
 
-  /// Release native resources. Call on app shutdown or when swapping models.
   Future<void> dispose() async {
     _isGenerating = false;
-    try {
-      await _engine?.dispose();
-    } catch (e) {
-      debugPrint('LLMService: Error disposing engine: $e');
+    if (_sessionAddress != 0) {
+      try {
+        _ensureBindings();
+        _chatDestroy!(Pointer<Void>.fromAddress(_sessionAddress));
+      } catch (e) {
+        debugPrint('LLMService: Error destroying session: $e');
+      }
+      _sessionAddress = 0;
     }
-    _engine = null;
     _isInitialized = false;
     _initializationFailed = false;
-    _modelPath = null;
     debugPrint('LLMService: Disposed');
   }
 }

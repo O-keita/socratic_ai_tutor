@@ -4,27 +4,37 @@ import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/chat_screen.dart';
-import 'services/hybrid_tutor_service.dart';
 import 'services/theme_service.dart';
 import 'services/model_download_service.dart';
 import 'services/llm_service.dart';
 import 'services/auth_service.dart';
+import 'services/model_version_service.dart';
+import 'utils/app_config.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Refresh model download status from filesystem so Settings shows the correct
-  // state after a restart (in-memory DownloadStatus resets to notStarted).
-  ModelDownloadService()
-      .refreshStatus(SocraticLlmService.modelFileName)
-      .ignore();
+  // Refresh model download status from filesystem so the UI starts with the
+  // correct state (in-memory DownloadStatus resets to notStarted on restart).
+  // Must complete BEFORE runApp so widgets see the real status immediately.
+  await ModelDownloadService()
+      .refreshStatus(SocraticLlmService.modelFileName);
 
-  // Initialize Hybrid Tutor service in the background
-  Future.delayed(const Duration(seconds: 1), () {
-    final hybridService = HybridTutorService();
-    hybridService.initialize();
-  });
+  // Seed model version for existing users who downloaded the model
+  // before version tracking was added.
+  final modelExists = await ModelDownloadService()
+      .isModelDownloaded(AppConfig.modelFileName);
+  final versionService = ModelVersionService();
+  final installedVersion = await versionService.getInstalledVersion();
+  if (modelExists && installedVersion == null) {
+    await versionService.setInstalledVersion(AppConfig.bundledModelVersion);
+  }
+
+  // Don't eagerly initialize HybridTutorService here — loading the local
+  // GGUF model (~350-770 MB) on startup can OOM-kill budget devices and cause
+  // a crash loop.  The engine initializes lazily on the first chat request
+  // via _getBestEngine() in HybridTutorService.
   
   runApp(
     MultiProvider(
@@ -32,6 +42,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => ModelDownloadService()),
         ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => ModelVersionService()),
       ],
       child: const SocraticTutorApp(),
     ),

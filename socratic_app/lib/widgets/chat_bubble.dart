@@ -14,12 +14,8 @@ class ChatBubble extends StatelessWidget {
   });
 
   String _cleanMessage(String text) {
-    if (text.contains('<think>')) {
-      return text
-          .replaceAll('<think>', '> *Thinking:* ')
-          .replaceAll('</think>', '\n\n');
-    }
-    return text;
+    // Strip <think>...</think> blocks entirely — internal reasoning not for UI.
+    return text.replaceAll(RegExp(r'<think>[\s\S]*?</think>'), '').trim();
   }
 
   @override

@@ -3,6 +3,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'llm_service.dart';
+import 'model_version_service.dart';
+import '../utils/app_config.dart';
 
 enum DownloadStatus { notStarted, connecting, downloading, completed, error }
 
@@ -236,6 +239,27 @@ class ModelDownloadService extends ChangeNotifier {
         return;
       }
 
+      // ── Validate downloaded file size ────────────────────────────────────
+      // A valid GGUF model is ~300+ MB.  If the server returned an HTML error
+      // page or the download was truncated, the file will be much smaller.
+      final downloadedSize = await tempFile.length();
+      const minValidSize = 100 * 1024 * 1024; // 100 MB minimum
+      if (downloadedSize < minValidSize) {
+        debugPrint(
+            'DownloadService: ❌ Downloaded file too small '
+            '(${(downloadedSize / 1024 / 1024).toStringAsFixed(1)} MB). '
+            'Expected 300+ MB. Possibly an error page or truncated file.');
+        await tempFile.delete();
+        _hasPartial = false;
+        _status = DownloadStatus.error;
+        _errorMessage =
+            'Download appears incomplete or invalid '
+            '(${(downloadedSize / 1024 / 1024).toStringAsFixed(1)} MB — too small for a GGUF model). '
+            'Please try again on a stable connection.';
+        notifyListeners();
+        return;
+      }
+
       // ── Rename temp → final ───────────────────────────────────────────────
       final existingFinal = File(savePath);
       if (await existingFinal.exists()) await existingFinal.delete();
@@ -244,9 +268,25 @@ class ModelDownloadService extends ChangeNotifier {
       _status = DownloadStatus.completed;
       _progress = 1.0;
       _hasPartial = false;
+
+      // Reset the LLM engine so it can pick up the newly downloaded model
+      // without requiring an app restart.
+      SocraticLlmService().resetInitializationFailure();
+
+      // Persist the model version so future update checks work.
+      final versionService = ModelVersionService();
+      final latestVersion = versionService.latestVersion;
+      if (latestVersion != null) {
+        await versionService.setInstalledVersion(latestVersion);
+      } else {
+        await versionService.setInstalledVersion(AppConfig.bundledModelVersion);
+      }
+      versionService.clearUpdateFlag();
+
       notifyListeners();
 
-      debugPrint('DownloadService: ✅ Download complete → $savePath');
+      debugPrint('DownloadService: ✅ Download complete → $savePath '
+          '(${(downloadedSize / 1024 / 1024).toStringAsFixed(1)} MB)');
     } catch (e) {
       if (e is DioException && CancelToken.isCancel(e)) {
         // Cancelled — keep .tmp intact for resume

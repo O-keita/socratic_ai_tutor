@@ -11,8 +11,9 @@ Offline-first mobile app that teaches data science and machine learning using th
 **Stack:**
 - Flutter (Dart) — mobile frontend
 - FastAPI (Python) — backend inference server
-- Qwen3-0.6B (GGUF Q4_K_M, ~300 MB) — the LLM powering the tutor
-- `llama_flutter_android` — on-device inference (ARM64 Android only)
+- Qwen3-0.6B (GGUF Q4_K_M, ~460 MB) — the LLM powering the tutor
+- `libchat` — custom C API wrapping llama.cpp, compiled from source via CMake into the APK
+- `dart:ffi` — Dart FFI bindings to libchat.so (no third-party inference packages)
 - `llama-cpp-python` — server-side inference
 
 ---
@@ -36,10 +37,15 @@ socratic_ai_tutor/
 │   │   └── users.json        # File-based user DB (no SQL server needed)
 │   └── content/              # Runtime-uploaded courses (not in git)
 ├── socratic_app/             # Flutter app
+│   ├── android/app/src/main/cpp/
+│   │   ├── libchat.h         # C API header (4 functions)
+│   │   ├── libchat.cc        # Implementation (~235 lines)
+│   │   ├── CMakeLists.txt    # Builds llama.cpp from source + libchat
+│   │   └── LIBCHAT.md        # Full documentation of the C API
 │   ├── lib/
 │   │   ├── main.dart
-│   │   ├── screens/          # 18 screens
-│   │   ├── services/         # 15 services (see Services section)
+│   │   ├── screens/          # UI screens
+│   │   ├── services/         # Business logic services
 │   │   ├── models/           # Dart data classes
 │   │   ├── widgets/          # Reusable UI components
 │   │   ├── theme/app_theme.dart
@@ -50,7 +56,16 @@ socratic_ai_tutor/
 │       ├── glossary/
 │       ├── images/logo.png
 │       └── playground/index.html
-├── models/                   # GGUF model file (not in git, ~300 MB)
+├── local_llama_cpp_dart/     # llama.cpp source (not in git, ~208 MB)
+├── webapp/                   # React web app (admin + student portal)
+│   ├── src/
+│   │   ├── App.tsx           # Routing
+│   │   ├── context/          # Auth + Progress providers
+│   │   ├── api/              # All HTTP calls
+│   │   └── components/       # UI components
+│   └── vite.config.ts        # Dev server, proxies /api → :8000
+├── notebooks/training/       # Fine-tuning notebooks (Colab)
+├── models/                   # GGUF model file (not in git, ~460 MB)
 ├── docker-compose.yml
 └── requirements.txt
 ```
@@ -101,14 +116,52 @@ To point the app at your local machine from an emulator:
 The most important concept in this codebase. **`HybridTutorService`** (`lib/services/hybrid_tutor_service.dart`) routes every AI request to either the on-device model or the remote backend:
 
 ```
-Desktop (Linux/Windows/macOS)?  → Always remote
-Forced mode set?                → Use that mode
-Network available?              → Remote (3-second liveness ping)
-No network / offline mode?      → Local GGUF (if downloaded)
-x86_64 arch (emulator)?        → Always remote (ARM64-only plugin)
+User forced mode?               → Use that mode (online/offline)
+Auto mode + network available?  → Remote (3-second liveness ping)
+Auto mode + no network?         → Local GGUF (if downloaded)
+Previous inference crashed?     → Block local, route to remote (SIGILL protection)
+Previous model load crashed?    → Block local, route to remote (OOM protection)
 ```
 
-`llama_flutter_android` only works on **ARM64 Android**. On x86_64 emulators it crashes the native plugin channel, which also breaks `path_provider`. See the Known Issues section.
+On-device inference uses **libchat** (our custom C API wrapping llama.cpp via `dart:ffi`). Works on **ARM64 Android** only.
+
+---
+
+## On-Device Inference: libchat C API
+
+Instead of third-party Flutter packages (which have broken builds, missing submodules, or wrong CPU targets), we compile llama.cpp directly from source into the APK via CMake.
+
+**Architecture:**
+```
+Dart (llm_service.dart) → dart:ffi → libchat.so → llama.cpp (compiled from source)
+```
+
+**API (4 functions):**
+```c
+chat_session * chat_create(const char * model_path, int n_ctx, int n_threads);
+char * chat_generate(chat_session * session, const char * user_message);
+void chat_string_free(char * str);
+void chat_destroy(chat_session * session);
+```
+
+**Key details:**
+- Chat template auto-detected from GGUF metadata (works with ChatML, Qwen, Llama, etc.)
+- Conversation history managed natively in `chat_session` struct
+- CPU-only, ARM64 baseline (no dotprod/i8mm/SVE — runs on all ARM64 devices)
+- No OpenMP, OpenCL, or Vulkan dependencies
+- Inference runs in `Isolate.run()` to keep Flutter UI responsive
+- FFI bindings re-resolved inside the isolate (Dart isolates don't share state)
+
+**Files:**
+- `socratic_app/android/app/src/main/cpp/libchat.h` — C API header
+- `socratic_app/android/app/src/main/cpp/libchat.cc` — Implementation
+- `socratic_app/android/app/src/main/cpp/CMakeLists.txt` — Build config
+- `socratic_app/android/app/src/main/cpp/LIBCHAT.md` — Full documentation
+- `socratic_app/lib/services/llm_service.dart` — Dart FFI bindings
+
+**llama.cpp source:** Located at `local_llama_cpp_dart/src/llama.cpp/` (referenced by CMakeLists.txt via relative path). Not checked into git (~208 MB).
+
+See `LIBCHAT.md` for the full standalone documentation including setup guide and Dart library plan.
 
 ---
 
@@ -117,11 +170,11 @@ x86_64 arch (emulator)?        → Always remote (ARM64-only plugin)
 | Service | Purpose |
 |---------|---------|
 | `HybridTutorService` | Routes LLM requests local vs remote |
-| `SocraticLlmService` (llm_service.dart) | On-device GGUF inference |
+| `SocraticLlmService` (llm_service.dart) | On-device GGUF inference via libchat FFI |
 | `RemoteLlmService` | HTTP calls to FastAPI `/chat` |
 | `AuthService` | Login/register, JWT, current user state |
 | `CourseService` | Load bundled courses; fetch remote courses |
-| `ModelDownloadService` | Download the GGUF model to device storage |
+| `ModelDownloadService` | Download the GGUF model from HuggingFace |
 | `ThemeService` | Light/dark mode (`ChangeNotifier`) |
 | `ProgressService` | Track completed lessons (SharedPreferences) |
 
@@ -221,18 +274,38 @@ POST /chat
 
 ## LLM & Prompting
 
-The model uses **ChatML format**:
+The model uses **ChatML format** (auto-detected from GGUF metadata by llama.cpp):
 ```
 <|im_start|>system
-You are a Socratic tutor...
+You are a Socratic AI tutor...
 <|im_end|>
 <|im_start|>user
 {message}
 <|im_end|>
 <|im_start|>assistant
+<think>reasoning here</think>
+Response here
 ```
 
-The system prompt enforces Socratic guardrails — the model must never directly answer questions, only guide with questions. `<think>...</think>` blocks in the output are stripped before sending to the client.
+**System prompt** (matches the training notebook `Qwen3_0_6B.ipynb`):
+```
+You are a Socratic AI tutor specializing in data science and machine learning.
+
+RULES:
+1. ALWAYS begin your response with a thinking block containing your reasoning.
+2. For conceptual questions: respond with ONE guiding question. NEVER give direct answers.
+   If the student is stuck, give a small hint before your question.
+3. For code questions: guide the student to write the code themselves through Socratic questioning.
+4. For casual messages (greetings, thanks, chitchat): respond warmly and naturally.
+
+Always start with a thinking block. This is mandatory.
+```
+
+**`<think>` block handling:**
+- The Qwen3 model generates `<think>...</think>` blocks as internal reasoning
+- `SocraticLlmService` strips them before yielding to the UI
+- `RemoteLlmService` strips them from backend responses
+- `ChatBubble._cleanMessage()` strips any that slip through as a final safety net
 
 Prompt templates live in `backend/ml/socratic_prompts.py`. Difficulty levels (beginner/intermediate/advanced) adjust how much scaffolding the prompt instructs the model to provide.
 
@@ -283,21 +356,17 @@ Light/dark mode is managed by `ThemeService` (a `ChangeNotifier`). Persist the p
 
 ## Known Issues & Workarounds
 
-### x86_64 emulator hang on startup
-`llama_flutter_android` is ARM64-only. On x86_64 emulators, the native crash blocks **all** Flutter plugin channels, including `path_provider`. This causes a hang during initialization.
+### Crash-loop protection
+On-device inference can crash the app (OOM during model load, SIGILL on incompatible CPUs). The app uses SharedPreferences flags to detect and block repeat crashes:
+- `SocraticLlmService._prefLoadingKey`: set before model load, cleared after. If OOM kills the process, flag persists → blocks local init on next launch.
+- `SocraticLlmService._prefInferenceKey`: same pattern for inference crashes (SIGILL).
+- User can clear flags via Settings → Reset Model.
 
-Workarounds already in place:
-- `SocraticLlmService._getApplicationDataDirectory()`: max 2 retries, 500 ms flat delay
-- `HybridTutorService.initialize()`: 5-second timeout on local engine init
-- `ModelDownloadService.isModelDownloaded()`: try/catch + 2-second timeout, returns `false` on any failure
-
-Use a physical ARM64 device or set the engine to "Online only" in Settings when running on x86_64.
-
-### Login stuck on login screen
-Caused by `isModelDownloaded()` throwing before the fix above. If you see this after a regression, check that `ModelDownloadService.isModelDownloaded()` still has its try/catch.
+### x86_64 emulator
+libchat is compiled for ARM64 only. On x86_64 emulators the native code won't load. Use a physical ARM64 device or set "Online only" in Settings.
 
 ### RenderFlex overflows
-Several screens have `Expanded`/`Flexible` wrappers added to prevent overflow on small screens. Don't remove them when refactoring layout code:
+Several screens have `Expanded`/`Flexible` wrappers to prevent overflow on small screens. Don't remove them:
 - `home_screen.dart` `_buildToolCard` — `Text` in Row
 - `chat_screen.dart` `_buildAppBar` — title Column inside AppBar Row
 - `profile_screen.dart` `_buildProgressItem` — label Text in Row
@@ -313,18 +382,20 @@ cd backend && uvicorn main:app --reload
 # Run Flutter app (debug)
 cd socratic_app && flutter run
 
+# Build release APK (arm64 only, ~60 MB without model)
+cd socratic_app && flutter build apk --release
+
+# Install on connected device
+flutter install --release
+
 # Rebuild launcher icons from assets/images/logo.png
 cd socratic_app && dart run flutter_launcher_icons
-
-# Build release APK
-cd socratic_app && flutter build apk --release --split-per-abi
 
 # Run backend in Docker
 docker-compose up --build
 
-# Check Flutter issues
-flutter analyze
-flutter doctor
+# Web app dev server
+cd webapp && npm run dev
 ```
 
 ---
@@ -351,10 +422,15 @@ The compose file mounts `./models/` so the GGUF file doesn't need to be inside t
 
 ### Android APK
 ```bash
-flutter build apk --release --split-per-abi
-# Outputs:
-#   build/app/outputs/flutter-apk/app-arm64-v8a-release.apk  ← use this one
-#   build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+cd socratic_app && flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk (~60 MB)
 ```
 
-Before building, set the production backend URL in `lib/utils/app_config.dart`.
+Before building:
+1. Set the production backend URL in `lib/utils/app_config.dart`
+2. Ensure `local_llama_cpp_dart/src/llama.cpp/` exists (CMake needs it)
+
+### Web App
+```bash
+cd webapp && npm run build    # → dist/ (static files, serve behind backend)
+```

@@ -1,23 +1,29 @@
 # Socratic AI Tutor - Mobile Frontend
 
-This is a Flutter-based mobile application that provides a **hybrid** Socratic tutoring experience. It intelligently alternates between local, on-device inference (powered by GGUF models) and remote cloud-based inference depending on the user's connectivity and hardware capabilities.
+Flutter-based mobile application that provides a **hybrid** Socratic tutoring experience. Intelligently alternates between local on-device inference and remote cloud-based inference depending on connectivity and hardware.
 
 ## Architecture
 
-The app uses a **Hybrid Infrastructure**:
-- **Local Engine**: Powered by `llama_flutter_android` using a quantized Qwen3-0.6B model.
-- **Remote Engine**: Connects to the FastAPI backend for higher-fidelity reasoning when online.
-- **Orchestration**: Managed by `HybridTutorService` which handles seamless switching between modes.
+- **Local Engine**: Custom `libchat` C API wrapping llama.cpp, compiled from source via CMake into the APK. Called from Dart via `dart:ffi`.
+- **Remote Engine**: Connects to the FastAPI backend for inference when online.
+- **Orchestration**: `HybridTutorService` handles seamless switching between modes.
+
+## On-Device Inference
+
+The app uses a custom thin C wrapper (`libchat`) around llama.cpp instead of third-party packages. See `android/app/src/main/cpp/LIBCHAT.md` for full documentation.
+
+```
+Dart (llm_service.dart) → dart:ffi → libchat.so → llama.cpp
+```
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+For release builds (ARM64 only):
+```bash
+flutter build apk --release
+```
