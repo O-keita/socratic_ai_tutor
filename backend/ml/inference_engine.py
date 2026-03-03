@@ -1,4 +1,5 @@
 import re
+import time
 
 from .model_loader import model_loader, load_config
 from .socratic_prompts import SocraticPromptBuilder
@@ -26,11 +27,19 @@ class InferenceEngine:
         history: list = None,
         max_tokens: int = None,
     ) -> dict:
+        t0 = time.perf_counter()
         response_raw = self.generate_response_raw(user_message, history, max_tokens)
+        response_time_ms = round((time.perf_counter() - t0) * 1000)
+
         content = response_raw["choices"][0]["message"]["content"]
 
         # Strip <think>...</think> reasoning block (Qwen3 chain-of-thought)
         content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+
+        # Token usage from llama-cpp-python response
+        usage = response_raw.get("usage", {})
+        prompt_tokens = usage.get("prompt_tokens", 0)
+        completion_tokens = usage.get("completion_tokens", 0)
 
         # Calculate metrics for the metadata
         # We include the current message in a temporary full history for analysis
@@ -39,11 +48,19 @@ class InferenceEngine:
         scaffolding_level = AdaptiveMetrics.recommend_scaffolding_level(full_history)
         sentiment = AdaptiveMetrics.analyze_sentiment(user_message)
 
+        # Check if response ends with a question (Socratic compliance)
+        stripped = content.rstrip()
+        ends_with_question = stripped.endswith("?") if stripped else False
+
         return {
             "response": content,
             "socratic_index": socratic_index,
             "scaffolding_level": scaffolding_level,
-            "sentiment": sentiment
+            "sentiment": sentiment,
+            "response_time_ms": response_time_ms,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "ends_with_question": ends_with_question,
         }
 
     def generate_response_raw(

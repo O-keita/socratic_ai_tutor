@@ -13,6 +13,10 @@ from typing import Optional, List, Dict
 _server_start: _dt = _dt.utcnow()
 _chat_request_count: int = 0
 
+# ── Chat performance logs (in-memory, capped ring buffer) ────────────────────
+_MAX_CHAT_LOGS = 500
+_chat_logs: List[Dict] = []
+
 import uvicorn
 from fastapi import FastAPI, HTTPException, Header, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -172,6 +176,10 @@ class ChatResponse(BaseModel):
     socratic_index: float
     scaffolding_level: str
     sentiment: str
+    response_time_ms: int = 0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    ends_with_question: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +264,8 @@ async def model_version():
 async def chat(payload: ChatRequest, request: Request, user: dict = Depends(_get_auth_user)):
     global _chat_request_count
     _chat_request_count += 1
-    logger.info("Chat request from %s: %.80s...", user.get("username", "?"), payload.message)
+    username = user.get("username", "?")
+    logger.info("Chat request from %s: %.80s...", username, payload.message)
     try:
         loop = asyncio.get_event_loop()
         data = await asyncio.wait_for(
@@ -271,12 +280,31 @@ async def chat(payload: ChatRequest, request: Request, user: dict = Depends(_get
             timeout=60.0,
         )
         logger.info("Chat response: %.80s...", data["response"])
+
+        # ── Store performance log ──
+        _chat_logs.append({
+            "timestamp": _dt.utcnow().isoformat(),
+            "username": username,
+            "message_preview": payload.message[:120],
+            "response_preview": data["response"][:120],
+            "socratic_index": data["socratic_index"],
+            "scaffolding_level": data["scaffolding_level"],
+            "sentiment": data["sentiment"],
+            "response_time_ms": data.get("response_time_ms", 0),
+            "prompt_tokens": data.get("prompt_tokens", 0),
+            "completion_tokens": data.get("completion_tokens", 0),
+            "ends_with_question": data.get("ends_with_question", False),
+        })
+        # Cap the ring buffer
+        if len(_chat_logs) > _MAX_CHAT_LOGS:
+            del _chat_logs[: len(_chat_logs) - _MAX_CHAT_LOGS]
+
         return ChatResponse(**data)
     except asyncio.TimeoutError:
-        logger.error("Chat timeout for user %s", user.get("username", "?"))
+        logger.error("Chat timeout for user %s", username)
         raise HTTPException(status_code=503, detail="The AI is taking too long. Please try again.")
     except Exception:
-        logger.exception("Chat error for user %s", user.get("username", "?"))
+        logger.exception("Chat error for user %s", username)
         raise HTTPException(status_code=500, detail="An error occurred. Please try again.")
 
 
@@ -427,6 +455,60 @@ async def admin_stats(x_admin_token: Optional[str] = Header(default=None)):
     }
 
 
+@app.get("/admin/api/chat-logs")
+async def admin_chat_logs(
+    x_admin_token: Optional[str] = Header(default=None),
+    limit: int = 200,
+):
+    """Return stored chat performance logs (most recent first) and aggregate stats."""
+    _require_admin(x_admin_token)
+    logs = list(reversed(_chat_logs[-limit:]))
+
+    # Compute aggregates
+    total = len(_chat_logs)
+    if total == 0:
+        return {
+            "logs": [],
+            "total": 0,
+            "aggregates": {
+                "avg_response_time_ms": 0,
+                "avg_socratic_index": 0,
+                "question_rate": 0,
+                "avg_prompt_tokens": 0,
+                "avg_completion_tokens": 0,
+                "scaffolding_distribution": {},
+                "sentiment_distribution": {},
+            },
+        }
+
+    avg_rt = round(sum(l["response_time_ms"] for l in _chat_logs) / total)
+    avg_si = round(sum(l["socratic_index"] for l in _chat_logs) / total, 3)
+    q_count = sum(1 for l in _chat_logs if l.get("ends_with_question"))
+    q_rate = round(q_count / total, 3)
+    avg_pt = round(sum(l["prompt_tokens"] for l in _chat_logs) / total)
+    avg_ct = round(sum(l["completion_tokens"] for l in _chat_logs) / total)
+
+    scaffolding_dist: Dict[str, int] = {}
+    sentiment_dist: Dict[str, int] = {}
+    for l in _chat_logs:
+        scaffolding_dist[l["scaffolding_level"]] = scaffolding_dist.get(l["scaffolding_level"], 0) + 1
+        sentiment_dist[l["sentiment"]] = sentiment_dist.get(l["sentiment"], 0) + 1
+
+    return {
+        "logs": logs,
+        "total": total,
+        "aggregates": {
+            "avg_response_time_ms": avg_rt,
+            "avg_socratic_index": avg_si,
+            "question_rate": q_rate,
+            "avg_prompt_tokens": avg_pt,
+            "avg_completion_tokens": avg_ct,
+            "scaffolding_distribution": scaffolding_dist,
+            "sentiment_distribution": sentiment_dist,
+        },
+    }
+
+
 @app.get("/admin/api/users")
 async def admin_list_users(x_admin_token: Optional[str] = Header(default=None)):
     _require_admin(x_admin_token)
@@ -519,6 +601,19 @@ async def admin_save_lesson(
     lesson_file.write_text(content)
     logger.info("Admin: saved lesson %s/%s", course_id, filename)
     return {"status": "ok"}
+
+
+@app.get("/admin/api/courses/{course_id}/lessons")
+async def admin_list_lessons(
+    course_id: str,
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    _require_admin(x_admin_token)
+    lessons_dir = _safe_path(_CONTENT_DIR, course_id, "lessons")
+    if not lessons_dir.exists():
+        return {"lessons": []}
+    files = sorted(f.name for f in lessons_dir.iterdir() if f.is_file() and f.suffix == ".md")
+    return {"lessons": files}
 
 
 @app.delete("/admin/api/courses/{course_id}/lessons/{filename}")

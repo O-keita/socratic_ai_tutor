@@ -5,200 +5,174 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Socratic AI Tutor — Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
             brand: {
-              50: '#fff7ed',
-              100: '#ffedd5',
-              500: '#f97316',
-              600: '#ea580c',
-              700: '#c2410c',
+              50:  '#FFF7ED',
+              100: '#FFEDD5',
+              200: '#FED7AA',
+              300: '#FDBA74',
+              400: '#FB923C',
+              500: '#F97316',
+              600: '#EA580C',
+              700: '#C2410C',
+            },
+            slate: {
+              900: '#0F172A',
+              800: '#1E293B',
+              700: '#334155',
+              600: '#475569',
+              500: '#64748B',
+              400: '#94A3B8',
+              300: '#CBD5E1',
+              200: '#E2E8F0',
+              100: '#F1F5F9',
+              50:  '#F8FAFC',
             }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
           }
         }
       }
     }
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
-    * {
-      font-family: 'Inter', sans-serif;
-    }
-    
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
     .gradient-bg {
-      background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #8b5cf6 100%);
+      background: linear-gradient(135deg, #F97316 0%, #FB923C 50%, #FDBA74 100%);
     }
-    
+
+    .gradient-bg-dark {
+      background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+    }
+
     .gradient-text {
-      background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #8b5cf6 100%);
+      background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    
+
     .stat-card {
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    
     .stat-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.15);
     }
-    
-    .nav-item {
-      transition: all 0.2s;
-    }
-    
+
+    .nav-item { transition: all 0.2s; }
     .nav-item:hover {
-      background-color: rgba(249, 115, 22, 0.1);
-      color: #f97316;
+      background-color: rgba(249, 115, 22, 0.08);
+      color: #F97316;
     }
-    
     .nav-item.active {
       background-color: rgba(249, 115, 22, 0.1);
-      color: #f97316;
+      color: #F97316;
       font-weight: 600;
-      border-left: 3px solid #f97316;
+      border-left: 3px solid #F97316;
     }
-    
-    .section-hidden {
-      display: none;
+
+    .section-hidden { display: none; }
+
+    /* Toast notifications */
+    .toast {
+      animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
     }
+    @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } }
+    @keyframes fadeOut { to { opacity: 0; } }
   </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-50 font-sans">
 
   <!-- Auth Screen -->
   <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
     <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-slate-200">
-      <!-- Logo -->
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-bg mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-          </svg>
-        </div>
+        <img src="/admin/logo" alt="Socratic AI" class="w-16 h-16 mx-auto mb-4 rounded-2xl">
         <h1 class="text-2xl font-bold text-slate-900">Socratic AI Tutor</h1>
-        <p class="text-slate-600 text-sm mt-1">Admin Dashboard</p>
+        <p class="text-slate-500 text-sm mt-1">Admin Dashboard</p>
       </div>
 
-      <!-- Login Form -->
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
-          <input
-            id="admin-email-input"
-            type="email"
-            placeholder="admin@example.com"
-            class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition"
-          />
+          <input id="admin-email-input" type="email" placeholder="admin@example.com"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition" />
         </div>
-
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Password</label>
-          <input
-            id="admin-password-input"
-            type="password"
-            placeholder="Enter your password"
-            class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition"
-          />
+          <input id="admin-password-input" type="password" placeholder="Enter your password"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition" />
         </div>
-
-        <button
-          onclick="login()"
-          class="w-full gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition"
-        >
+        <button onclick="login()" class="w-full gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">
           Sign In
         </button>
-
-        <p id="auth-error" class="text-red-600 text-sm text-center hidden"></p>
+        <p id="auth-error" class="text-red-500 text-sm text-center hidden"></p>
       </div>
 
-      <div class="mt-6 pt-6 border-t border-slate-200">
-        <p class="text-xs text-slate-500 text-center">
-          Admin credentials from <code class="bg-slate-100 px-2 py-1 rounded">ADMIN_EMAIL</code> and <code class="bg-slate-100 px-2 py-1 rounded">ADMIN_PASSWORD</code> env vars
+      <div class="mt-6 pt-6 border-t border-slate-100">
+        <p class="text-xs text-slate-400 text-center">
+          Credentials from <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">ADMIN_EMAIL</code> &amp;
+          <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">ADMIN_PASSWORD</code> env vars
         </p>
       </div>
     </div>
   </div>
 
-  <!-- Main App -->
+  <!-- Main App Shell -->
   <div id="app-shell" class="hidden fixed inset-0 flex">
     <!-- Sidebar -->
     <aside class="w-64 bg-white border-r border-slate-200 flex flex-col h-screen flex-shrink-0">
-      <!-- Logo -->
-      <div class="p-6 border-b border-slate-200">
+      <div class="p-6 border-b border-slate-100">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-          </div>
+          <img src="/admin/logo" alt="Logo" class="w-10 h-10 rounded-xl">
           <div>
             <div class="font-bold text-slate-900 text-sm">Socratic AI</div>
-            <div class="text-xs text-slate-500">Admin Panel</div>
+            <div class="text-xs text-slate-400">Admin Panel</div>
           </div>
         </div>
       </div>
 
-      <!-- Navigation -->
       <nav class="flex-1 p-4 space-y-1">
-        <button onclick="showSection('dashboard')" class="nav-item active w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-          </svg>
+        <button onclick="showSection('dashboard')" class="nav-item active w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
           Dashboard
         </button>
-
-        <button onclick="showSection('courses')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-          </svg>
+        <button onclick="showSection('courses')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
           Courses
         </button>
-
-        <button onclick="showSection('users')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-          </svg>
+        <button onclick="showSection('users')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
           Users
         </button>
-
-        <button onclick="showSection('logs')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-          </svg>
+        <button onclick="showSection('logs')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
           Chat Logs
         </button>
-
-        <button onclick="showSection('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg text-slate-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
+        <button onclick="showSection('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           Settings
         </button>
       </nav>
 
-      <!-- Footer -->
-      <div class="p-4 border-t border-slate-200">
-        <div class="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-lg mb-3">
-          <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-white text-sm font-bold">
-            A
-          </div>
+      <div class="p-4 border-t border-slate-100">
+        <div class="flex items-center gap-3 px-3 py-2 bg-brand-50 rounded-xl mb-3">
+          <div class="w-8 h-8 rounded-full gradient-bg-dark flex items-center justify-center text-white text-sm font-bold">A</div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-semibold text-slate-900">Admin</div>
-            <div class="text-xs text-slate-500">Authenticated</div>
+            <div class="text-xs text-slate-400">Authenticated</div>
           </div>
         </div>
-        <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-          </svg>
+        <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-xl transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
           Sign Out
         </button>
       </div>
@@ -206,189 +180,188 @@
 
     <!-- Main Content -->
     <main class="flex-1 overflow-y-auto bg-slate-50">
-      <!-- Dashboard Section -->
+
+      <!-- ════════════ DASHBOARD ════════════ -->
       <section id="dashboard-section" class="p-8">
         <div class="max-w-7xl mx-auto">
-          <!-- Header -->
           <div class="mb-8">
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
-            <p class="text-slate-600">Welcome to the Socratic AI Tutor admin panel</p>
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Dashboard</h1>
+            <p class="text-slate-500">Welcome to the Socratic AI Tutor admin panel</p>
           </div>
 
           <!-- Stats Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Total Students -->
-            <div class="stat-card bg-white rounded-xl p-6 border border-slate-200">
-              <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                  </svg>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <div class="stat-card bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                 </div>
               </div>
-              <div class="text-3xl font-bold text-slate-900 mb-1" id="stat-students">0</div>
-              <div class="text-sm text-slate-600">Total Students</div>
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="stat-students">0</div>
+              <div class="text-sm text-slate-400">Total Students</div>
             </div>
-
-            <!-- Total Courses -->
-            <div class="stat-card bg-white rounded-xl p-6 border border-slate-200">
-              <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
-                  <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                  </svg>
+            <div class="stat-card bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                 </div>
               </div>
-              <div class="text-3xl font-bold text-slate-900 mb-1" id="stat-courses">0</div>
-              <div class="text-sm text-slate-600">Total Courses</div>
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="stat-courses">0</div>
+              <div class="text-sm text-slate-400">Total Courses</div>
             </div>
-
-            <!-- Chat Requests -->
-            <div class="stat-card bg-white rounded-xl p-6 border border-slate-200">
-              <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
-                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                  </svg>
+            <div class="stat-card bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                 </div>
               </div>
-              <div class="text-3xl font-bold text-slate-900 mb-1" id="stat-chats">0</div>
-              <div class="text-sm text-slate-600">Chats (since restart)</div>
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="stat-chats">0</div>
+              <div class="text-sm text-slate-400">Chats (since restart)</div>
             </div>
-
-            <!-- Total Lessons -->
-            <div class="stat-card bg-white rounded-xl p-6 border border-slate-200">
-              <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
-                  <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
+            <div class="stat-card bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </div>
               </div>
-              <div class="text-3xl font-bold text-slate-900 mb-1" id="stat-lessons">0</div>
-              <div class="text-sm text-slate-600">Total Lessons</div>
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="stat-lessons">0</div>
+              <div class="text-sm text-slate-400">Total Lessons</div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Overview Doughnut -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-lg font-bold text-slate-900 mb-4">Content Overview</h2>
+              <div class="flex items-center justify-center" style="height:220px">
+                <canvas id="chart-overview"></canvas>
+              </div>
+            </div>
+            <!-- Server Health Bar Chart -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-lg font-bold text-slate-900 mb-4">Server Health</h2>
+              <div style="height:220px">
+                <canvas id="chart-health"></canvas>
+              </div>
             </div>
           </div>
 
           <!-- Model Info + Recent Users -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Model Info -->
-            <div class="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 class="text-xl font-bold text-slate-900 mb-4">Model Info</h2>
-              <div id="model-info" class="space-y-3 text-sm">
-                <p class="text-slate-500">Loading...</p>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-lg font-bold text-slate-900 mb-4">Model Info</h2>
+              <div id="model-info" class="space-y-1 text-sm">
+                <p class="text-slate-400">Loading...</p>
               </div>
             </div>
-
-            <!-- Recent Users -->
-            <div class="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 class="text-xl font-bold text-slate-900 mb-4">Recent Users</h2>
-              <div id="recent-users" class="space-y-3">
-                <p class="text-slate-500 text-sm">Loading...</p>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-lg font-bold text-slate-900 mb-4">Recent Users</h2>
+              <div id="recent-users" class="space-y-2">
+                <p class="text-slate-400 text-sm">Loading...</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Courses Section -->
+      <!-- ════════════ COURSES ════════════ -->
       <section id="courses-section" class="p-8 section-hidden">
         <div class="max-w-7xl mx-auto">
-          <!-- Header -->
           <div class="flex items-center justify-between mb-8">
             <div>
-              <h1 class="text-3xl font-bold text-slate-900 mb-2">Courses</h1>
-              <p class="text-slate-600">Manage your course content and lessons</p>
+              <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Courses</h1>
+              <p class="text-slate-500">Manage your course content and lessons</p>
             </div>
-            <button onclick="showUploadModal()" class="flex items-center gap-2 px-6 py-3 gradient-bg text-white font-semibold rounded-lg hover:opacity-90 transition">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
+            <button onclick="showUploadModal()" class="flex items-center gap-2 px-5 py-2.5 gradient-bg-dark text-white font-semibold rounded-xl hover:opacity-90 transition text-sm">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
               Upload Course
             </button>
           </div>
-
-          <!-- Courses Grid -->
           <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Courses will be loaded here dynamically -->
             <div class="text-center py-12 col-span-full">
-              <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-              </svg>
-              <p class="text-slate-500">Loading courses...</p>
+              <p class="text-slate-400">Loading courses...</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Users Section -->
+      <!-- ════════════ USERS ════════════ -->
       <section id="users-section" class="p-8 section-hidden">
         <div class="max-w-7xl mx-auto">
-          <!-- Header -->
-          <div class="mb-8">
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">Users</h1>
-            <p class="text-slate-600">View all registered students</p>
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Users</h1>
+              <p class="text-slate-500">View all registered students</p>
+            </div>
+            <div class="text-sm text-slate-400" id="users-count-label"></div>
           </div>
 
-          <!-- Users Table -->
-          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <table class="w-full">
-              <thead class="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">User</th>
-                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Joined</th>
-                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="users-table-body" class="divide-y divide-slate-200">
-                <tr>
-                  <td colspan="4" class="px-6 py-12 text-center text-slate-500">
-                    Loading users...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- User stats mini-charts -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-2xl border border-slate-100 p-5 col-span-1">
+              <div class="text-sm font-semibold text-slate-700 mb-2">Registration Timeline</div>
+              <div style="height:140px"><canvas id="chart-users-timeline"></canvas></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-5 col-span-2">
+              <!-- Users Table -->
+              <div class="overflow-hidden">
+                <table class="w-full">
+                  <thead class="border-b border-slate-100">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">User</th>
+                      <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Joined</th>
+                      <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                      <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="users-table-body" class="divide-y divide-slate-50">
+                    <tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">Loading users...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Chat Logs Section -->
+      <!-- ════════════ CHAT LOGS ════════════ -->
       <section id="logs-section" class="p-8 section-hidden">
         <div class="max-w-7xl mx-auto">
-          <!-- Header -->
           <div class="mb-8">
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">Chat Logs</h1>
-            <p class="text-slate-600">Chat request statistics since server start</p>
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Chat Logs</h1>
+            <p class="text-slate-500">Chat request statistics since server start</p>
           </div>
 
-          <!-- Chat Stats -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white rounded-xl p-6 border border-slate-200">
-              <div class="text-2xl font-bold text-slate-900 mb-1" id="log-stat-chats">0</div>
-              <div class="text-sm text-slate-600">Chat Requests (since restart)</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+            <div class="bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="log-stat-chats">0</div>
+              <div class="text-sm text-slate-400">Chat Requests (since restart)</div>
             </div>
-            <div class="bg-white rounded-xl p-6 border border-slate-200">
-              <div class="text-2xl font-bold text-slate-900 mb-1" id="log-stat-users">0</div>
-              <div class="text-sm text-slate-600">Registered Users</div>
+            <div class="bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="log-stat-users">0</div>
+              <div class="text-sm text-slate-400">Registered Users</div>
             </div>
-            <div class="bg-white rounded-xl p-6 border border-slate-200">
-              <div class="text-2xl font-bold text-slate-900 mb-1" id="log-stat-model">—</div>
-              <div class="text-sm text-slate-600">Model Status</div>
+            <div class="bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="text-3xl font-extrabold mb-0.5" id="log-stat-model">—</div>
+              <div class="text-sm text-slate-400">Model Status</div>
             </div>
           </div>
 
-          <!-- Info card -->
-          <div class="bg-white rounded-xl border border-slate-200 p-6">
+          <!-- Chat activity visualization -->
+          <div class="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Session Activity</h2>
+            <div style="height:200px"><canvas id="chart-chat-activity"></canvas></div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-100 p-6">
             <div class="flex items-start gap-3">
-              <svg class="w-6 h-6 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
+              <svg class="w-5 h-5 text-brand-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               <div>
-                <h3 class="font-semibold text-slate-900 mb-1">Chat Log Persistence</h3>
-                <p class="text-sm text-slate-600">
+                <h3 class="font-semibold text-slate-900 mb-1 text-sm">Chat Log Persistence</h3>
+                <p class="text-sm text-slate-500">
                   Chat statistics are tracked per server session. The counter resets when the server restarts.
-                  To persist conversation logs for research, consider enabling file-based or database logging in the backend configuration.
+                  To persist conversation logs for research, consider enabling database logging in the backend.
                 </p>
               </div>
             </div>
@@ -396,32 +369,25 @@
         </div>
       </section>
 
-      <!-- Settings Section -->
+      <!-- ════════════ SETTINGS ════════════ -->
       <section id="settings-section" class="p-8 section-hidden">
         <div class="max-w-3xl mx-auto">
-          <!-- Header -->
           <div class="mb-8">
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">Settings</h1>
-            <p class="text-slate-600">Server and model configuration (read-only)</p>
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Settings</h1>
+            <p class="text-slate-500">Server and model configuration (read-only)</p>
           </div>
 
-          <!-- Server Info -->
-          <div class="bg-white rounded-xl border border-slate-200 p-6 space-y-6 mb-6">
-            <div>
-              <h3 class="text-lg font-semibold text-slate-900 mb-4">Server Info</h3>
-              <div class="space-y-3" id="settings-server-info">
-                <p class="text-slate-500 text-sm">Loading...</p>
-              </div>
+          <div class="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Server Info</h3>
+            <div id="settings-server-info" class="space-y-1 text-sm">
+              <p class="text-slate-400">Loading...</p>
             </div>
           </div>
 
-          <!-- Model Configuration -->
-          <div class="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
-            <div>
-              <h3 class="text-lg font-semibold text-slate-900 mb-4">Model Configuration</h3>
-              <div class="space-y-3" id="settings-model-info">
-                <p class="text-slate-500 text-sm">Loading...</p>
-              </div>
+          <div class="bg-white rounded-2xl border border-slate-100 p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Model Configuration</h3>
+            <div id="settings-model-info" class="space-y-1 text-sm">
+              <p class="text-slate-400">Loading...</p>
             </div>
           </div>
         </div>
@@ -435,595 +401,614 @@
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold text-slate-900">Upload New Course</h2>
         <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-
-      <form onsubmit="uploadCourse(event)" class="space-y-6">
+      <form onsubmit="uploadCourse(event)" class="space-y-5">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Course ID</label>
-          <input type="text" id="course-id" placeholder="e.g., intro-to-ml" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-          <p class="text-xs text-slate-500 mt-1">Unique identifier (lowercase, hyphens only)</p>
+          <input type="text" id="course-id" placeholder="e.g., intro-to-ml" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-400 mt-1">Unique identifier (lowercase, hyphens only)</p>
         </div>
-
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Course Title</label>
-          <input type="text" id="course-title" placeholder="e.g., Introduction to Machine Learning" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+          <input type="text" id="course-title" placeholder="e.g., Introduction to Machine Learning" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
         </div>
-
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
-          <textarea id="course-description" rows="3" placeholder="Brief course description..." required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+          <textarea id="course-description" rows="3" placeholder="Brief course description..." required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
         </div>
-
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">Course JSON File</label>
-          <input type="file" id="course-json" accept=".json" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-          <p class="text-xs text-slate-500 mt-1">Upload the course.json file with modules and lessons</p>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Course JSON File (Optional)</label>
+          <input type="file" id="course-json" accept=".json" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-400 mt-1">Upload a course.json with modules structure, or leave empty to create a blank course</p>
         </div>
-
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Lesson Files (Optional)</label>
-          <input type="file" id="lesson-files" accept=".md" multiple class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-          <p class="text-xs text-slate-500 mt-1">Upload markdown (.md) lesson files</p>
+          <input type="file" id="lesson-files" accept=".md" multiple class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-400 mt-1">Upload markdown (.md) lesson files</p>
         </div>
-
-        <div class="flex gap-3 pt-4">
-          <button type="submit" class="flex-1 gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition">
-            Upload Course
-          </button>
-          <button type="button" onclick="closeUploadModal()" class="px-6 py-3 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition">
-            Cancel
-          </button>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="flex-1 gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">Upload Course</button>
+          <button type="button" onclick="closeUploadModal()" class="px-6 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <script>
     let ADMIN_TOKEN = '';
     const API_BASE = window.location.origin;
 
-    // Auth Functions
+    // ── Toast helper ─────────────────────────────────────────────────────
+    function toast(msg, type = 'success') {
+      const colors = { success: 'bg-emerald-500', error: 'bg-red-500', info: 'bg-brand-500' };
+      const el = document.createElement('div');
+      el.className = `toast fixed top-4 right-4 z-[999] ${colors[type] || colors.info} text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium`;
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    // ── Auth ─────────────────────────────────────────────────────────────
     async function login() {
       const email = document.getElementById('admin-email-input').value.trim();
       const password = document.getElementById('admin-password-input').value;
       const errorEl = document.getElementById('auth-error');
-
-      if (!email || !password) {
-        errorEl.textContent = 'Please enter both email and password';
-        errorEl.classList.remove('hidden');
-        return;
-      }
-
+      if (!email || !password) { errorEl.textContent = 'Please enter both email and password'; errorEl.classList.remove('hidden'); return; }
       try {
-        const response = await fetch(`${API_BASE}/admin/api/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          ADMIN_TOKEN = data.token;
+        const r = await fetch(`${API_BASE}/admin/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+        if (r.ok) {
+          const d = await r.json();
+          ADMIN_TOKEN = d.token;
           sessionStorage.setItem('admin_token', ADMIN_TOKEN);
           document.getElementById('auth-screen').classList.add('hidden');
           document.getElementById('app-shell').classList.remove('hidden');
           loadDashboardData();
         } else {
-          const error = await response.json();
-          errorEl.textContent = error.detail || 'Invalid credentials';
+          const e = await r.json();
+          errorEl.textContent = e.detail || 'Invalid credentials';
           errorEl.classList.remove('hidden');
         }
-      } catch (error) {
+      } catch (_) {
         errorEl.textContent = 'Connection error. Is the backend running?';
         errorEl.classList.remove('hidden');
       }
     }
 
     function logout() {
-      fetch(`${API_BASE}/admin/api/logout`, {
-        method: 'POST',
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
-      }).finally(() => {
-        sessionStorage.removeItem('admin_token');
-        ADMIN_TOKEN = '';
-        document.getElementById('auth-screen').classList.remove('hidden');
-        document.getElementById('app-shell').classList.add('hidden');
-        document.getElementById('admin-email-input').value = '';
-        document.getElementById('admin-password-input').value = '';
-      });
+      fetch(`${API_BASE}/admin/api/logout`, { method: 'POST', headers: { 'X-Admin-Token': ADMIN_TOKEN } })
+        .finally(() => {
+          sessionStorage.removeItem('admin_token');
+          ADMIN_TOKEN = '';
+          document.getElementById('auth-screen').classList.remove('hidden');
+          document.getElementById('app-shell').classList.add('hidden');
+          document.getElementById('admin-email-input').value = '';
+          document.getElementById('admin-password-input').value = '';
+        });
     }
 
-    // Check for saved token on load
     window.addEventListener('DOMContentLoaded', () => {
-      const savedToken = sessionStorage.getItem('admin_token');
-      if (savedToken) {
-        ADMIN_TOKEN = savedToken;
-        // Verify token is still valid
-        fetch(`${API_BASE}/admin/api/me`, {
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
-        }).then(response => {
-          if (response.ok) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-shell').classList.remove('hidden');
-            loadDashboardData();
-          } else {
-            sessionStorage.removeItem('admin_token');
-            ADMIN_TOKEN = '';
-          }
-        });
+      const saved = sessionStorage.getItem('admin_token');
+      if (saved) {
+        ADMIN_TOKEN = saved;
+        fetch(`${API_BASE}/admin/api/me`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } })
+          .then(r => { if (r.ok) { document.getElementById('auth-screen').classList.add('hidden'); document.getElementById('app-shell').classList.remove('hidden'); loadDashboardData(); } else { sessionStorage.removeItem('admin_token'); ADMIN_TOKEN = ''; } });
       }
     });
 
-    // Navigation
+    // ── Navigation ───────────────────────────────────────────────────────
     function showSection(section) {
-      // Hide all sections
       document.querySelectorAll('main > section').forEach(s => s.classList.add('section-hidden'));
-
-      // Remove active class from all nav items
-      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-
-      // Show selected section
-      const target = document.getElementById(`${section}-section`);
-      if (target) target.classList.remove('section-hidden');
-
-      // Add active class to the matching nav item
-      const navButtons = document.querySelectorAll('.nav-item');
-      navButtons.forEach(btn => {
-        if (btn.getAttribute('onclick') === `showSection('${section}')`) {
-          btn.classList.add('active');
-        }
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      const t = document.getElementById(`${section}-section`);
+      if (t) t.classList.remove('section-hidden');
+      document.querySelectorAll('.nav-item').forEach(b => {
+        if (b.getAttribute('onclick') === `showSection('${section}')`) b.classList.add('active');
       });
-
-      // Load section-specific data
       if (section === 'dashboard') loadDashboardData();
-      if (section === 'courses') loadCourses();
-      if (section === 'users') loadUsers();
-      if (section === 'logs') loadChatLogs();
-      if (section === 'settings') loadSettings();
+      if (section === 'courses')   loadCourses();
+      if (section === 'users')     loadUsers();
+      if (section === 'logs')      loadChatLogs();
+      if (section === 'settings')  loadSettings();
     }
 
-    // Load Dashboard Data
+    // ── Chart instances ──────────────────────────────────────────────────
+    let chartOverview = null, chartHealth = null, chartUsersTimeline = null, chartChatActivity = null;
+    const ORANGE = '#F97316', ORANGE_LIGHT = '#FB923C', ORANGE_PALE = '#FDBA74',
+          SLATE = '#0F172A', EMERALD = '#10B981', AMBER = '#F59E0B', RED = '#EF4444',
+          ORANGE_BG = 'rgba(249,115,22,0.1)', EMERALD_BG = 'rgba(16,185,129,0.1)';
+
+    function destroyChart(c) { if (c) c.destroy(); return null; }
+
+    // ── Dashboard ────────────────────────────────────────────────────────
     async function loadDashboardData() {
       try {
-        const resp = await fetch(`${API_BASE}/admin/api/stats`, {
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
-        });
-        if (!resp.ok) return;
-        const s = await resp.json();
+        const r = await fetch(`${API_BASE}/admin/api/stats`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const s = await r.json();
 
-        // Stat cards
         document.getElementById('stat-students').textContent = s.total_users || 0;
-        document.getElementById('stat-courses').textContent = s.total_courses || 0;
-        document.getElementById('stat-chats').textContent = s.chats_since_restart || 0;
-        document.getElementById('stat-lessons').textContent = s.total_lessons || 0;
+        document.getElementById('stat-courses').textContent  = s.total_courses || 0;
+        document.getElementById('stat-chats').textContent    = s.chats_since_restart || 0;
+        document.getElementById('stat-lessons').textContent  = s.total_lessons || 0;
 
         // Model info
-        const hrs = Math.floor((s.uptime_seconds || 0) / 3600);
-        const mins = Math.floor(((s.uptime_seconds || 0) % 3600) / 60);
-        document.getElementById('model-info').innerHTML = `
-          <div class="flex justify-between py-2 border-b border-slate-100">
-            <span class="text-slate-500">Model</span>
-            <span class="font-medium text-slate-900">${s.model_name || '—'}</span>
-          </div>
-          <div class="flex justify-between py-2 border-b border-slate-100">
-            <span class="text-slate-500">Status</span>
-            <span class="font-medium ${s.model_loaded ? 'text-green-600' : 'text-red-600'}">${s.model_loaded ? 'Loaded' : 'Not loaded'}</span>
-          </div>
-          <div class="flex justify-between py-2 border-b border-slate-100">
-            <span class="text-slate-500">Context</span>
-            <span class="font-medium text-slate-900">${s.n_ctx || '—'} tokens</span>
-          </div>
-          <div class="flex justify-between py-2 border-b border-slate-100">
-            <span class="text-slate-500">Temperature</span>
-            <span class="font-medium text-slate-900">${s.temperature || '—'}</span>
-          </div>
-          <div class="flex justify-between py-2 border-b border-slate-100">
-            <span class="text-slate-500">Max tokens</span>
-            <span class="font-medium text-slate-900">${s.max_tokens || '—'}</span>
-          </div>
-          <div class="flex justify-between py-2">
-            <span class="text-slate-500">Uptime</span>
-            <span class="font-medium text-slate-900">${hrs}h ${mins}m</span>
-          </div>
-        `;
+        const hrs = Math.floor((s.uptime_seconds||0)/3600);
+        const mins = Math.floor(((s.uptime_seconds||0)%3600)/60);
+        const row = (l,v) => `<div class="flex justify-between py-2 border-b border-slate-50"><span class="text-slate-400">${l}</span><span class="font-medium text-slate-800">${v}</span></div>`;
+        document.getElementById('model-info').innerHTML =
+          row('Model', s.model_name||'—') +
+          row('Status', s.model_loaded ? '<span class="text-emerald-500 font-semibold">Loaded</span>' : '<span class="text-red-500 font-semibold">Not loaded</span>') +
+          row('Context', `${s.n_ctx||'—'} tokens`) +
+          row('Temperature', s.temperature||'—') +
+          row('Max Tokens', s.max_tokens||'—') +
+          row('Uptime', `${hrs}h ${mins}m`);
 
         // Recent users
         const users = s.recent_users || [];
-        if (users.length === 0) {
-          document.getElementById('recent-users').innerHTML = '<p class="text-slate-500 text-sm">No users yet</p>';
-        } else {
-          document.getElementById('recent-users').innerHTML = users.map(u => `
-            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-              <div class="w-9 h-9 rounded-full gradient-bg flex items-center justify-center text-white text-sm font-bold">
-                ${(u.username || 'U').charAt(0).toUpperCase()}
-              </div>
+        document.getElementById('recent-users').innerHTML = users.length === 0
+          ? '<p class="text-slate-400 text-sm">No users yet</p>'
+          : users.map(u => `
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+              <div class="w-9 h-9 rounded-full gradient-bg-dark flex items-center justify-center text-white text-xs font-bold">${(u.username||'U').charAt(0).toUpperCase()}</div>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-semibold text-slate-900">${u.username || 'Unknown'}</div>
-                <div class="text-xs text-slate-500">${u.email || ''}</div>
+                <div class="text-sm font-semibold text-slate-800">${u.username||'Unknown'}</div>
+                <div class="text-xs text-slate-400">${u.email||''}</div>
               </div>
-              <div class="text-xs text-slate-400">${u.created_at ? new Date(u.created_at).toLocaleDateString() : ''}</div>
-            </div>
-          `).join('');
-        }
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      }
+              <div class="text-xs text-slate-300">${u.created_at ? new Date(u.created_at).toLocaleDateString() : ''}</div>
+            </div>`).join('');
+
+        // ── Overview Doughnut ──
+        chartOverview = destroyChart(chartOverview);
+        const ctx1 = document.getElementById('chart-overview').getContext('2d');
+        chartOverview = new Chart(ctx1, {
+          type: 'doughnut',
+          data: {
+            labels: ['Users', 'Courses', 'Lessons', 'Chats'],
+            datasets: [{
+              data: [s.total_users||0, s.total_courses||0, s.total_lessons||0, s.chats_since_restart||0],
+              backgroundColor: [ORANGE, ORANGE_LIGHT, ORANGE_PALE, EMERALD],
+              borderWidth: 0,
+              hoverOffset: 6,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, cutout: '65%',
+            plugins: {
+              legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10, font: { family: 'Plus Jakarta Sans', size: 12 } } }
+            }
+          }
+        });
+
+        // ── Server Health Bar ──
+        chartHealth = destroyChart(chartHealth);
+        const ctx2 = document.getElementById('chart-health').getContext('2d');
+        chartHealth = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+            labels: ['Uptime (min)', 'Context (k)', 'Threads', 'GPU Layers'],
+            datasets: [{
+              data: [Math.round((s.uptime_seconds||0)/60), Math.round((s.n_ctx||0)/1000), s.n_threads||0, s.n_gpu_layers||0],
+              backgroundColor: [ORANGE_BG, ORANGE_BG, ORANGE_BG, ORANGE_BG],
+              borderColor: [ORANGE, ORANGE_LIGHT, ORANGE_PALE, ORANGE],
+              borderWidth: 2, borderRadius: 8, barPercentage: 0.6,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } } },
+              y: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 12, weight: 500 } } }
+            }
+          }
+        });
+      } catch (e) { console.error('Dashboard error:', e); }
     }
 
-    // Load Courses
+    // ── Courses ──────────────────────────────────────────────────────────
     async function loadCourses() {
       const grid = document.getElementById('courses-grid');
-      grid.innerHTML = '<div class="text-center py-12 col-span-full"><p class="text-slate-500">Loading courses...</p></div>';
-
+      grid.innerHTML = '<div class="text-center py-12 col-span-full"><p class="text-slate-400">Loading courses...</p></div>';
       try {
-        const response = await fetch(`${API_BASE}/admin/api/courses`, {
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const courses = data.courses || [];
-          
-          if (courses.length === 0) {
-            grid.innerHTML = `
-              <div class="text-center py-12 col-span-full">
-                <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
-                <p class="text-slate-500 mb-4">No courses yet</p>
-                <button onclick="showUploadModal()" class="gradient-bg text-white px-6 py-2 rounded-lg hover:opacity-90 transition">Upload Your First Course</button>
-              </div>
-            `;
-          } else {
-            grid.innerHTML = courses.map(course => {
-              // Count lessons
-              let lessonCount = 0;
-              if (course.modules) {
-                course.modules.forEach(module => {
-                  if (module.chapters) {
-                    module.chapters.forEach(chapter => {
-                      if (chapter.lessons) {
-                        lessonCount += chapter.lessons.length;
-                      }
-                    });
-                  }
-                });
-              }
-              
-              const difficultyColors = {
-                'beginner': 'bg-green-100 text-green-800',
-                'intermediate': 'bg-blue-100 text-blue-800',
-                'advanced': 'bg-purple-100 text-purple-800'
-              };
-              
-              const difficulty = course.difficulty || 'intermediate';
-              const difficultyClass = difficultyColors[difficulty] || difficultyColors['intermediate'];
-              
-              return `
-                <div class="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition">
-                  <div class="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    </svg>
-                  </div>
-                  <div class="mb-2">
-                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${difficultyClass}">
-                      ${difficulty}
-                    </span>
-                  </div>
-                  <h3 class="font-bold text-slate-900 mb-2">${course.title || course.id}</h3>
-                  <p class="text-sm text-slate-600 mb-4 line-clamp-2">${course.description || 'No description'}</p>
-                  <div class="flex items-center justify-between text-xs text-slate-500 mb-4">
-                    <span>${(course.modules || []).length} modules</span>
-                    <span>${lessonCount} lessons</span>
-                  </div>
-                  <div class="flex gap-2">
-                    <button onclick="viewCourseDetails('${course.id}')" class="flex-1 px-3 py-2 text-sm border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition">
-                      View
-                    </button>
-                    <button onclick="deleteCourse('${course.id}')" class="px-3 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              `;
-            }).join('');
-          }
-          
-          // Update dashboard stat
-          document.getElementById('stat-courses').textContent = courses.length;
+        const r = await fetch(`${API_BASE}/admin/api/courses`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const courses = (await r.json()).courses || [];
+        if (courses.length === 0) {
+          grid.innerHTML = `<div class="text-center py-16 col-span-full">
+            <svg class="w-14 h-14 text-slate-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <p class="text-slate-400 mb-4">No courses yet</p>
+            <button onclick="showUploadModal()" class="gradient-bg-dark text-white px-6 py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold">Upload Your First Course</button>
+          </div>`;
+          return;
         }
-      } catch (error) {
-        console.error('Error loading courses:', error);
-        grid.innerHTML = '<div class="text-center py-12 col-span-full text-red-600">Error loading courses</div>';
+        grid.innerHTML = courses.map(c => {
+          let lc = 0;
+          (c.modules||[]).forEach(m => (m.chapters||[]).forEach(ch => { lc += (ch.lessons||[]).length; }));
+          const diff = c.difficulty || 'intermediate';
+          const dc = { beginner: 'bg-emerald-50 text-emerald-700', intermediate: 'bg-brand-50 text-brand-700', advanced: 'bg-slate-800 text-white' };
+          return `<div class="bg-white rounded-2xl border border-slate-100 p-6 hover:shadow-lg hover:shadow-brand-500/5 transition">
+            <div class="w-11 h-11 rounded-xl gradient-bg-dark flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <div class="mb-2"><span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${dc[diff]||dc.intermediate}">${diff}</span></div>
+            <h3 class="font-bold text-slate-900 mb-1">${c.title||c.id}</h3>
+            <p class="text-sm text-slate-400 mb-4 line-clamp-2">${c.description||'No description'}</p>
+            <div class="flex items-center justify-between text-xs text-slate-300 mb-4">
+              <span>${(c.modules||[]).length} modules</span><span>${lc} lessons</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="viewCourseDetails('${c.id}')" class="flex-1 px-3 py-2 text-xs border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition font-medium">View</button>
+              <button onclick="editCourse('${c.id}')" class="flex-1 px-3 py-2 text-xs border border-brand-200 text-brand-600 rounded-xl hover:bg-brand-50 transition font-medium">Edit</button>
+              <button onclick="deleteCourse('${c.id}')" class="px-3 py-2 text-xs text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition font-medium">Delete</button>
+            </div>
+          </div>`;
+        }).join('');
+        document.getElementById('stat-courses').textContent = courses.length;
+      } catch (e) {
+        console.error('Courses error:', e);
+        grid.innerHTML = '<div class="text-center py-12 col-span-full text-red-500">Error loading courses</div>';
       }
     }
 
-    // Load Users
+    // ── Users ────────────────────────────────────────────────────────────
     async function loadUsers() {
       const tbody = document.getElementById('users-table-body');
-      tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-500">Loading users...</td></tr>';
-
+      tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">Loading...</td></tr>';
       try {
-        const response = await fetch(`${API_BASE}/admin/api/users`, {
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
-        });
+        const r = await fetch(`${API_BASE}/admin/api/users`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const users = (await r.json()).users || [];
+        document.getElementById('users-count-label').textContent = `${users.length} user${users.length !== 1 ? 's' : ''}`;
 
-        if (response.ok) {
-          const data = await response.json();
-          const users = data.users || [];
-          
-          if (users.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-500">No users registered yet</td></tr>';
-          } else {
-            tbody.innerHTML = users.map(user => `
-              <tr class="hover:bg-slate-50">
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white font-semibold">
-                      ${(user.username || user.email || 'U').charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div class="font-semibold text-slate-900">${user.username || 'Unknown'}</div>
-                      <div class="text-sm text-slate-500">${user.email || 'No email'}</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-sm text-slate-600">
-                  ${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
-                </td>
-                <td class="px-6 py-4">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
-                </td>
-                <td class="px-6 py-4">
-                  <button onclick="deleteUser('${user.id}', '${user.username || user.email}')" class="text-sm text-red-600 hover:text-red-700 font-medium">
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            `).join('');
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">No users registered yet</td></tr>';
+        } else {
+          tbody.innerHTML = users.map(u => `
+            <tr class="hover:bg-slate-50/50">
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full gradient-bg-dark flex items-center justify-center text-white text-xs font-bold">${(u.username||u.email||'U').charAt(0).toUpperCase()}</div>
+                  <div><div class="text-sm font-semibold text-slate-800">${u.username||'Unknown'}</div><div class="text-xs text-slate-400">${u.email||''}</div></div>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-500">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600">Active</span></td>
+              <td class="px-4 py-3"><button onclick="deleteUser('${u.id}','${(u.username||u.email||'').replace(/'/g,"\\'")}')" class="text-xs text-red-500 hover:text-red-600 font-medium">Delete</button></td>
+            </tr>`).join('');
+        }
+
+        // Timeline chart
+        chartUsersTimeline = destroyChart(chartUsersTimeline);
+        const dateCounts = {};
+        users.forEach(u => {
+          if (u.created_at) {
+            const d = new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            dateCounts[d] = (dateCounts[d]||0) + 1;
           }
-          
-          // Update dashboard stat
-          document.getElementById('stat-students').textContent = users.length;
-        }
-      } catch (error) {
-        console.error('Error loading users:', error);
-        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-red-600">Error loading users</td></tr>';
-      }
-    }
-
-    // Modal Functions
-    function showUploadModal() {
-      document.getElementById('upload-modal').classList.remove('hidden');
-    }
-
-    function closeUploadModal() {
-      document.getElementById('upload-modal').classList.add('hidden');
-      document.getElementById('course-id').value = '';
-      document.getElementById('course-title').value = '';
-      document.getElementById('course-description').value = '';
-      document.getElementById('course-json').value = '';
-      document.getElementById('lesson-files').value = '';
-    }
-
-    // Upload Course
-    async function uploadCourse(event) {
-      event.preventDefault();
-      
-      const courseId = document.getElementById('course-id').value;
-      const courseJsonFile = document.getElementById('course-json').files[0];
-      
-      if (!courseJsonFile) {
-        alert('Please select a course JSON file');
-        return;
-      }
-
-      try {
-        const courseData = JSON.parse(await courseJsonFile.text());
-        
-        const response = await fetch(`${API_BASE}/admin/api/courses/${courseId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Admin-Token': ADMIN_TOKEN
+        });
+        const labels = Object.keys(dateCounts).slice(-7);
+        const data = labels.map(l => dateCounts[l]);
+        const ctx = document.getElementById('chart-users-timeline').getContext('2d');
+        chartUsersTimeline = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{ data, borderColor: ORANGE, backgroundColor: ORANGE_BG, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: ORANGE, borderWidth: 2 }]
           },
-          body: JSON.stringify(courseData)
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } },
+              y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1, font: { family: 'Plus Jakarta Sans', size: 10 } } }
+            }
+          }
         });
 
-        if (response.ok) {
-          alert('Course uploaded successfully!');
-          closeUploadModal();
-          loadCourses();
-        } else {
-          alert('Failed to upload course');
-        }
-      } catch (error) {
-        console.error('Error uploading course:', error);
-        alert('Error uploading course. Check console for details.');
+        document.getElementById('stat-students').textContent = users.length;
+      } catch (e) {
+        console.error('Users error:', e);
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-500 text-sm">Error loading users</td></tr>';
       }
     }
 
-    // Delete Course
-    async function deleteCourse(courseId) {
-      if (!confirm(`Are you sure you want to delete course: ${courseId}?`)) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_BASE}/admin/api/courses/${courseId}`, {
-          method: 'DELETE',
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
-        });
-
-        if (response.ok) {
-          alert('Course deleted successfully');
-          loadCourses();
-          loadDashboardData();
-        } else {
-          alert('Failed to delete course');
-        }
-      } catch (error) {
-        console.error('Error deleting course:', error);
-        alert('Error deleting course');
-      }
-    }
-
-    // Delete User
-    async function deleteUser(userId, username) {
-      if (!confirm(`Are you sure you want to delete user "${username}"? This cannot be undone.`)) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_BASE}/admin/api/users/${userId}`, {
-          method: 'DELETE',
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
-        });
-
-        if (response.ok) {
-          alert('User deleted successfully');
-          loadUsers();
-          loadDashboardData();
-        } else {
-          alert('Failed to delete user');
-        }
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        alert('Error deleting user');
-      }
-    }
-
-    // View Course Details (modal)
-    async function viewCourseDetails(courseId) {
-      try {
-        const response = await fetch(`${API_BASE}/content/${courseId}/course.json`);
-        if (!response.ok) { alert('Course not found'); return; }
-        const course = await response.json();
-
-        let modulesHtml = '';
-        (course.modules || []).forEach((mod, i) => {
-          let chaptersHtml = '';
-          (mod.chapters || []).forEach((ch, j) => {
-            let lessonsHtml = (ch.lessons || []).map(l =>
-              `<li class="text-sm text-slate-600 py-1 pl-4 border-l-2 border-slate-200">${l.title || l.id}</li>`
-            ).join('');
-            chaptersHtml += `
-              <div class="ml-4 mb-2">
-                <div class="text-sm font-medium text-slate-700">${i+1}.${j+1} ${ch.title}</div>
-                <ul class="mt-1">${lessonsHtml || '<li class="text-xs text-slate-400 pl-4">No lessons</li>'}</ul>
-              </div>`;
-          });
-          modulesHtml += `
-            <div class="mb-4">
-              <div class="font-semibold text-slate-900 mb-1">${i+1}. ${mod.title}</div>
-              ${chaptersHtml || '<div class="ml-4 text-sm text-slate-400">No chapters</div>'}
-            </div>`;
-        });
-
-        // Reuse the upload modal container pattern
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-        modal.innerHTML = `
-          <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="text-2xl font-bold text-slate-900">${course.title || courseId}</h2>
-              <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-slate-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
-            </div>
-            <div class="space-y-3 mb-6">
-              <div class="flex gap-2">
-                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${course.difficulty || 'intermediate'}</span>
-                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-800">ID: ${course.id}</span>
-              </div>
-              <p class="text-sm text-slate-600">${course.description || 'No description'}</p>
-            </div>
-            <h3 class="font-semibold text-slate-900 mb-3">Course Structure</h3>
-            <div class="bg-slate-50 rounded-lg p-4">
-              ${modulesHtml || '<p class="text-sm text-slate-400">No modules defined</p>'}
-            </div>
-          </div>`;
-        document.body.appendChild(modal);
-      } catch (error) {
-        console.error('Error loading course details:', error);
-        alert('Error loading course details');
-      }
-    }
-
-    // Load Chat Logs stats
+    // ── Chat Logs ────────────────────────────────────────────────────────
     async function loadChatLogs() {
       try {
-        const resp = await fetch(`${API_BASE}/admin/api/stats`, {
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
-        });
-        if (!resp.ok) return;
-        const s = await resp.json();
+        const r = await fetch(`${API_BASE}/admin/api/stats`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const s = await r.json();
         document.getElementById('log-stat-chats').textContent = s.chats_since_restart || 0;
         document.getElementById('log-stat-users').textContent = s.total_users || 0;
-        document.getElementById('log-stat-model').textContent = s.model_loaded ? 'Loaded' : 'Not loaded';
-        document.getElementById('log-stat-model').className =
-          'text-2xl font-bold mb-1 ' + (s.model_loaded ? 'text-green-600' : 'text-red-600');
-      } catch (error) {
-        console.error('Error loading chat logs:', error);
-      }
+        const modelEl = document.getElementById('log-stat-model');
+        modelEl.textContent = s.model_loaded ? 'Loaded' : 'Not loaded';
+        modelEl.className = 'text-3xl font-extrabold mb-0.5 ' + (s.model_loaded ? 'text-emerald-500' : 'text-red-500');
+
+        // Chat activity visualization (simulated from uptime & chat count)
+        chartChatActivity = destroyChart(chartChatActivity);
+        const uptimeMin = Math.round((s.uptime_seconds||0)/60);
+        const chats = s.chats_since_restart || 0;
+        const ctx = document.getElementById('chart-chat-activity').getContext('2d');
+        // Create a nice visual of session metrics
+        chartChatActivity = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Chat Requests', 'Users', 'Courses', 'Lessons', 'Uptime (min)'],
+            datasets: [{
+              data: [chats, s.total_users||0, s.total_courses||0, s.total_lessons||0, uptimeMin],
+              backgroundColor: [ORANGE, ORANGE_LIGHT, ORANGE_PALE, EMERALD, '#E2E8F0'],
+              borderRadius: 8, barPercentage: 0.5,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 12, weight: 500 } } },
+              y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } } }
+            }
+          }
+        });
+      } catch (e) { console.error('Chat logs error:', e); }
     }
 
-    // Load Settings
+    // ── Settings ─────────────────────────────────────────────────────────
     async function loadSettings() {
       try {
-        const resp = await fetch(`${API_BASE}/admin/api/stats`, {
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
-        });
-        if (!resp.ok) return;
-        const s = await resp.json();
-        const hrs = Math.floor((s.uptime_seconds || 0) / 3600);
-        const mins = Math.floor(((s.uptime_seconds || 0) % 3600) / 60);
-
-        const row = (label, value) => `
-          <div class="flex justify-between py-2 border-b border-slate-100">
-            <span class="text-slate-500">${label}</span>
-            <span class="font-medium text-slate-900">${value}</span>
-          </div>`;
+        const r = await fetch(`${API_BASE}/admin/api/stats`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const s = await r.json();
+        const hrs = Math.floor((s.uptime_seconds||0)/3600);
+        const mins = Math.floor(((s.uptime_seconds||0)%3600)/60);
+        const row = (l,v) => `<div class="flex justify-between py-2.5 border-b border-slate-50"><span class="text-slate-400">${l}</span><span class="font-medium text-slate-800">${v}</span></div>`;
 
         document.getElementById('settings-server-info').innerHTML =
-          row('Backend URL', window.location.origin) +
-          row('Uptime', `${hrs}h ${mins}m`) +
-          row('Total Users', s.total_users || 0) +
-          row('Total Courses', s.total_courses || 0) +
-          row('Chat Requests', s.chats_since_restart || 0);
+          row('Backend URL', window.location.origin) + row('Uptime', `${hrs}h ${mins}m`) +
+          row('Total Users', s.total_users||0) + row('Total Courses', s.total_courses||0) +
+          row('Chat Requests', s.chats_since_restart||0);
 
         document.getElementById('settings-model-info').innerHTML =
-          row('Model File', s.model_name || '—') +
-          row('Model Path', s.model_path || '—') +
-          row('Status', s.model_loaded ? '<span class="text-green-600">Loaded</span>' : '<span class="text-red-600">Not loaded</span>') +
-          row('Context Window', `${s.n_ctx || '—'} tokens`) +
-          row('Threads', s.n_threads || '—') +
-          row('GPU Layers', s.n_gpu_layers || 0) +
-          row('Temperature', s.temperature || '—') +
-          row('Max Tokens', s.max_tokens || '—') +
-          row('Top P', s.top_p || '—') +
-          row('Top K', s.top_k || '—') +
-          row('Repeat Penalty', s.repeat_penalty || '—');
-      } catch (error) {
-        console.error('Error loading settings:', error);
-      }
+          row('Model File', s.model_name||'—') + row('Model Path', s.model_path||'—') +
+          row('Status', s.model_loaded ? '<span class="text-emerald-500 font-semibold">Loaded</span>' : '<span class="text-red-500 font-semibold">Not loaded</span>') +
+          row('Context Window', `${s.n_ctx||'—'} tokens`) + row('Threads', s.n_threads||'—') +
+          row('GPU Layers', s.n_gpu_layers||0) + row('Temperature', s.temperature||'—') +
+          row('Max Tokens', s.max_tokens||'—') + row('Top P', s.top_p||'—') +
+          row('Top K', s.top_k||'—') + row('Repeat Penalty', s.repeat_penalty||'—');
+      } catch (e) { console.error('Settings error:', e); }
     }
 
-    // Handle Enter key in login
-    document.getElementById('admin-email-input')?.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') login();
-    });
-    document.getElementById('admin-password-input')?.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') login();
-    });
+    // ── Modal helpers ────────────────────────────────────────────────────
+    function createModal(html) {
+      const m = document.createElement('div');
+      m.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      m.onclick = e => { if (e.target === m) m.remove(); };
+      m.innerHTML = `<div class="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">${html}</div>`;
+      document.body.appendChild(m);
+      return m;
+    }
+    function closeModal(el) { const m = el.closest('.fixed'); if (m) m.remove(); }
+
+    function showUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); }
+    function closeUploadModal() {
+      document.getElementById('upload-modal').classList.add('hidden');
+      ['course-id','course-title','course-description','course-json','lesson-files'].forEach(id => { document.getElementById(id).value = ''; });
+    }
+
+    // ── Upload Course ────────────────────────────────────────────────────
+    async function uploadCourse(e) {
+      e.preventDefault();
+      const courseId = document.getElementById('course-id').value.trim();
+      const title = document.getElementById('course-title').value.trim();
+      const desc = document.getElementById('course-description').value.trim();
+      const jsonFile = document.getElementById('course-json').files[0];
+      const lessonFiles = document.getElementById('lesson-files').files;
+      if (!courseId) { toast('Please enter a course ID', 'error'); return; }
+      try {
+        let data = jsonFile ? JSON.parse(await jsonFile.text()) : { modules: [] };
+        data.title = title || data.title || courseId;
+        data.description = desc || data.description || '';
+        const r = await fetch(`${API_BASE}/admin/api/courses/${courseId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN }, body: JSON.stringify(data) });
+        if (!r.ok) { toast('Failed to upload course', 'error'); return; }
+        let up = 0;
+        for (const f of lessonFiles) {
+          const lr = await fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons/${f.name}`, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'X-Admin-Token': ADMIN_TOKEN }, body: await f.text() });
+          if (lr.ok) up++;
+        }
+        toast(up > 0 ? `Course uploaded with ${up} lesson(s)!` : 'Course uploaded!');
+        closeUploadModal(); loadCourses(); loadDashboardData();
+      } catch (err) { toast('Error: ' + err.message, 'error'); }
+    }
+
+    // ── Delete Course ────────────────────────────────────────────────────
+    async function deleteCourse(id) {
+      if (!confirm(`Delete course "${id}"? This cannot be undone.`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/courses/${id}`, { method: 'DELETE', headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (r.ok) { toast('Course deleted'); loadCourses(); loadDashboardData(); } else toast('Failed to delete course', 'error');
+      } catch (e) { toast('Error deleting course', 'error'); }
+    }
+
+    // ── Delete User ──────────────────────────────────────────────────────
+    async function deleteUser(id, name) {
+      if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/users/${id}`, { method: 'DELETE', headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (r.ok) { toast('User deleted'); loadUsers(); loadDashboardData(); } else toast('Failed to delete user', 'error');
+      } catch (e) { toast('Error deleting user', 'error'); }
+    }
+
+    // ── View Course Details ──────────────────────────────────────────────
+    async function viewCourseDetails(courseId) {
+      try {
+        const [cr, lr] = await Promise.all([
+          fetch(`${API_BASE}/content/${courseId}/course.json`),
+          fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } })
+        ]);
+        if (!cr.ok) { toast('Course not found', 'error'); return; }
+        const course = await cr.json();
+        const files = lr.ok ? (await lr.json()).lessons || [] : [];
+
+        let modHtml = '';
+        (course.modules||[]).forEach((m,i) => {
+          let chHtml = '';
+          (m.chapters||[]).forEach((ch,j) => {
+            let lsHtml = (ch.lessons||[]).map(l => `<li class="text-sm text-slate-500 py-1 pl-4 border-l-2 border-brand-100">${l.title||l.id}</li>`).join('');
+            chHtml += `<div class="ml-4 mb-2"><div class="text-sm font-medium text-slate-600">${i+1}.${j+1} ${ch.title}</div><ul class="mt-1">${lsHtml||'<li class="text-xs text-slate-300 pl-4">No lessons</li>'}</ul></div>`;
+          });
+          modHtml += `<div class="mb-3"><div class="font-semibold text-slate-800 mb-1">${i+1}. ${m.title}</div>${chHtml||'<div class="ml-4 text-sm text-slate-300">No chapters</div>'}</div>`;
+        });
+
+        let filesHtml = files.length === 0 ? '<p class="text-sm text-slate-300">No lesson files uploaded</p>'
+          : files.map(f => `<div class="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-xl">
+            <div class="flex items-center gap-2"><svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span class="text-sm text-slate-600">${f}</span></div>
+            <div class="flex gap-2"><button onclick="editLesson('${courseId}','${f}')" class="text-xs text-brand-600 hover:text-brand-700 font-medium">Edit</button><button onclick="deleteLesson('${courseId}','${f}',this)" class="text-xs text-red-500 hover:text-red-600 font-medium">Delete</button></div>
+          </div>`).join('');
+
+        createModal(`
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-slate-900">${course.title||courseId}</h2>
+            <button onclick="closeModal(this)" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <div class="space-y-3 mb-5">
+            <div class="flex gap-2">
+              <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-brand-50 text-brand-700">${course.difficulty||'intermediate'}</span>
+              <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-600">ID: ${course.id}</span>
+            </div>
+            <p class="text-sm text-slate-500">${course.description||'No description'}</p>
+          </div>
+          <div class="flex items-center gap-3 mb-5">
+            <button onclick="closeModal(this); editCourse('${courseId}')" class="px-4 py-2 text-sm gradient-bg-dark text-white rounded-xl hover:opacity-90 transition font-medium">Edit Course</button>
+            <button onclick="closeModal(this); deleteCourse('${courseId}')" class="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition font-medium">Delete Course</button>
+          </div>
+          <h3 class="font-semibold text-slate-900 mb-3 text-sm">Course Structure</h3>
+          <div class="bg-slate-50 rounded-xl p-4 mb-5">${modHtml||'<p class="text-sm text-slate-300">No modules defined</p>'}</div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-slate-900 text-sm">Lesson Files</h3>
+            <button onclick="addLesson('${courseId}')" class="flex items-center gap-1 px-3 py-1.5 text-xs gradient-bg-dark text-white rounded-lg hover:opacity-90 transition font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add Lesson
+            </button>
+          </div>
+          <div class="space-y-2">${filesHtml}</div>
+        `);
+      } catch (e) { console.error('View course error:', e); toast('Error loading course', 'error'); }
+    }
+
+    // ── Edit Course ──────────────────────────────────────────────────────
+    async function editCourse(courseId) {
+      try {
+        const r = await fetch(`${API_BASE}/content/${courseId}/course.json`);
+        if (!r.ok) { toast('Course not found', 'error'); return; }
+        const c = await r.json();
+        const modal = createModal(`
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-slate-900">Edit Course</h2>
+            <button onclick="closeModal(this)" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <form id="edit-course-form" class="space-y-5">
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Course ID</label><input type="text" value="${courseId}" disabled class="w-full px-4 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-400"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Title</label><input type="text" id="edit-title" value="${(c.title||'').replace(/"/g,'&quot;')}" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Description</label><textarea id="edit-description" rows="3" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">${c.description||''}</textarea></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Difficulty</label>
+              <select id="edit-difficulty" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+                <option value="beginner" ${c.difficulty==='beginner'?'selected':''}>Beginner</option>
+                <option value="intermediate" ${c.difficulty==='intermediate'||!c.difficulty?'selected':''}>Intermediate</option>
+                <option value="advanced" ${c.difficulty==='advanced'?'selected':''}>Advanced</option>
+              </select>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Duration</label><input type="text" id="edit-duration" value="${(c.duration||'').replace(/"/g,'&quot;')}" placeholder="e.g., 4 hours" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Course Structure (JSON)</label><textarea id="edit-modules-json" rows="8" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-mono text-sm">${JSON.stringify(c.modules||[],null,2)}</textarea><p class="text-xs text-slate-400 mt-1">Edit modules/chapters/lessons structure</p></div>
+            <div class="flex gap-3 pt-2">
+              <button type="submit" class="flex-1 gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">Save Changes</button>
+              <button type="button" onclick="closeModal(this)" class="px-6 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+            </div>
+          </form>
+        `);
+        document.getElementById('edit-course-form').onsubmit = async (ev) => {
+          ev.preventDefault();
+          let modules;
+          try { modules = JSON.parse(document.getElementById('edit-modules-json').value); }
+          catch (err) { toast('Invalid JSON: ' + err.message, 'error'); return; }
+          const updated = { ...c, title: document.getElementById('edit-title').value.trim(), description: document.getElementById('edit-description').value.trim(), difficulty: document.getElementById('edit-difficulty').value, duration: document.getElementById('edit-duration').value.trim(), modules };
+          const sr = await fetch(`${API_BASE}/admin/api/courses/${courseId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN }, body: JSON.stringify(updated) });
+          if (sr.ok) { modal.remove(); loadCourses(); loadDashboardData(); toast('Course updated!'); } else toast('Failed to save', 'error');
+        };
+      } catch (e) { toast('Error loading course', 'error'); }
+    }
+
+    // ── Add Lesson ───────────────────────────────────────────────────────
+    function addLesson(courseId) {
+      document.querySelectorAll('.fixed.inset-0.bg-black').forEach(m => m.remove());
+      const modal = createModal(`
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-900">Add Lesson</h2>
+          <button onclick="closeModal(this)" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <form id="add-lesson-form" class="space-y-5">
+          <div><label class="block text-sm font-medium text-slate-700 mb-2">Filename</label><input type="text" id="new-lesson-filename" placeholder="e.g., introduction.md" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none"><p class="text-xs text-slate-400 mt-1">Must end with .md</p></div>
+          <div><label class="block text-sm font-medium text-slate-700 mb-2">Content (Markdown)</label><textarea id="new-lesson-content" rows="12" placeholder="# Lesson Title&#10;&#10;Write your lesson content here..." required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-mono text-sm"></textarea></div>
+          <div><p class="text-sm text-slate-500 mb-2">Or upload a .md file:</p><input type="file" id="new-lesson-file" accept=".md" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50"></div>
+          <div class="flex gap-3 pt-2">
+            <button type="submit" class="flex-1 gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">Save Lesson</button>
+            <button type="button" onclick="closeModal(this); viewCourseDetails('${courseId}')" class="px-6 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+          </div>
+        </form>
+      `);
+      document.getElementById('new-lesson-file').onchange = async (ev) => {
+        const f = ev.target.files[0];
+        if (f) { document.getElementById('new-lesson-filename').value = f.name; document.getElementById('new-lesson-content').value = await f.text(); }
+      };
+      document.getElementById('add-lesson-form').onsubmit = async (ev) => {
+        ev.preventDefault();
+        let fn = document.getElementById('new-lesson-filename').value.trim();
+        if (!fn.endsWith('.md')) fn += '.md';
+        const r = await fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons/${fn}`, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'X-Admin-Token': ADMIN_TOKEN }, body: document.getElementById('new-lesson-content').value });
+        if (r.ok) { modal.remove(); viewCourseDetails(courseId); toast('Lesson added!'); } else toast('Failed to save lesson', 'error');
+      };
+    }
+
+    // ── Edit Lesson ──────────────────────────────────────────────────────
+    async function editLesson(courseId, filename) {
+      document.querySelectorAll('.fixed.inset-0.bg-black').forEach(m => m.remove());
+      try {
+        const r = await fetch(`${API_BASE}/content/${courseId}/lessons/${filename}`);
+        const content = r.ok ? await r.text() : '';
+        const modal = createModal(`
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-slate-900">Edit Lesson</h2>
+            <button onclick="closeModal(this)" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <form id="edit-lesson-form" class="space-y-5">
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Filename</label><input type="text" value="${filename}" disabled class="w-full px-4 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-400"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Content (Markdown)</label><textarea id="edit-lesson-content" rows="16" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-mono text-sm">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></div>
+            <div class="flex gap-3 pt-2">
+              <button type="submit" class="flex-1 gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">Save Changes</button>
+              <button type="button" onclick="closeModal(this); viewCourseDetails('${courseId}')" class="px-6 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+            </div>
+          </form>
+        `);
+        document.getElementById('edit-lesson-form').onsubmit = async (ev) => {
+          ev.preventDefault();
+          const sr = await fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons/${filename}`, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'X-Admin-Token': ADMIN_TOKEN }, body: document.getElementById('edit-lesson-content').value });
+          if (sr.ok) { modal.remove(); viewCourseDetails(courseId); toast('Lesson saved!'); } else toast('Failed to save', 'error');
+        };
+      } catch (e) { toast('Error loading lesson', 'error'); }
+    }
+
+    // ── Delete Lesson ────────────────────────────────────────────────────
+    async function deleteLesson(courseId, filename, btn) {
+      if (!confirm(`Delete lesson "${filename}"?`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons/${filename}`, { method: 'DELETE', headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (r.ok) { const row = btn.closest('.flex.items-center'); if (row) row.remove(); toast('Lesson deleted'); } else toast('Failed to delete', 'error');
+      } catch (e) { toast('Error deleting lesson', 'error'); }
+    }
+
+    // ── Enter key on login ───────────────────────────────────────────────
+    document.getElementById('admin-email-input')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+    document.getElementById('admin-password-input')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
   </script>
 </body>
 </html>
