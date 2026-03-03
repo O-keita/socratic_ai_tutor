@@ -11,11 +11,37 @@ from typing import Optional, List, Dict
 
 # ── Server-wide counters (reset on restart) ──────────────────────────────────
 _server_start: _dt = _dt.utcnow()
-_chat_request_count: int = 0
 
-# ── Chat performance logs (in-memory, capped ring buffer) ────────────────────
+# ── Chat performance logs (persisted to data/chat_logs.json) ─────────────────
 _MAX_CHAT_LOGS = 500
-_chat_logs: List[Dict] = []
+_CHAT_LOGS_PATH = Path(__file__).parent / "data" / "chat_logs.json"
+
+
+def _load_chat_logs() -> List[Dict]:
+    """Load persisted chat logs from disk."""
+    try:
+        if _CHAT_LOGS_PATH.exists():
+            with open(_CHAT_LOGS_PATH, "r") as f:
+                logs = json.load(f)
+            # Cap to max size
+            return logs[-_MAX_CHAT_LOGS:] if len(logs) > _MAX_CHAT_LOGS else logs
+    except Exception as e:
+        logging.getLogger(__name__).warning("Could not load chat_logs.json: %s", e)
+    return []
+
+
+def _save_chat_logs() -> None:
+    """Persist chat logs to disk (best-effort, non-blocking)."""
+    try:
+        _CHAT_LOGS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(_CHAT_LOGS_PATH, "w") as f:
+            json.dump(_chat_logs, f, ensure_ascii=False)
+    except Exception as e:
+        logging.getLogger(__name__).warning("Could not save chat_logs.json: %s", e)
+
+
+_chat_logs: List[Dict] = _load_chat_logs()
+_chat_request_count = len(_chat_logs)  # Initialize count from persisted logs
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Header, Request, Depends
@@ -295,9 +321,10 @@ async def chat(payload: ChatRequest, request: Request, user: dict = Depends(_get
             "completion_tokens": data.get("completion_tokens", 0),
             "ends_with_question": data.get("ends_with_question", False),
         })
-        # Cap the ring buffer
+        # Cap the ring buffer and persist
         if len(_chat_logs) > _MAX_CHAT_LOGS:
             del _chat_logs[: len(_chat_logs) - _MAX_CHAT_LOGS]
+        _save_chat_logs()
 
         return ChatResponse(**data)
     except asyncio.TimeoutError:
