@@ -75,7 +75,7 @@ export default function AuthPage({ defaultTab = 'login' }: AuthPageProps) {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/25">
             <BookOpen className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-800">Socratic AI Tutor</h1>
+          <h1 className="text-3xl font-bold text-slate-800">Bantaba AI</h1>
           <p className="text-slate-500 mt-1.5">Learn through guided discovery</p>
         </div>
 
@@ -160,7 +160,7 @@ export default function AuthPage({ defaultTab = 'login' }: AuthPageProps) {
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">
-          Powered by Socratic AI &middot; Learn by questioning
+          Powered by Bantaba AI &middot; Learn by questioning
         </p>
       </div>
     </div>

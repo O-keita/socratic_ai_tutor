@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _syncError;
   final CourseService _courseService = CourseService();
   final HybridTutorService _hybridService = HybridTutorService();
+  final GlobalKey<ProfileScreenState> _profileKey = GlobalKey<ProfileScreenState>();
 
   static const _starterPrompts = [
     'What is machine learning?',
@@ -125,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildCoursesTab(isDark),
               _buildChatTab(isDark),
-              const ProfileScreen(),
+              ProfileScreen(key: _profileKey),
               const SettingsScreen(),
             ],
           ),
@@ -232,7 +233,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _navItem(IconData icon, IconData activeIcon, String label, int idx, Color active, Color inactive, bool isDark) {
     final sel = _currentIndex == idx;
     return InkWell(
-      onTap: () => setState(() => _currentIndex = idx),
+      onTap: () {
+        setState(() => _currentIndex = idx);
+        if (idx == 2) _profileKey.currentState?.refresh();
+      },
       borderRadius: BorderRadius.circular(16),
       splashColor: active.withValues(alpha: 0.1),
       highlightColor: active.withValues(alpha: 0.05),
@@ -971,7 +975,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: const Icon(Icons.psychology_rounded, size: 30, color: Colors.white),
                           ),
                           const SizedBox(height: 16),
-                          const Text('Socratic AI Tutor', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
+                          const Text('Bantaba AI', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
                           const SizedBox(height: 6),
                           Text('I guide you to discover answers through thoughtful questions', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14, height: 1.4)),
                           const SizedBox(height: 16),

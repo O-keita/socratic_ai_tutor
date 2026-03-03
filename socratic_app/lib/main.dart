@@ -66,7 +66,7 @@ class SocraticTutorApp extends StatelessWidget {
         ));
 
         return MaterialApp(
-          title: 'Socratic AI Tutor',
+          title: 'Bantaba AI',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,

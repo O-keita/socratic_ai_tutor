@@ -75,7 +75,7 @@ class OnboardingScreen extends StatelessWidget {
                 
                 // Simple title
                 Text(
-                  'Socratic AI Tutor',
+                  'Bantaba AI',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

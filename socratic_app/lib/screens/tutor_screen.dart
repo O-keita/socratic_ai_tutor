@@ -14,7 +14,7 @@ class TutorScreen extends StatefulWidget {
 class _TutorScreenState extends State<TutorScreen> {
   final List<Message> _messages = [
     Message(
-      text: 'Hello! I am your Socratic Tutor. What topic are we exploring today?',
+      text: 'Hello! I am your Bantaba AI tutor. What topic are we exploring today?',
       isUser: false,
       timestamp: DateTime.now(),
     ),
@@ -45,7 +45,7 @@ class _TutorScreenState extends State<TutorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Socratic AI Tutor'),
+        title: const Text('Bantaba AI'),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.black87,

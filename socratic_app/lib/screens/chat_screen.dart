@@ -49,7 +49,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       if (_tutorBridge.currentSession != null && _tutorBridge.currentSession!.messages.isNotEmpty) {
         _messages.addAll(_tutorBridge.currentSession!.messages);
       } else {
-        _messages.add(Message(text: 'Hi! I\'m your Socratic tutor.\n\nAsk me anything and I\'ll guide you to discover the answer through questions.', isUser: false, timestamp: DateTime.now()));
+        _messages.add(Message(text: 'Hi! I\'m your Bantaba AI tutor.\n\nAsk me anything and I\'ll guide you to discover the answer through questions.', isUser: false, timestamp: DateTime.now()));
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
@@ -103,7 +103,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     if (!mounted) return;
     setState(() {
       _messages.add(Message(
-        text: 'Hi! I\'m your Socratic tutor.\n\nAsk me anything and I\'ll guide you to discover the answer through questions.',
+        text: 'Hi! I\'m your Bantaba AI tutor.\n\nAsk me anything and I\'ll guide you to discover the answer through questions.',
         isUser: false,
         timestamp: DateTime.now(),
       ));
@@ -186,7 +186,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(child: Text('Socratic Tutor', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary))),
+                    Flexible(child: Text('Bantaba AI', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary))),
                     const SizedBox(width: 8),
                     StreamBuilder<EngineStatus>(
                       stream: HybridTutorService().statusStream,

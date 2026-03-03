@@ -12,10 +12,11 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> {
+
   int _sessionCount = 0;
   int _questionCount = 0;
   int _topicCount = 0;
@@ -30,6 +31,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadData();
   }
+
+  /// Public method so the parent (HomeScreen) can trigger a refresh
+  /// when the user switches to the Profile tab.
+  void refresh() => _loadData();
 
   Future<void> _loadData() async {
     try {

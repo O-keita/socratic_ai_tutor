@@ -35,8 +35,8 @@ export default function TopBar() {
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div className="hidden sm:block">
-            <span className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">Socratic</span>
-            <span className="text-xs text-slate-500 block -mt-0.5">AI Tutor</span>
+            <span className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">Bantaba</span>
+            <span className="text-xs text-slate-500 block -mt-0.5">AI</span>
           </div>
         </Link>
 

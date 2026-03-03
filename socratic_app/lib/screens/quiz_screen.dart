@@ -170,7 +170,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     TextButton.icon(
                       onPressed: () => _showHelp(question),
                       icon: const Icon(Icons.psychology_rounded, color: AppTheme.accentOrange, size: 18),
-                      label: const Text('Ask Socratic Tutor for Help', style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600, fontSize: 13)),
+                      label: const Text('Ask Bantaba AI for Help', style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                   ],
                 ),

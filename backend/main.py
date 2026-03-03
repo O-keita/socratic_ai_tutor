@@ -168,7 +168,7 @@ async def _lifespan(_app: FastAPI):
 # ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
-app = FastAPI(title="Socratic AI Tutor", lifespan=_lifespan)
+app = FastAPI(title="Bantaba AI", lifespan=_lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -234,7 +234,7 @@ def _require_admin(x_admin_token: Optional[str]) -> dict:
 # ---------------------------------------------------------------------------
 @app.get("/")
 async def root():
-    return {"message": "Socratic AI Tutor API is running"}
+    return {"message": "Bantaba AI API is running"}
 
 
 @app.post("/register", response_model=UserResponse, status_code=201)

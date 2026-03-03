@@ -23,7 +23,7 @@ class AppConfig {
 
   /// Direct download URL for the GGUF model file.
   static const String modelDownloadUrl =
-      'https://huggingface.co/Omar-keita/DSML-Socatic-qwen3-0.6B/resolve/main/socratic-qwen3-0.5B-Q4_K_M.gguf';
+      'https://huggingface.co/Omar-keita/DSML-Socatic-qwen3-0.6B/resolve/main/socratic-qwen3-0.5B-Q4_K_M_offline.gguf';
 
   /// Human-readable model name shown in the UI.
   static const String modelDisplayName = 'Qwen3-0.6B';

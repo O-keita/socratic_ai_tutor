@@ -95,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
               const SizedBox(height: 28),
               const Text(
-                'Socratic AI Tutor',
+                'Bantaba AI',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,

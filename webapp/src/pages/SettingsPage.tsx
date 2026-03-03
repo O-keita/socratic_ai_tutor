@@ -79,7 +79,7 @@ export default function SettingsPage() {
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
             <div>
-              <p className="font-medium text-slate-700 dark:text-slate-200">Socratic AI Tutor</p>
+              <p className="font-medium text-slate-700 dark:text-slate-200">Bantaba AI</p>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 An AI-powered learning platform that teaches data science and machine learning using the Socratic method.
                 The AI never gives direct answers — it guides you with questions to develop critical thinking.

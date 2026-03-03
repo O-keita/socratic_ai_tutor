@@ -113,7 +113,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 20),
 
                 Text(
-                  'Socratic AI',
+                  'Bantaba AI',
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w800,
