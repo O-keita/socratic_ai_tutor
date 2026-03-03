@@ -92,7 +92,7 @@ class ModelLoader:
                 n_ctx=self.n_ctx,
                 n_threads=self.n_threads,
                 n_gpu_layers=self.n_gpu_layers,
-                chat_format="chatml",
+                chat_format=None,  # auto-detect from GGUF metadata (Qwen3 template)
                 verbose=False,
             )
             print("[model_loader] Model loaded.")
