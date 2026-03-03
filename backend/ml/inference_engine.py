@@ -83,6 +83,12 @@ class InferenceEngine:
 
         messages.append({"role": "user", "content": user_message})
 
+        # Prefill the assistant turn with "<think>\n" to force the model into
+        # its trained thinking-first pattern.  During training, Qwen3's
+        # enable_thinking=True did this automatically; llama-cpp-python's
+        # create_chat_completion does not, so we add it manually.
+        messages.append({"role": "assistant", "content": "<think>\n"})
+
         response = self.model.create_chat_completion(
             messages=messages,
             max_tokens=effective_max_tokens,
