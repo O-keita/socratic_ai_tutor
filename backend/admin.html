@@ -154,8 +154,8 @@
           Users
         </button>
         <button onclick="showSection('logs')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
-          Chat Logs
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Performance
         </button>
         <button onclick="showSection('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -325,45 +325,92 @@
         </div>
       </section>
 
-      <!-- ════════════ CHAT LOGS ════════════ -->
+      <!-- ════════════ MODEL PERFORMANCE ════════════ -->
       <section id="logs-section" class="p-8 section-hidden">
         <div class="max-w-7xl mx-auto">
           <div class="mb-8">
-            <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Chat Logs</h1>
-            <p class="text-slate-500">Chat request statistics since server start</p>
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Model Performance</h1>
+            <p class="text-slate-500">Real-time inference monitoring &amp; Socratic compliance</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-            <div class="bg-white rounded-2xl p-6 border border-slate-100">
-              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="log-stat-chats">0</div>
-              <div class="text-sm text-slate-400">Chat Requests (since restart)</div>
+          <!-- KPI Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-slate-900 mb-0.5" id="perf-total">0</div>
+              <div class="text-xs text-slate-400">Total Chats</div>
             </div>
-            <div class="bg-white rounded-2xl p-6 border border-slate-100">
-              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="log-stat-users">0</div>
-              <div class="text-sm text-slate-400">Registered Users</div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-brand-600 mb-0.5" id="perf-avg-rt">—</div>
+              <div class="text-xs text-slate-400">Avg Response (ms)</div>
             </div>
-            <div class="bg-white rounded-2xl p-6 border border-slate-100">
-              <div class="text-3xl font-extrabold mb-0.5" id="log-stat-model">—</div>
-              <div class="text-sm text-slate-400">Model Status</div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-slate-900 mb-0.5" id="perf-avg-si">—</div>
+              <div class="text-xs text-slate-400">Avg Socratic Index</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-emerald-500 mb-0.5" id="perf-q-rate">—</div>
+              <div class="text-xs text-slate-400">Question Rate</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-slate-900 mb-0.5" id="perf-avg-pt">—</div>
+              <div class="text-xs text-slate-400">Avg Prompt Tokens</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-slate-900 mb-0.5" id="perf-avg-ct">—</div>
+              <div class="text-xs text-slate-400">Avg Completion Tokens</div>
             </div>
           </div>
 
-          <!-- Chat activity visualization -->
-          <div class="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
-            <h2 class="text-lg font-bold text-slate-900 mb-4">Session Activity</h2>
-            <div style="height:200px"><canvas id="chart-chat-activity"></canvas></div>
+          <!-- Charts Row 1: Response Time + Socratic Index over time -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Response Time (ms)</h2>
+              <div style="height:200px"><canvas id="chart-perf-rt"></canvas></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Socratic Index Over Time</h2>
+              <div style="height:200px"><canvas id="chart-perf-si"></canvas></div>
+            </div>
           </div>
 
+          <!-- Charts Row 2: Scaffolding Distribution + Sentiment + Question Rate -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Scaffolding Level</h2>
+              <div style="height:180px"><canvas id="chart-perf-scaffolding"></canvas></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Student Sentiment</h2>
+              <div style="height:180px"><canvas id="chart-perf-sentiment"></canvas></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Token Usage</h2>
+              <div style="height:180px"><canvas id="chart-perf-tokens"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Recent Chat Logs Table -->
           <div class="bg-white rounded-2xl border border-slate-100 p-6">
-            <div class="flex items-start gap-3">
-              <svg class="w-5 h-5 text-brand-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <div>
-                <h3 class="font-semibold text-slate-900 mb-1 text-sm">Chat Log Persistence</h3>
-                <p class="text-sm text-slate-500">
-                  Chat statistics are tracked per server session. The counter resets when the server restarts.
-                  To persist conversation logs for research, consider enabling database logging in the backend.
-                </p>
-              </div>
+            <h2 class="text-sm font-bold text-slate-900 mb-4">Recent Chat Logs</h2>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="border-b border-slate-100">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Time</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">User</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Message</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Response</th>
+                    <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400 uppercase">RT (ms)</th>
+                    <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400 uppercase">SI</th>
+                    <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400 uppercase">Level</th>
+                    <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400 uppercase">Sent.</th>
+                    <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400 uppercase">Q?</th>
+                  </tr>
+                </thead>
+                <tbody id="perf-logs-body" class="divide-y divide-slate-50">
+                  <tr><td colspan="9" class="px-3 py-8 text-center text-slate-300">No chat logs yet. Logs appear after users send messages.</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -515,7 +562,8 @@
     }
 
     // ── Chart instances ──────────────────────────────────────────────────
-    let chartOverview = null, chartHealth = null, chartUsersTimeline = null, chartChatActivity = null;
+    let chartOverview = null, chartHealth = null, chartUsersTimeline = null;
+    let chartPerfRT = null, chartPerfSI = null, chartPerfScaffolding = null, chartPerfSentiment = null, chartPerfTokens = null;
     const ORANGE = '#F97316', ORANGE_LIGHT = '#FB923C', ORANGE_PALE = '#FDBA74',
           SLATE = '#0F172A', EMERALD = '#10B981', AMBER = '#F59E0B', RED = '#EF4444',
           ORANGE_BG = 'rgba(249,115,22,0.1)', EMERALD_BG = 'rgba(16,185,129,0.1)';
@@ -715,44 +763,162 @@
       }
     }
 
-    // ── Chat Logs ────────────────────────────────────────────────────────
+    // ── Model Performance ─────────────────────────────────────────────────
+    const CHART_FONT = { family: 'Plus Jakarta Sans' };
+    const GRID_COLOR = '#f1f5f9';
+
     async function loadChatLogs() {
       try {
-        const r = await fetch(`${API_BASE}/admin/api/stats`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        const r = await fetch(`${API_BASE}/admin/api/chat-logs`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
         if (!r.ok) return;
-        const s = await r.json();
-        document.getElementById('log-stat-chats').textContent = s.chats_since_restart || 0;
-        document.getElementById('log-stat-users').textContent = s.total_users || 0;
-        const modelEl = document.getElementById('log-stat-model');
-        modelEl.textContent = s.model_loaded ? 'Loaded' : 'Not loaded';
-        modelEl.className = 'text-3xl font-extrabold mb-0.5 ' + (s.model_loaded ? 'text-emerald-500' : 'text-red-500');
+        const { logs, total, aggregates: agg } = await r.json();
 
-        // Chat activity visualization (simulated from uptime & chat count)
-        chartChatActivity = destroyChart(chartChatActivity);
-        const uptimeMin = Math.round((s.uptime_seconds||0)/60);
-        const chats = s.chats_since_restart || 0;
-        const ctx = document.getElementById('chart-chat-activity').getContext('2d');
-        // Create a nice visual of session metrics
-        chartChatActivity = new Chart(ctx, {
-          type: 'bar',
+        // ── KPI cards ──
+        document.getElementById('perf-total').textContent = total;
+        document.getElementById('perf-avg-rt').textContent = total ? `${agg.avg_response_time_ms}` : '—';
+        document.getElementById('perf-avg-si').textContent = total ? agg.avg_socratic_index.toFixed(2) : '—';
+        document.getElementById('perf-q-rate').textContent = total ? `${Math.round(agg.question_rate * 100)}%` : '—';
+        document.getElementById('perf-avg-pt').textContent = total ? agg.avg_prompt_tokens : '—';
+        document.getElementById('perf-avg-ct').textContent = total ? agg.avg_completion_tokens : '—';
+
+        if (total === 0) return; // No charts to draw
+
+        // Prepare time-series data (last 50 entries, chronological)
+        const recent = logs.slice(0, 50).reverse();
+        const labels = recent.map((l, i) => `#${total - 50 + i + 1}`);
+
+        // ── Response Time line chart ──
+        chartPerfRT = destroyChart(chartPerfRT);
+        chartPerfRT = new Chart(document.getElementById('chart-perf-rt').getContext('2d'), {
+          type: 'line',
           data: {
-            labels: ['Chat Requests', 'Users', 'Courses', 'Lessons', 'Uptime (min)'],
+            labels,
             datasets: [{
-              data: [chats, s.total_users||0, s.total_courses||0, s.total_lessons||0, uptimeMin],
-              backgroundColor: [ORANGE, ORANGE_LIGHT, ORANGE_PALE, EMERALD, '#E2E8F0'],
-              borderRadius: 8, barPercentage: 0.5,
+              label: 'Response Time (ms)',
+              data: recent.map(l => l.response_time_ms),
+              borderColor: ORANGE, backgroundColor: ORANGE_BG, fill: true,
+              tension: 0.3, pointRadius: 2, borderWidth: 2,
             }]
           },
           options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 12, weight: 500 } } },
-              y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } } }
+              x: { display: false },
+              y: { beginAtZero: true, grid: { color: GRID_COLOR }, ticks: { font: { ...CHART_FONT, size: 10 } } }
             }
           }
         });
-      } catch (e) { console.error('Chat logs error:', e); }
+
+        // ── Socratic Index line chart ──
+        chartPerfSI = destroyChart(chartPerfSI);
+        chartPerfSI = new Chart(document.getElementById('chart-perf-si').getContext('2d'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Socratic Index',
+                data: recent.map(l => l.socratic_index),
+                borderColor: ORANGE, backgroundColor: ORANGE_BG, fill: true,
+                tension: 0.3, pointRadius: 2, borderWidth: 2,
+              },
+              {
+                label: 'Ends with ?',
+                data: recent.map(l => l.ends_with_question ? 1 : 0),
+                borderColor: EMERALD, backgroundColor: EMERALD_BG, fill: false,
+                tension: 0, pointRadius: 3, borderWidth: 1.5, borderDash: [4, 4],
+              }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, font: { ...CHART_FONT, size: 11 } } } },
+            scales: {
+              x: { display: false },
+              y: { min: 0, max: 1, grid: { color: GRID_COLOR }, ticks: { font: { ...CHART_FONT, size: 10 } } }
+            }
+          }
+        });
+
+        // ── Scaffolding doughnut ──
+        const scaff = agg.scaffolding_distribution || {};
+        const scaffLabels = Object.keys(scaff);
+        const scaffColors = { beginner: EMERALD, intermediate: ORANGE, advanced: SLATE };
+        chartPerfScaffolding = destroyChart(chartPerfScaffolding);
+        chartPerfScaffolding = new Chart(document.getElementById('chart-perf-scaffolding').getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: scaffLabels,
+            datasets: [{ data: scaffLabels.map(k => scaff[k]), backgroundColor: scaffLabels.map(k => scaffColors[k] || ORANGE_PALE), borderWidth: 0, hoverOffset: 4 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { ...CHART_FONT, size: 11 } } } } }
+        });
+
+        // ── Sentiment doughnut ──
+        const sent = agg.sentiment_distribution || {};
+        const sentLabels = Object.keys(sent);
+        const sentColors = { low_confidence: RED, neutral: '#94A3B8', high_confidence: EMERALD };
+        chartPerfSentiment = destroyChart(chartPerfSentiment);
+        chartPerfSentiment = new Chart(document.getElementById('chart-perf-sentiment').getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: sentLabels.map(l => l.replace('_', ' ')),
+            datasets: [{ data: sentLabels.map(k => sent[k]), backgroundColor: sentLabels.map(k => sentColors[k] || ORANGE_PALE), borderWidth: 0, hoverOffset: 4 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { ...CHART_FONT, size: 11 } } } } }
+        });
+
+        // ── Token usage bar chart (prompt vs completion per request) ──
+        chartPerfTokens = destroyChart(chartPerfTokens);
+        chartPerfTokens = new Chart(document.getElementById('chart-perf-tokens').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labels.slice(-20),
+            datasets: [
+              { label: 'Prompt', data: recent.slice(-20).map(l => l.prompt_tokens), backgroundColor: ORANGE_BG, borderColor: ORANGE, borderWidth: 1.5, borderRadius: 4, barPercentage: 0.7 },
+              { label: 'Completion', data: recent.slice(-20).map(l => l.completion_tokens), backgroundColor: EMERALD_BG, borderColor: EMERALD, borderWidth: 1.5, borderRadius: 4, barPercentage: 0.7 },
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { ...CHART_FONT, size: 11 } } } },
+            scales: {
+              x: { display: false, stacked: true },
+              y: { beginAtZero: true, stacked: true, grid: { color: GRID_COLOR }, ticks: { font: { ...CHART_FONT, size: 10 } } }
+            }
+          }
+        });
+
+        // ── Logs table ──
+        const tbody = document.getElementById('perf-logs-body');
+        const levelBadge = l => {
+          const c = { beginner: 'bg-emerald-50 text-emerald-600', intermediate: 'bg-brand-50 text-brand-700', advanced: 'bg-slate-800 text-white' };
+          return `<span class="inline-flex px-1.5 py-0.5 rounded text-xs font-medium ${c[l]||c.intermediate}">${l}</span>`;
+        };
+        const sentBadge = s => {
+          const c = { low_confidence: 'bg-red-50 text-red-600', neutral: 'bg-slate-100 text-slate-500', high_confidence: 'bg-emerald-50 text-emerald-600' };
+          const label = s.replace('_', ' ');
+          return `<span class="inline-flex px-1.5 py-0.5 rounded text-xs font-medium ${c[s]||c.neutral}">${label}</span>`;
+        };
+        const qBadge = q => q ? '<span class="text-emerald-500 font-bold">Y</span>' : '<span class="text-red-400">N</span>';
+        const timeStr = ts => { try { const d = new Date(ts); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); } catch(_) { return '—'; } };
+
+        tbody.innerHTML = logs.slice(0, 50).map(l => `
+          <tr class="hover:bg-slate-50/50">
+            <td class="px-3 py-2 text-xs text-slate-400 whitespace-nowrap">${timeStr(l.timestamp)}</td>
+            <td class="px-3 py-2 text-xs font-medium text-slate-700 whitespace-nowrap">${l.username||'—'}</td>
+            <td class="px-3 py-2 text-xs text-slate-500 max-w-[200px] truncate" title="${(l.message_preview||'').replace(/"/g,'&quot;')}">${l.message_preview||'—'}</td>
+            <td class="px-3 py-2 text-xs text-slate-500 max-w-[200px] truncate" title="${(l.response_preview||'').replace(/"/g,'&quot;')}">${l.response_preview||'—'}</td>
+            <td class="px-3 py-2 text-xs text-right font-mono ${l.response_time_ms > 5000 ? 'text-red-500 font-bold' : 'text-slate-600'}">${l.response_time_ms}</td>
+            <td class="px-3 py-2 text-xs text-right font-mono text-slate-600">${l.socratic_index.toFixed(2)}</td>
+            <td class="px-3 py-2 text-center">${levelBadge(l.scaffolding_level)}</td>
+            <td class="px-3 py-2 text-center">${sentBadge(l.sentiment)}</td>
+            <td class="px-3 py-2 text-center">${qBadge(l.ends_with_question)}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="9" class="px-3 py-8 text-center text-slate-300">No chat logs yet.</td></tr>';
+
+      } catch (e) { console.error('Performance error:', e); }
     }
 
     // ── Settings ─────────────────────────────────────────────────────────
