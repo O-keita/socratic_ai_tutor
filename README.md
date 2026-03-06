@@ -256,6 +256,56 @@ Courses are bundled in the APK for offline use. Admins can upload additional cou
 
 ---
 
+## Testing Results
+
+### Comprehensive Device Testing
+
+The application has been tested across **three device configurations** with both **online** and **offline** inference modes:
+
+| Device | OS | Architecture | Online Mode | Offline Mode | Offline Support |
+|--------|-----|--------------|-----------|---|---|
+| **Emulator (x86_64)** | Android 12 | x86_64 | 8.5s avg | N/A | ❌ No |
+| **Huawei P Smart** | Android 9 | ARM64 | 6.4s avg | 5-7s | ✅ Yes |
+| **Samsung A14** | Android 11 | ARM64 | 4-7s | 5-7s | ✅ Yes |
+
+### Performance Metrics
+
+**Online (Remote) Inference:**
+- Cold start: 4.4-6.4s
+- Average response: 4-8.5s (varies with network)
+- Success rate: 86-100%
+- Network-dependent ✅
+
+**Offline (Local) Inference:**
+- Response time: 5-7s (ARM64 devices only)
+- Success rate: 100%
+- No internet required ✅
+- CPU-bound (expected for ARM64)
+
+### Socratic Quality
+
+Across all devices and modes:
+- **Socratic Index**: 0.60-0.65 (guidance quality maintained)
+- **Adaptive Difficulty**: Beginner → Intermediate → Advanced
+- **Reasoning Blocks**: `<think>...</think>` blocks properly stripped before UI
+- **Response Variation**: Different guidance based on student proficiency
+
+### Testing Evidence
+
+Complete testing documentation available in [`testing/TESTING_REPORT.md`](testing/TESTING_REPORT.md):
+- Functional testing (11 features verified)
+- Performance testing (cold/warm start analysis)
+- Hardware compatibility testing (x86_64, ARM64)
+- Data variation testing (5+ conversation turns)
+- Admin dashboard analytics
+
+**Screenshots collected:**
+- Emulator: Login, Home, Chat, Offline mode, Settings
+- Huawei P Smart: Online chat, Offline chat, WiFi-off confirmation
+- Samsung A14: Online/offline inference comparison
+
+---
+
 ## Deployment
 
 ### Remote Backend
@@ -271,14 +321,56 @@ docker compose up --build -d
 cd socratic_app && flutter build apk --release
 # Output: build/app/outputs/flutter-apk/app-release.apk (~60 MB)
 # Model downloaded separately on first launch (~460 MB)
+
+# Install on device
+flutter install --release
+```
+
+### Running Tests
+```bash
+# View complete testing report
+cat testing/TESTING_REPORT.md
+
+# Test on emulator (x86_64 remote-only)
+flutter run
+
+# Test on physical ARM64 device (supports online + offline)
+flutter run -d <device-id>
 ```
 
 ---
 
+## ML Training & Fine-Tuning
+
+The model was fine-tuned using Qwen3-0.6B with Socratic teaching datasets:
+
+**Training notebooks:**
+- [`notebooks/training/Qwen3_0_6B.ipynb`](notebooks/training/Qwen3_0_6B.ipynb) — Fine-tuning pipeline
+- [`notebooks/training/SmolLM2_360M_Instruct.ipynb`](notebooks/training/SmolLM2_360M_Instruct.ipynb) — Alternative model
+- [`notebooks/quantization/gguf_quantization.ipynb`](notebooks/quantization/gguf_quantization.ipynb) — Model quantization to GGUF
+
+**Training data:**
+- 234 Socratic conversations
+- 73 supplementary samples (code, greetings, diverse topics)
+- Augmented to ~991 samples via windowing
+- LoRA fine-tuning with r=32, RSLoRA
+
+---
+
 ## Capstone Submission Details
-- **Methodology**: Discovery Learning via Socratic Dialogue
-- **Innovation**: Custom C API (`libchat`) for reliable on-device LLM inference, hybrid edge-cloud routing for low-resource environments
-- **Research Focus**: Enhancing ML education through pedagogical AI guardrails
+
+### Objectives Met ✅
+1. ✅ **Offline-First Architecture**: Hybrid edge-cloud routing verified on 2 ARM64 devices
+2. ✅ **Socratic Method**: System never gives direct answers, guides through questions
+3. ✅ **Performance**: 4-7s response time with 100% success on target devices
+4. ✅ **Cross-Device Testing**: Tested on 3 device types (emulator, 2 physical devices)
+5. ✅ **ML Training**: Fine-tuned model with full training pipeline documented
+
+### Innovation
+- **Custom C API** (`libchat`): Reliable on-device LLM inference without third-party packages
+- **Hybrid Routing**: Seamless switching between local (100% offline) and remote inference
+- **Pedagogical AI**: System trained to never give direct answers, only guiding questions
+- **Low-Resource Design**: Works on 4GB RAM devices with 5-7s inference time
 
 ---
 
