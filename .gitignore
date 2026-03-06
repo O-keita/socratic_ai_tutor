@@ -30,7 +30,8 @@ socratic_app/.pub-cache/
 socratic_app/.dart_tool/
 socratic_app/generated/
 
-# ---------- Web App ----------
+# ---------- Web App (not part of mobile submission) ----------
+webapp/
 webapp/node_modules/
 webapp/dist/
 
@@ -49,6 +50,12 @@ dist/
 # ---------- Figma / Graphics ----------
 *.fig
 
-# ---------- Misc ----------
+# ---------- Development & Training (not for submission) ----------
+notebooks/
 research.txt
 *.lock
+
+# ---------- Test Screenshots (optional - kept for reference) ----------
+# testing/emulator/screenshots/*.png
+# testing/huawei*/screenshots/*.png
+# testing/samsung*/screenshots/*.png
