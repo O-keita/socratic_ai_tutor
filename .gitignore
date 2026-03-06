@@ -53,6 +53,10 @@ dist/
 # ---------- Development & Training (not for submission) ----------
 notebooks/
 research.txt
+mission.txt
+CLAUDE.md
+DEPLOYMENT.md
+PROJECT_REVIEW.md
 *.lock
 
 # ---------- Test Screenshots (optional - kept for reference) ----------
