@@ -57,6 +57,8 @@ mission.txt
 CLAUDE.md
 DEPLOYMENT.md
 PROJECT_REVIEW.md
+multi_socratic_data.json
+test_backend.py
 *.lock
 
 # ---------- Test Screenshots (optional - kept for reference) ----------
