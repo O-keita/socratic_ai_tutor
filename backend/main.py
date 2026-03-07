@@ -134,6 +134,7 @@ _CONTENT_DIR.mkdir(exist_ok=True)
 
 # Paths for static assets served to the admin panel
 _ADMIN_HTML = Path(__file__).parent / "admin.html"
+_CHAT_HTML  = Path(__file__).parent / "chat.html"
 _LOGO_PATH = Path(__file__).parent / "logo.png"  # Fallback for containerized deployment
 if not _LOGO_PATH.exists():
     # Attempt to find it relative to workspace if running locally
@@ -241,6 +242,13 @@ async def root():
     return HTMLResponse("<h1>Socratic AI Tutor API</h1>")
 
 
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_ui():
+    if _CHAT_HTML.exists():
+        return HTMLResponse(_CHAT_HTML.read_text())
+    raise HTTPException(status_code=404, detail="Chat UI not found.")
+
+
 @app.post("/register", response_model=UserResponse, status_code=201)
 @limiter.limit("5/minute")
 async def register(payload: UserRegister, request: Request):
@@ -287,6 +295,51 @@ async def model_version():
         "download_url": mobile.get("download_url", ""),
         "release_notes": mobile.get("release_notes", ""),
     }
+
+
+@app.post("/chat/public", response_model=ChatResponse)
+@limiter.limit("15/minute")
+async def chat_public(payload: ChatRequest, request: Request):
+    """Public chat endpoint — no auth required. Used by the web chat UI."""
+    global _chat_request_count
+    _chat_request_count += 1
+    username = "guest"
+    logger.info("Public chat request: %.80s...", payload.message)
+    try:
+        loop = asyncio.get_event_loop()
+        data = await asyncio.wait_for(
+            loop.run_in_executor(
+                _inference_executor,
+                lambda: inference_engine.generate_response(
+                    user_message=payload.message,
+                    history=payload.history,
+                    max_tokens=payload.max_tokens,
+                ),
+            ),
+            timeout=60.0,
+        )
+        _chat_logs.append({
+            "timestamp": _dt.utcnow().isoformat(),
+            "username": username,
+            "message_preview": payload.message[:120],
+            "response_preview": data["response"][:120],
+            "socratic_index": data["socratic_index"],
+            "scaffolding_level": data["scaffolding_level"],
+            "sentiment": data["sentiment"],
+            "response_time_ms": data.get("response_time_ms", 0),
+            "prompt_tokens": data.get("prompt_tokens", 0),
+            "completion_tokens": data.get("completion_tokens", 0),
+            "ends_with_question": data.get("ends_with_question", False),
+        })
+        if len(_chat_logs) > _MAX_CHAT_LOGS:
+            del _chat_logs[: len(_chat_logs) - _MAX_CHAT_LOGS]
+        _save_chat_logs()
+        return ChatResponse(**data)
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=503, detail="The AI is taking too long. Please try again.")
+    except Exception:
+        logger.exception("Public chat error")
+        raise HTTPException(status_code=500, detail="An error occurred. Please try again.")
 
 
 @app.post("/chat", response_model=ChatResponse)
