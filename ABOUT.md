@@ -6,7 +6,7 @@
 ### Works offline. Runs on your phone. No cloud required.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-socratic.hx--ai.org-orange?style=for-the-badge)](https://socratic.hx-ai.org/)
-[![Download APK](https://img.shields.io/badge/Download-APK%20(58%20MB)-green?style=for-the-badge&logo=android)](../../releases)
+[![Download APK](https://img.shields.io/badge/Download-APK%20v1.0.0%20(58%20MB)-green?style=for-the-badge&logo=android)](https://github.com/O-keita/socratic_ai_tutor/releases/download/v1.0.0/bantaba-ai-v1.0.0.apk)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/O-keita/socratic_ai_tutor)
 
 </div>
@@ -231,6 +231,6 @@ When existing tools are broken, the right call is to go one layer deeper. `libch
 **Built as a Computer Science Capstone project.**
 Designed for learners. Engineered for the edge.
 
-[Try it live](https://socratic.hx-ai.org/) · [Download APK](../../releases) · [View Source](https://github.com/O-keita/socratic_ai_tutor) · [Full README](README.md)
+[Try it live](https://socratic.hx-ai.org/) · [Download APK v1.0.0](https://github.com/O-keita/socratic_ai_tutor/releases/download/v1.0.0/bantaba-ai-v1.0.0.apk) · [View Source](https://github.com/O-keita/socratic_ai_tutor) · [Full README](README.md)
 
 </div>

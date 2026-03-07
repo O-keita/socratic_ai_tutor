@@ -21,7 +21,7 @@ By combining on-device LLM inference with a cloud-fallback API, it provides a se
 - **GitHub Repository**: [https://github.com/O-keita/socratic_ai_tutor.git](https://github.com/O-keita/socratic_ai_tutor.git)
 
 ### 📱 Mobile App Download
-- **Android APK (Release)**: Download from [Releases](../../releases) or build from source (see Installation below)
+- **Android APK (Release)**: [Download v1.0.0](https://github.com/O-keita/socratic_ai_tutor/releases/download/v1.0.0/bantaba-ai-v1.0.0.apk) or build from source (see Installation below)
 - **APK Size**: ~60 MB (arm64 architecture)
 - **Model Size**: ~460 MB (downloaded on first launch from HuggingFace)
 
@@ -194,7 +194,7 @@ The backend is already deployed at **https://socratic.hx-ai.org/**. To test the 
 ```bash
 # Download from Releases or build yourself (see Option B)
 # Then install:
-adb install app-release.apk
+adb install bantaba-ai-v1.0.0.apk
 
 # Or: enable "Install from unknown sources" and tap the APK file
 ```
