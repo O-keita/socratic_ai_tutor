@@ -362,6 +362,13 @@ async def admin_ui():
     return HTMLResponse(_ADMIN_HTML.read_text())
 
 
+@app.get("/logo.png")
+async def logo():
+    if _LOGO_PATH.exists():
+        return FileResponse(str(_LOGO_PATH), media_type="image/png")
+    raise HTTPException(status_code=404)
+
+
 @app.get("/admin/logo")
 async def admin_logo():
     if _LOGO_PATH.exists():
