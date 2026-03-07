@@ -5,1158 +5,1150 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Socratic AI Tutor — Think. Discover. Learn.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,700;0,900;1,300;1,700&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Syne:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --ink: #0a0a0a;
-    --paper: #f5f0e8;
-    --orange: #e85d00;
-    --orange-dim: #c44d00;
-    --blue-deep: #0d1b2a;
-    --blue-mid: #112240;
-    --cream: #faf7f0;
-    --muted: #6b6560;
-    --border: rgba(10,10,10,0.12);
-  }
+/* ═══════════════════════════════════════
+   RESET & TOKENS
+═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  /* Color system */
+  --void:       #010810;
+  --deep:       #030f1c;
+  --surface:    #061524;
+  --panel:      #081d2e;
+  --cyan:       #00e5ff;
+  --cyan-dim:   rgba(0,229,255,0.15);
+  --orange:     #ff6b00;
+  --orange-dim: rgba(255,107,0,0.12);
+  --white:      #f0f8ff;
+  --text:       #c8dff0;       /* readable body copy - 85% */
+  --muted:      #7a9bb5;       /* secondary text - still readable */
+  --border:     rgba(0,229,255,0.1);
+  --border-hot: rgba(0,229,255,0.25);
+}
 
-  html { scroll-behavior: smooth; }
+body {
+  background: var(--void);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+}
 
-  body {
-    background: var(--cream);
-    color: var(--ink);
-    font-family: 'Instrument Sans', sans-serif;
-    overflow-x: hidden;
-    cursor: none;
-  }
+/* Subtle grid overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 80px 80px;
+  opacity: 0.4;
+}
 
-  /* Custom cursor */
-  .cursor {
-    position: fixed;
-    width: 10px; height: 10px;
-    background: var(--orange);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transition: transform 0.15s ease, opacity 0.2s;
-    transform: translate(-50%, -50%);
-  }
-  .cursor-ring {
-    position: fixed;
-    width: 36px; height: 36px;
-    border: 1.5px solid var(--orange);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9998;
-    transition: transform 0.4s cubic-bezier(.16,1,.3,1), width 0.3s, height 0.3s, opacity 0.2s;
-    transform: translate(-50%, -50%);
-    opacity: 0.6;
-  }
+/* Scanlines */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px
+  );
+}
 
-  /* NAV */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1.4rem 3rem;
-    background: rgba(245,240,232,0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-  }
-  .nav-logo {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 1.2rem;
-    letter-spacing: -0.02em;
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .nav-logo span { color: var(--orange); }
-  .nav-links { display: flex; gap: 2.5rem; align-items: center; }
-  .nav-links a {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: none;
-    letter-spacing: 0.02em;
-    transition: color 0.2s;
-  }
-  .nav-links a:hover { color: var(--ink); }
-  .nav-cta {
-    background: var(--ink) !important;
-    color: var(--cream) !important;
-    padding: 0.55rem 1.4rem;
-    border-radius: 2px;
-    font-size: 0.82rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.04em;
-    transition: background 0.2s !important;
-  }
-  .nav-cta:hover { background: var(--orange) !important; color: white !important; }
+/* Neural canvas */
+#nc { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.45; }
 
-  /* HERO */
-  .hero {
-    min-height: 100vh;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding-top: 80px;
-    overflow: hidden;
-    position: relative;
-  }
+/* ═══════════════════════════════════════
+   CURSOR
+═══════════════════════════════════════ */
+.cursor-dot {
+  position: fixed; width: 8px; height: 8px;
+  background: var(--cyan); border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; z-index: 9999;
+  box-shadow: 0 0 10px var(--cyan), 0 0 20px rgba(0,229,255,0.4);
+  transition: transform 0.15s;
+}
+.cursor-ring {
+  position: fixed; width: 36px; height: 36px;
+  border: 1.5px solid rgba(0,229,255,0.5); border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; z-index: 9998;
+  transition: width 0.25s, height 0.25s, opacity 0.25s;
+}
 
-  .hero-left {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 6rem 3rem 6rem 3rem;
-    position: relative;
-    z-index: 2;
-  }
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 3rem;
+  background: rgba(1,8,16,0.8);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+}
 
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--ink);
-    color: var(--cream);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    padding: 0.4rem 0.9rem;
-    border-radius: 1px;
-    margin-bottom: 2.5rem;
-    width: fit-content;
-    opacity: 0;
-    animation: fadeUp 0.8s 0.2s forwards;
-  }
-  .hero-badge-dot {
-    width: 6px; height: 6px;
-    background: var(--orange);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
+.nav-logo {
+  display: flex; align-items: center; gap: 0.75rem;
+  font-family: 'Orbitron', monospace; font-weight: 700;
+  font-size: 0.95rem; letter-spacing: 0.15em;
+  color: var(--white); text-decoration: none;
+}
+.logo-orb {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--cyan), var(--orange), var(--cyan));
+  animation: spin 10s linear infinite;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 900; color: #000;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
+.nav-links { display: flex; align-items: center; gap: 2.5rem; }
+.nav-link {
+  font-family: 'Space Mono', monospace; font-size: 0.7rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
+}
+.nav-link:hover { color: var(--cyan); }
 
-  .hero-title {
-    font-family: 'Fraunces', serif;
-    font-size: clamp(3.2rem, 5.5vw, 5.5rem);
-    font-weight: 900;
-    line-height: 1.0;
-    letter-spacing: -0.03em;
-    margin-bottom: 1.8rem;
-    opacity: 0;
-    animation: fadeUp 0.8s 0.4s forwards;
-  }
-  .hero-title em {
-    font-style: italic;
-    font-weight: 300;
-    color: var(--orange);
-  }
+.nav-cta {
+  font-family: 'Space Mono', monospace; font-size: 0.7rem;
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #000; background: var(--cyan);
+  padding: 0.6rem 1.5rem; text-decoration: none;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  transition: background 0.2s, transform 0.2s;
+}
+.nav-cta:hover { background: var(--orange); transform: translateY(-1px); }
 
-  .hero-sub {
-    font-size: 1.05rem;
-    line-height: 1.7;
-    color: var(--muted);
-    max-width: 420px;
-    margin-bottom: 3rem;
-    opacity: 0;
-    animation: fadeUp 0.8s 0.6s forwards;
-  }
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+.hero {
+  position: relative; z-index: 10;
+  min-height: 100vh;
+  display: grid; grid-template-columns: 1fr 1fr;
+  align-items: center; gap: 4rem;
+  padding: 120px 3rem 5rem;
+  max-width: 1300px; margin: 0 auto;
+}
 
-  .hero-actions {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    opacity: 0;
-    animation: fadeUp 0.8s 0.8s forwards;
-  }
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    background: var(--orange);
-    color: white;
-    font-weight: 600;
-    font-size: 0.9rem;
-    padding: 0.9rem 2rem;
-    border-radius: 2px;
-    text-decoration: none;
-    letter-spacing: 0.01em;
-    transition: background 0.2s, transform 0.2s;
-  }
-  .btn-primary:hover { background: var(--orange-dim); transform: translateY(-2px); }
-  .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    background: transparent;
-    color: var(--ink);
-    font-weight: 500;
-    font-size: 0.9rem;
-    padding: 0.9rem 1.6rem;
-    border-radius: 2px;
-    border: 1.5px solid var(--border);
-    text-decoration: none;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-  .btn-secondary:hover { border-color: var(--ink); transform: translateY(-2px); }
+/* HUD decorations */
+.hud { position: absolute; pointer-events: none; }
+.hud-tl { top: 100px; left: 0; width: 50px; height: 50px; border-top: 2px solid rgba(0,229,255,0.3); border-left: 2px solid rgba(0,229,255,0.3); }
+.hud-tr { top: 100px; right: 0; width: 50px; height: 50px; border-top: 2px solid rgba(0,229,255,0.3); border-right: 2px solid rgba(0,229,255,0.3); }
 
-  .hero-stats {
-    display: flex;
-    gap: 3rem;
-    margin-top: 4rem;
-    padding-top: 2.5rem;
-    border-top: 1px solid var(--border);
-    opacity: 0;
-    animation: fadeUp 0.8s 1s forwards;
-  }
-  .stat-num {
-    font-family: 'Fraunces', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--ink);
-    line-height: 1;
-  }
-  .stat-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 0.3rem;
-    letter-spacing: 0.03em;
-  }
+.hero-left { display: flex; flex-direction: column; }
 
-  /* Hero right — chat mockup */
-  .hero-right {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6rem 3rem 6rem 2rem;
-    position: relative;
-  }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: 'Space Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--cyan);
+  margin-bottom: 2rem; width: fit-content;
+  opacity: 0; animation: fadeUp 0.7s 0.3s forwards;
+}
+.badge-dot {
+  width: 7px; height: 7px; background: var(--cyan); border-radius: 50%;
+  box-shadow: 0 0 8px var(--cyan); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-  .hero-bg-shape {
-    position: absolute;
-    right: -80px; top: 50%;
-    transform: translateY(-50%);
-    width: 600px; height: 600px;
-    background: radial-gradient(ellipse at center, rgba(232,93,0,0.08) 0%, transparent 70%);
-    pointer-events: none;
-  }
+.hero-eyebrow {
+  font-family: 'Space Mono', monospace; font-size: 0.7rem;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--orange);
+  margin-bottom: 1.5rem;
+  opacity: 0; animation: fadeUp 0.7s 0.5s forwards;
+}
 
-  .chat-window {
-    background: var(--blue-deep);
-    border-radius: 16px;
-    width: 100%;
-    max-width: 440px;
-    box-shadow: 0 40px 80px rgba(10,10,10,0.25), 0 0 0 1px rgba(255,255,255,0.06);
-    overflow: hidden;
-    opacity: 0;
-    animation: fadeUp 0.9s 0.5s forwards;
-    position: relative;
-    z-index: 2;
-  }
+.hero-title {
+  font-family: 'Orbitron', monospace; font-weight: 900;
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  line-height: 1.0; letter-spacing: -0.02em;
+  margin-bottom: 2rem;
+  opacity: 0; animation: fadeUp 0.7s 0.7s forwards;
+}
+.hero-title .solid { display: block; color: var(--white); }
+.hero-title .gradient {
+  display: block;
+  background: linear-gradient(110deg, var(--cyan) 0%, var(--orange) 55%, var(--cyan) 100%);
+  background-size: 200%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: gradShift 6s ease infinite;
+}
+@keyframes gradShift { 0%{background-position:0%} 50%{background-position:100%} 100%{background-position:0%} }
 
-  .chat-header {
-    background: var(--blue-mid);
-    padding: 1rem 1.4rem;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .chat-dots { display: flex; gap: 6px; }
-  .chat-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-  }
-  .chat-dot:nth-child(1) { background: #ff5f57; }
-  .chat-dot:nth-child(2) { background: #febc2e; }
-  .chat-dot:nth-child(3) { background: #28c840; }
-  .chat-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.4);
-    margin-left: 0.5rem;
-    letter-spacing: 0.04em;
-  }
+/* READABLE hero body */
+.hero-body {
+  font-size: 1.05rem; line-height: 1.8; color: var(--text);
+  max-width: 480px; margin-bottom: 2.5rem;
+  opacity: 0; animation: fadeUp 0.7s 0.9s forwards;
+}
 
-  .chat-body {
-    padding: 1.6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-height: 380px;
-  }
+.hero-actions {
+  display: flex; gap: 1rem; flex-wrap: wrap;
+  opacity: 0; animation: fadeUp 0.7s 1.1s forwards;
+}
 
-  .msg {
-    max-width: 85%;
-    padding: 0.85rem 1.1rem;
-    border-radius: 12px;
-    font-size: 0.83rem;
-    line-height: 1.6;
-    opacity: 0;
-  }
-  .msg-user {
-    background: var(--orange);
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 3px;
-    animation: msgIn 0.5s forwards;
-  }
-  .msg-ai {
-    background: rgba(255,255,255,0.07);
-    color: rgba(255,255,255,0.85);
-    align-self: flex-start;
-    border-bottom-left-radius: 3px;
-    border: 1px solid rgba(255,255,255,0.08);
-    animation: msgIn 0.5s forwards;
-    font-family: 'Instrument Sans', sans-serif;
-  }
-  .msg-ai strong { color: var(--orange); font-weight: 600; }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  padding: 1rem 2.2rem; text-decoration: none;
+  font-family: 'Space Mono', monospace; font-size: 0.78rem;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  position: relative; overflow: hidden;
+  color: #000; background: var(--cyan);
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  transition: background 0.3s, transform 0.2s;
+}
+.btn-primary:hover { background: var(--orange); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,107,0,0.4); }
 
-  .msg:nth-child(1) { animation-delay: 1.0s; }
-  .msg:nth-child(2) { animation-delay: 1.8s; }
-  .msg:nth-child(3) { animation-delay: 2.8s; }
-  .msg:nth-child(4) { animation-delay: 3.8s; }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  padding: 1rem 2.2rem; text-decoration: none;
+  font-family: 'Space Mono', monospace; font-size: 0.78rem;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--cyan); border: 1.5px solid var(--cyan);
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  transition: all 0.3s; background: transparent; position: relative; overflow: hidden;
+}
+.btn-secondary::before {
+  content: ''; position: absolute; inset: 0; background: var(--cyan);
+  transform: translateX(-101%); transition: transform 0.3s;
+}
+.btn-secondary:hover { color: #000; }
+.btn-secondary:hover::before { transform: translateX(0); }
+.btn-secondary span { position: relative; z-index: 1; display: flex; align-items: center; gap: 0.6rem; }
 
-  @keyframes msgIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+/* Stats row */
+.hero-stats {
+  display: flex; gap: 0; margin-top: 3.5rem;
+  border: 1px solid var(--border);
+  opacity: 0; animation: fadeUp 0.7s 1.3s forwards;
+}
+.stat {
+  padding: 1.4rem 2rem; border-right: 1px solid var(--border);
+  flex: 1; text-align: center;
+}
+.stat:last-child { border-right: none; }
+.stat-number {
+  font-family: 'Orbitron', monospace; font-size: 1.7rem;
+  font-weight: 900; color: var(--cyan);
+  text-shadow: 0 0 20px rgba(0,229,255,0.4); line-height: 1;
+}
+.stat-label {
+  font-family: 'Space Mono', monospace; font-size: 0.6rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); margin-top: 0.5rem;
+}
 
-  .offline-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: rgba(40,200,64,0.15);
-    border: 1px solid rgba(40,200,64,0.3);
-    color: #28c840;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    padding: 0.3rem 0.7rem;
-    border-radius: 20px;
-    margin-top: 0.8rem;
-    letter-spacing: 0.06em;
-    opacity: 0;
-    animation: msgIn 0.5s 4.6s forwards;
-  }
+/* Hero right — terminal */
+.hero-right {
+  opacity: 0; animation: fadeUp 0.7s 0.8s forwards;
+  position: relative;
+}
+/* glow behind terminal */
+.hero-right::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px; height: 400px;
+  background: radial-gradient(ellipse at center, rgba(0,229,255,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
 
-  /* MARQUEE */
-  .marquee-section {
-    background: var(--ink);
-    padding: 1rem 0;
-    overflow: hidden;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  .marquee-track {
-    display: flex;
-    gap: 3rem;
-    animation: marquee 25s linear infinite;
-    white-space: nowrap;
-    width: max-content;
-  }
-  .marquee-item {
-    font-family: 'Fraunces', serif;
-    font-style: italic;
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.35);
-    letter-spacing: 0.02em;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .marquee-item::after {
-    content: '◆';
-    font-size: 0.4rem;
-    color: var(--orange);
-    font-style: normal;
-  }
-  @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
+/* ═══════════════════════════════════════
+   TERMINAL COMPONENT
+═══════════════════════════════════════ */
+.terminal {
+  background: rgba(3,15,28,0.95);
+  border: 1px solid var(--border-hot);
+  box-shadow: 0 0 0 1px rgba(0,229,255,0.05), 0 40px 80px rgba(0,0,0,0.6);
+  position: relative; overflow: hidden;
+}
+.terminal::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), var(--orange), transparent);
+}
+.term-bar {
+  background: rgba(0,229,255,0.04);
+  padding: 0.9rem 1.3rem;
+  display: flex; align-items: center; gap: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.term-dots { display: flex; gap: 7px; }
+.term-dot { width: 11px; height: 11px; border-radius: 50%; }
+.term-dot:nth-child(1) { background: #ff5f57; }
+.term-dot:nth-child(2) { background: #febc2e; }
+.term-dot:nth-child(3) { background: #28c840; }
+.term-name {
+  font-family: 'Space Mono', monospace; font-size: 0.62rem;
+  letter-spacing: 0.08em; color: rgba(0,229,255,0.35); margin-left: 0.3rem;
+}
+.term-live {
+  margin-left: auto; display: flex; align-items: center; gap: 0.4rem;
+  font-family: 'Space Mono', monospace; font-size: 0.6rem; color: #28c840;
+  letter-spacing: 0.08em;
+}
+.term-live-dot { width: 5px; height: 5px; background: #28c840; border-radius: 50%; animation: pulse 2s infinite; }
 
-  /* HOW IT WORKS */
-  .section { padding: 8rem 3rem; max-width: 1200px; margin: 0 auto; }
+.term-body { padding: 1.6rem; display: flex; flex-direction: column; gap: 1rem; min-height: 370px; }
 
-  .section-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    color: var(--orange);
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-  }
-  .section-title {
-    font-family: 'Fraunces', serif;
-    font-size: clamp(2.2rem, 3.5vw, 3.5rem);
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    margin-bottom: 1.5rem;
-  }
-  .section-title em { font-style: italic; font-weight: 300; color: var(--orange); }
-  .section-desc {
-    color: var(--muted);
-    font-size: 1rem;
-    line-height: 1.7;
-    max-width: 560px;
-  }
+.msg { max-width: 88%; opacity: 0; }
+.msg-user {
+  align-self: flex-end;
+  background: rgba(255,107,0,0.12);
+  border: 1px solid rgba(255,107,0,0.25);
+  padding: 0.85rem 1.1rem;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  /* READABLE: high contrast */
+  color: #ffd8b0; font-size: 0.87rem; line-height: 1.65;
+  font-family: 'Syne', sans-serif;
+  animation: msgIn 0.4s forwards;
+}
+.msg-ai {
+  align-self: flex-start;
+  background: rgba(0,229,255,0.05);
+  border: 1px solid rgba(0,229,255,0.18);
+  padding: 0.85rem 1.1rem;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  /* READABLE: high contrast */
+  color: #c8e8f8; font-size: 0.87rem; line-height: 1.7;
+  font-family: 'Space Mono', monospace;
+}
+.msg-ai em { color: var(--cyan); font-style: normal; font-weight: 700; }
+.msg-ai .highlight { color: var(--orange); font-weight: 700; }
+.msg-ai { animation: msgIn 0.4s forwards; }
 
-  /* Method steps */
-  .method-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    margin-top: 5rem;
-    border: 1px solid var(--border);
-  }
-  .method-step {
-    padding: 3rem;
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    position: relative;
-    overflow: hidden;
-    transition: background 0.3s;
-  }
-  .method-step:hover { background: rgba(232,93,0,0.03); }
-  .method-step:nth-child(even) { border-right: none; }
-  .method-step:nth-child(3), .method-step:nth-child(4) { border-bottom: none; }
-  .step-num {
-    font-family: 'Fraunces', serif;
-    font-size: 4rem;
-    font-weight: 900;
-    color: rgba(10,10,10,0.06);
-    line-height: 1;
-    position: absolute;
-    top: 1.5rem; right: 2rem;
-    letter-spacing: -0.04em;
-  }
-  .step-icon {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
-    display: block;
-  }
-  .step-title {
-    font-family: 'Fraunces', serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin-bottom: 0.8rem;
-    letter-spacing: -0.02em;
-  }
-  .step-desc {
-    color: var(--muted);
-    font-size: 0.9rem;
-    line-height: 1.7;
-  }
+.msg:nth-child(1) { animation-delay: 0.8s; }
+.msg:nth-child(2) { animation-delay: 2s; }
+.msg:nth-child(3) { animation-delay: 3.4s; }
+.msg:nth-child(4) { animation-delay: 4.8s; }
 
-  /* FEATURES */
-  .features-section {
-    background: var(--blue-deep);
-    padding: 8rem 0;
-  }
-  .features-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 3rem;
-  }
-  .features-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    margin-bottom: 5rem;
-    align-items: end;
-  }
-  .features-section .section-label { color: var(--orange); }
-  .features-section .section-title { color: white; }
-  .features-section .section-desc { color: rgba(255,255,255,0.5); }
+@keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
 
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: rgba(255,255,255,0.06);
-  }
-  .feature-card {
-    background: var(--blue-deep);
-    padding: 2.5rem;
-    transition: background 0.3s;
-  }
-  .feature-card:hover { background: var(--blue-mid); }
-  .feature-icon {
-    width: 44px; height: 44px;
-    background: rgba(232,93,0,0.15);
-    border: 1px solid rgba(232,93,0,0.3);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    margin-bottom: 1.5rem;
-  }
-  .feature-title {
-    font-family: 'Fraunces', serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 0.6rem;
-    letter-spacing: -0.01em;
-  }
-  .feature-desc {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.45);
-    line-height: 1.65;
-  }
+.term-chip {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: rgba(40,200,64,0.08); border: 1px solid rgba(40,200,64,0.25);
+  color: #5de87a; font-family: 'Space Mono', monospace; font-size: 0.62rem;
+  letter-spacing: 0.08em; text-transform: uppercase; padding: 0.4rem 0.9rem;
+  clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+  opacity: 0; animation: msgIn 0.4s 6s forwards;
+  align-self: flex-start; margin-top: 0.3rem;
+}
 
-  /* TECH STACK */
-  .tech-section {
-    background: var(--paper);
-    padding: 6rem 3rem;
-    overflow: hidden;
-  }
-  .tech-inner { max-width: 1200px; margin: 0 auto; }
-  .tech-flow {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-top: 3rem;
-    overflow-x: auto;
-    padding-bottom: 1rem;
-  }
-  .tech-node {
-    background: var(--cream);
-    border: 1.5px solid var(--border);
-    padding: 1.2rem 1.8rem;
-    border-radius: 4px;
-    text-align: center;
-    flex-shrink: 0;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-  .tech-node:hover { border-color: var(--orange); transform: translateY(-4px); }
-  .tech-node-name {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--ink);
-    margin-bottom: 0.3rem;
-  }
-  .tech-node-role {
-    font-size: 0.7rem;
-    color: var(--muted);
-  }
-  .tech-arrow {
-    color: var(--orange);
-    font-size: 1.2rem;
-    padding: 0 0.8rem;
-    flex-shrink: 0;
-    opacity: 0.6;
-  }
+/* ═══════════════════════════════════════
+   TICKER
+═══════════════════════════════════════ */
+.ticker {
+  position: relative; z-index: 10;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  background: rgba(0,229,255,0.02); padding: 0.9rem 0; overflow: hidden;
+}
+.ticker-track {
+  display: flex; gap: 2.5rem; width: max-content;
+  animation: ticker 35s linear infinite;
+}
+.ticker-item {
+  font-family: 'Space Mono', monospace; font-size: 0.68rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  white-space: nowrap; display: flex; align-items: center; gap: 2rem;
+}
+.ticker-item::after { content: '◆'; color: var(--orange); font-size: 0.35rem; opacity: 0.6; }
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
 
-  /* PERFORMANCE */
-  .perf-section { padding: 8rem 3rem; max-width: 1200px; margin: 0 auto; }
-  .perf-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    background: var(--border);
-    margin-top: 4rem;
-  }
-  .perf-card {
-    background: var(--cream);
-    padding: 3rem 2.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .perf-device {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
-    color: var(--orange);
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-  }
-  .perf-speed {
-    font-family: 'Fraunces', serif;
-    font-size: 3rem;
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.04em;
-    margin-bottom: 0.3rem;
-  }
-  .perf-speed sup { font-size: 1rem; font-weight: 400; color: var(--muted); }
-  .perf-label { color: var(--muted); font-size: 0.82rem; margin-bottom: 1.5rem; }
-  .perf-bar-wrap { background: rgba(10,10,10,0.08); height: 4px; border-radius: 2px; overflow: hidden; }
-  .perf-bar {
-    height: 100%;
-    background: var(--orange);
-    border-radius: 2px;
-    animation: growBar 1.5s ease forwards;
-    width: 0%;
-  }
-  @keyframes growBar {
-    to { width: var(--target-w); }
-  }
+/* ═══════════════════════════════════════
+   SECTION BASE
+═══════════════════════════════════════ */
+.section { position: relative; z-index: 10; padding: 8rem 3rem; max-width: 1300px; margin: 0 auto; }
+.section-full { position: relative; z-index: 10; }
 
-  /* OFFLINE SECTION */
-  .offline-section {
-    background: var(--ink);
-    padding: 8rem 3rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .offline-bg {
-    position: absolute;
-    inset: 0;
-    background: 
-      radial-gradient(ellipse 60% 40% at 80% 50%, rgba(232,93,0,0.12) 0%, transparent 70%),
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 40px,
-        rgba(255,255,255,0.015) 40px,
-        rgba(255,255,255,0.015) 41px
-      );
-    pointer-events: none;
-  }
-  .offline-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6rem;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-  }
-  .offline-section .section-title { color: white; }
-  .offline-section .section-desc { color: rgba(255,255,255,0.5); margin-bottom: 2.5rem; }
-  .offline-points { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
-  .offline-point {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    color: rgba(255,255,255,0.7);
-    font-size: 0.9rem;
-    line-height: 1.6;
-  }
-  .offline-point-icon {
-    color: var(--orange);
-    font-size: 1rem;
-    margin-top: 0.1rem;
-    flex-shrink: 0;
-  }
+.label {
+  font-family: 'Space Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--orange);
+  margin-bottom: 1rem; display: flex; align-items: center; gap: 0.8rem;
+}
+.label::before { content: ''; width: 30px; height: 1px; background: var(--orange); }
 
-  /* routing diagram */
-  .routing-diagram {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 2rem;
-  }
-  .routing-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    color: rgba(255,255,255,0.3);
-    text-transform: uppercase;
-    margin-bottom: 1.8rem;
-  }
-  .routing-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.9rem 1.2rem;
-    background: rgba(255,255,255,0.04);
-    border-radius: 6px;
-    margin-bottom: 0.6rem;
-    border: 1px solid rgba(255,255,255,0.06);
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.65);
-    font-family: 'DM Mono', monospace;
-  }
-  .routing-icon { font-size: 1rem; }
-  .routing-arrow-r { margin-left: auto; color: var(--orange); font-size: 0.7rem; }
+.heading {
+  font-family: 'Orbitron', monospace; font-size: clamp(1.9rem, 3.5vw, 3rem);
+  font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.2rem;
+  color: var(--white);
+}
+.heading em {
+  font-style: normal;
+  background: linear-gradient(90deg, var(--cyan), var(--orange));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
 
-  /* CTA SECTION */
-  .cta-section {
-    padding: 10rem 3rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .cta-bg {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 50% 60% at center, rgba(232,93,0,0.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .cta-inner { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; }
-  .cta-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; color: var(--orange); text-transform: uppercase; margin-bottom: 1.5rem; }
-  .cta-title {
-    font-family: 'Fraunces', serif;
-    font-size: clamp(2.5rem, 5vw, 4.5rem);
-    font-weight: 900;
-    line-height: 1.0;
-    letter-spacing: -0.03em;
-    margin-bottom: 1.5rem;
-  }
-  .cta-title em { font-style: italic; font-weight: 300; color: var(--orange); }
-  .cta-sub { color: var(--muted); font-size: 1rem; line-height: 1.7; margin-bottom: 3rem; }
-  .cta-buttons { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+/* READABLE body paragraph */
+.body-text { font-size: 1rem; line-height: 1.85; color: var(--text); max-width: 520px; }
 
-  /* FOOTER */
-  footer {
-    background: var(--ink);
-    padding: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-  }
-  .footer-logo {
-    font-family: 'Fraunces', serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: white;
-  }
-  .footer-logo span { color: var(--orange); }
-  .footer-links { display: flex; gap: 2rem; }
-  .footer-links a { color: rgba(255,255,255,0.4); font-size: 0.82rem; text-decoration: none; transition: color 0.2s; }
-  .footer-links a:hover { color: white; }
-  .footer-copy { color: rgba(255,255,255,0.25); font-size: 0.75rem; font-family: 'DM Mono', monospace; }
+/* ═══════════════════════════════════════
+   HOW IT WORKS
+═══════════════════════════════════════ */
+.how-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: var(--border); margin-top: 5rem;
+}
+.how-card {
+  background: var(--deep); padding: 3rem 2rem;
+  position: relative; overflow: hidden; transition: background 0.3s;
+}
+.how-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  transform: scaleX(0); transition: transform 0.4s;
+}
+.how-card:hover { background: rgba(0,229,255,0.03); }
+.how-card:hover::before { transform: scaleX(1); }
 
-  /* ANIMATIONS */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+.how-number {
+  font-family: 'Orbitron', monospace; font-size: 3.5rem; font-weight: 900;
+  color: rgba(0,229,255,0.06); line-height: 1; margin-bottom: 1.5rem;
+}
+.how-icon { font-size: 1.6rem; margin-bottom: 1rem; display: block; filter: drop-shadow(0 0 8px rgba(0,229,255,0.5)); }
+.how-title {
+  font-family: 'Orbitron', monospace; font-size: 0.82rem;
+  font-weight: 700; letter-spacing: 0.06em; color: var(--white);
+  margin-bottom: 0.9rem;
+}
+/* READABLE card body */
+.how-desc { font-size: 0.87rem; line-height: 1.75; color: var(--text); }
 
-  .reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ═══════════════════════════════════════
+   FEATURES
+═══════════════════════════════════════ */
+.features-wrap {
+  background: var(--surface);
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 8rem 0;
+}
+.features-inner { max-width: 1300px; margin: 0 auto; padding: 0 3rem; }
 
-  /* RESPONSIVE */
-  @media (max-width: 900px) {
-    .hero { grid-template-columns: 1fr; }
-    .hero-right { display: none; }
-    .method-grid { grid-template-columns: 1fr; }
-    .method-step { border-right: none; }
-    .method-step:nth-child(3) { border-bottom: 1px solid var(--border); }
-    .features-header { grid-template-columns: 1fr; }
-    .features-grid { grid-template-columns: 1fr 1fr; }
-    .perf-grid { grid-template-columns: 1fr; }
-    .offline-inner { grid-template-columns: 1fr; }
-    nav { padding: 1.2rem 1.5rem; }
-    .section { padding: 5rem 1.5rem; }
-    nav .nav-links { display: none; }
-  }
+.features-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border); margin-top: 5rem;
+}
+.feat-card {
+  background: var(--deep); padding: 2.8rem 2.2rem;
+  position: relative; overflow: hidden; transition: background 0.3s;
+}
+.feat-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--orange));
+  transform: scaleX(0); transform-origin: left; transition: transform 0.4s;
+}
+.feat-card:hover { background: rgba(0,229,255,0.025); }
+.feat-card:hover::after { transform: scaleX(1); }
+
+.feat-num {
+  font-family: 'Space Mono', monospace; font-size: 0.6rem;
+  letter-spacing: 0.15em; color: var(--orange); margin-bottom: 1.8rem;
+}
+.feat-icon { font-size: 1.9rem; margin-bottom: 1.2rem; display: block; filter: drop-shadow(0 0 10px rgba(0,229,255,0.4)); }
+.feat-title {
+  font-family: 'Orbitron', monospace; font-size: 0.82rem;
+  font-weight: 700; letter-spacing: 0.05em; color: var(--white); margin-bottom: 0.9rem;
+}
+/* READABLE */
+.feat-desc { font-size: 0.87rem; line-height: 1.75; color: var(--text); }
+
+/* ═══════════════════════════════════════
+   ARCHITECTURE
+═══════════════════════════════════════ */
+.arch-wrap { background: var(--panel); padding: 8rem 3rem; position: relative; overflow: hidden; }
+.arch-grid-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.arch-inner { max-width: 1300px; margin: 0 auto; position: relative; z-index: 2; }
+
+.arch-flow { display: flex; align-items: center; gap: 0; margin-top: 4rem; overflow-x: auto; padding-bottom: 1rem; }
+.arch-node {
+  background: rgba(0,229,255,0.04); border: 1px solid var(--border);
+  padding: 1.8rem 2rem; flex-shrink: 0; transition: all 0.3s;
+  clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+  min-width: 150px;
+}
+.arch-node:hover {
+  background: rgba(0,229,255,0.1); border-color: var(--cyan);
+  transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,229,255,0.1);
+}
+.arch-node.special { background: rgba(255,107,0,0.07); border-color: rgba(255,107,0,0.3); }
+.arch-node.special:hover { background: rgba(255,107,0,0.14); box-shadow: 0 20px 40px rgba(255,107,0,0.15); }
+
+.arch-node-name {
+  font-family: 'Space Mono', monospace; font-size: 0.75rem;
+  font-weight: 700; color: var(--cyan); margin-bottom: 0.5rem; letter-spacing: 0.04em;
+}
+.arch-node.special .arch-node-name { color: var(--orange); }
+/* READABLE */
+.arch-node-desc { font-size: 0.78rem; color: var(--text); line-height: 1.5; }
+
+.arch-arrow {
+  display: flex; align-items: center; padding: 0 1.2rem;
+  color: rgba(0,229,255,0.3); font-size: 1.5rem; flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════
+   PERFORMANCE
+═══════════════════════════════════════ */
+.perf-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border); margin-top: 4rem;
+}
+.perf-card { background: var(--deep); padding: 3rem 2.5rem; position: relative; }
+.perf-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--orange));
+}
+.perf-device {
+  font-family: 'Space Mono', monospace; font-size: 0.62rem;
+  letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; margin-bottom: 1.5rem;
+}
+.perf-value {
+  font-family: 'Orbitron', monospace; font-size: 3.2rem;
+  font-weight: 900; line-height: 1; margin-bottom: 0.4rem; color: var(--white);
+  text-shadow: 0 0 30px rgba(0,229,255,0.2);
+}
+.perf-value sup { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
+/* READABLE */
+.perf-meta { font-size: 0.87rem; color: var(--text); margin-bottom: 2rem; line-height: 1.5; }
+.perf-bar-bg { height: 3px; background: rgba(0,229,255,0.08); margin-bottom: 0.6rem; }
+.perf-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--orange));
+  box-shadow: 0 0 8px var(--cyan);
+  animation: barGrow 2s ease forwards; width: 0;
+}
+@keyframes barGrow { to { width: var(--target); } }
+.perf-bar-note {
+  font-family: 'Space Mono', monospace; font-size: 0.6rem;
+  letter-spacing: 0.08em; color: var(--muted);
+}
+
+/* ═══════════════════════════════════════
+   OFFLINE / EDGE
+═══════════════════════════════════════ */
+.offline-wrap {
+  background: var(--surface); padding: 8rem 3rem;
+  border-top: 1px solid var(--border); position: relative; overflow: hidden;
+}
+.offline-glow {
+  position: absolute; right: -100px; top: 50%; transform: translateY(-50%);
+  width: 600px; height: 600px; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0,229,255,0.05) 0%, transparent 70%);
+}
+.offline-inner {
+  max-width: 1300px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center;
+  position: relative; z-index: 2;
+}
+
+.offline-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; margin-top: 2.5rem; }
+.offline-item {
+  display: flex; align-items: flex-start; gap: 1rem;
+  padding: 1.2rem 1.4rem;
+  background: rgba(0,229,255,0.03); border: 1px solid var(--border);
+  transition: border-color 0.3s, background 0.3s;
+}
+.offline-item:hover { border-color: var(--border-hot); background: rgba(0,229,255,0.06); }
+.offline-item-icon { color: var(--cyan); flex-shrink: 0; margin-top: 0.1rem; filter: drop-shadow(0 0 5px var(--cyan)); }
+/* READABLE */
+.offline-item-text { font-size: 0.9rem; line-height: 1.7; color: var(--text); }
+
+/* Routing diagram */
+.route-box {
+  background: rgba(1,8,16,0.8);
+  border: 1px solid var(--border-hot);
+  padding: 2.5rem; position: relative;
+}
+.route-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+}
+.route-title {
+  font-family: 'Space Mono', monospace; font-size: 0.62rem;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 2rem;
+}
+.route-row {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 1.2rem; margin-bottom: 0.7rem;
+  background: rgba(0,229,255,0.03); border: 1px solid var(--border);
+  font-family: 'Space Mono', monospace; font-size: 0.75rem;
+  /* READABLE */
+  color: var(--text); transition: all 0.3s;
+  clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+}
+.route-row:hover { background: rgba(0,229,255,0.07); border-color: var(--border-hot); }
+.route-dest { margin-left: auto; color: var(--cyan); font-size: 0.7rem; font-weight: 700; }
+
+/* ═══════════════════════════════════════
+   CTA
+═══════════════════════════════════════ */
+.cta-section {
+  position: relative; z-index: 10;
+  padding: 12rem 3rem; text-align: center; overflow: hidden;
+}
+.cta-atmosphere {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 60% at center, rgba(0,229,255,0.05) 0%, transparent 70%);
+}
+.cta-ring-1 {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px; height: 700px;
+  border: 1px solid rgba(0,229,255,0.05); border-radius: 50%;
+  animation: ringPulse 5s ease-in-out infinite; pointer-events: none;
+}
+.cta-ring-2 {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 450px; height: 450px;
+  border: 1px solid rgba(255,107,0,0.05); border-radius: 50%;
+  animation: ringPulse 5s 2.5s ease-in-out infinite; pointer-events: none;
+}
+@keyframes ringPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.5; }
+  50% { transform: translate(-50%,-50%) scale(1.08); opacity: 1; }
+}
+.cta-inner { position: relative; z-index: 2; max-width: 680px; margin: 0 auto; }
+
+.cta-label {
+  font-family: 'Space Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--orange); margin-bottom: 2rem;
+}
+.cta-heading {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(2.5rem, 6vw, 5.5rem);
+  font-weight: 900; line-height: 0.95; letter-spacing: -0.02em;
+  color: var(--white); margin-bottom: 1.5rem;
+}
+.cta-heading em {
+  font-style: normal; display: block;
+  background: linear-gradient(90deg, var(--cyan), var(--orange));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+/* READABLE */
+.cta-body { font-size: 1rem; line-height: 1.85; color: var(--text); margin-bottom: 3.5rem; }
+.cta-buttons { display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer {
+  position: relative; z-index: 10;
+  background: var(--void); border-top: 1px solid var(--border);
+  padding: 2.5rem 3rem;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;
+}
+.foot-logo {
+  font-family: 'Orbitron', monospace; font-size: 0.9rem;
+  font-weight: 700; letter-spacing: 0.15em; color: var(--white);
+}
+.foot-links { display: flex; gap: 2.5rem; }
+.foot-links a {
+  font-family: 'Space Mono', monospace; font-size: 0.68rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
+}
+.foot-links a:hover { color: var(--cyan); }
+.foot-copy {
+  font-family: 'Space Mono', monospace; font-size: 0.6rem;
+  letter-spacing: 0.06em; color: rgba(122,155,181,0.5);
+}
+
+/* ═══════════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════════ */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ═══════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media (max-width: 960px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  .hero { grid-template-columns: 1fr; padding: 100px 1.5rem 4rem; }
+  .hero-right { display: none; }
+  .hero-stats { flex-wrap: wrap; }
+  .how-grid { grid-template-columns: 1fr 1fr; }
+  .features-grid { grid-template-columns: 1fr 1fr; }
+  .perf-grid { grid-template-columns: 1fr; }
+  .offline-inner { grid-template-columns: 1fr; }
+  .section { padding: 5rem 1.5rem; }
+  .arch-wrap, .offline-wrap, .features-wrap { padding: 5rem 1.5rem; }
+}
 </style>
 </head>
 <body>
 
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
+<canvas id="nc"></canvas>
+<div class="cursor-dot" id="cdot"></div>
+<div class="cursor-ring" id="cring"></div>
 
-<!-- NAV -->
+<!-- ── NAV ── -->
 <nav>
-  <a href="#" class="nav-logo">Socratic<span>.</span>AI</a>
+  <a href="#" class="nav-logo">
+    <div class="logo-orb">S</div>
+    SOCRATIC.AI
+  </a>
   <div class="nav-links">
-    <a href="#how">How it works</a>
-    <a href="#features">Features</a>
-    <a href="#offline">Offline Mode</a>
-    <a href="https://socratic.hx-ai.org/" target="_blank" class="nav-cta">Try Live Demo →</a>
+    <a href="#method" class="nav-link">Method</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#offline" class="nav-link">Offline</a>
+    <a href="https://socratic.hx-ai.org/" target="_blank" class="nav-cta">Launch Demo</a>
   </div>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
+<!-- ── HERO ── -->
+<div style="position:relative;z-index:10;">
+<div class="hero">
+  <div class="hud hud-tl"></div>
+  <div class="hud hud-tr"></div>
+
   <div class="hero-left">
     <div class="hero-badge">
-      <span class="hero-badge-dot"></span>
-      LIVE · OFFLINE-FIRST · FINE-TUNED AI
+      <span class="badge-dot"></span>
+      System Online · Edge AI Active · Offline Ready
     </div>
+    <div class="hero-eyebrow">Bantaba AI — Gambia</div>
     <h1 class="hero-title">
-      The AI that<br>
-      <em>asks</em> instead<br>
-      of telling.
+      <span class="solid">THE AI THAT</span>
+      <span class="gradient">ASKS.</span>
     </h1>
-    <p class="hero-sub">
-      Socratic AI Tutor teaches Data Science and Machine Learning through guided questions — the way the greatest minds have always taught. Works entirely without internet.
+    <p class="hero-body">
+      Not another chatbot that hands you the answer. A fine-tuned AI that guides you to discover it yourself — through questions, on any device, even without internet.
     </p>
     <div class="hero-actions">
-      <a href="https://socratic.hx-ai.org/" target="_blank" class="btn-primary">
-        Try Live Demo →
-      </a>
+      <a href="https://socratic.hx-ai.org/" target="_blank" class="btn-primary">▶ Try Live Demo</a>
       <a href="https://github.com/O-keita/socratic_ai_tutor" target="_blank" class="btn-secondary">
-        ↓ Download APK
+        <span>↓ Download APK</span>
       </a>
     </div>
     <div class="hero-stats">
-      <div>
-        <div class="stat-num">0.6B</div>
-        <div class="stat-label">Fine-tuned parameters</div>
+      <div class="stat">
+        <div class="stat-number">0.6B</div>
+        <div class="stat-label">Params fine-tuned</div>
       </div>
-      <div>
-        <div class="stat-num">58MB</div>
-        <div class="stat-label">App install size</div>
+      <div class="stat">
+        <div class="stat-number">307</div>
+        <div class="stat-label">Training conversations</div>
       </div>
-      <div>
-        <div class="stat-num">100%</div>
-        <div class="stat-label">Offline success rate</div>
+      <div class="stat">
+        <div class="stat-number">58MB</div>
+        <div class="stat-label">APK size</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">100%</div>
+        <div class="stat-label">Offline success</div>
       </div>
     </div>
   </div>
 
   <div class="hero-right">
-    <div class="hero-bg-shape"></div>
-    <div class="chat-window">
-      <div class="chat-header">
-        <div class="chat-dots">
-          <div class="chat-dot"></div>
-          <div class="chat-dot"></div>
-          <div class="chat-dot"></div>
+    <div class="terminal">
+      <div class="term-bar">
+        <div class="term-dots">
+          <div class="term-dot"></div>
+          <div class="term-dot"></div>
+          <div class="term-dot"></div>
         </div>
-        <span class="chat-title">socratic-ai · offline mode active</span>
+        <span class="term-name">socratic-ai-tutor · offline mode</span>
+        <div class="term-live"><span class="term-live-dot"></span> LIVE</div>
       </div>
-      <div class="chat-body">
+      <div class="term-body">
         <div class="msg msg-user">What is gradient descent?</div>
-        <div class="msg msg-ai">Before I explain — <strong>imagine you're lost in a hilly fog.</strong> How would you find the lowest valley if you could only feel the ground beneath your feet?</div>
-        <div class="msg msg-user">I'd feel which way is downhill and step that way?</div>
-        <div class="msg msg-ai"><strong>Exactly.</strong> Now — what if each "step" you took was too large? What might go wrong in your search for the valley floor?</div>
-        <div class="offline-badge">
-          ● RUNNING ON-DEVICE · NO INTERNET
+        <div class="msg msg-ai">Before I explain — <em>imagine you're blindfolded on a hillside.</em> You want to reach the lowest valley. What strategy would you use if you could only feel the slope beneath your feet?</div>
+        <div class="msg msg-user">I'd feel which direction goes downhill and step that way, carefully.</div>
+        <div class="msg msg-ai"><span class="highlight">Exactly right.</span> Now — what happens if each step you take is <em>too large?</em> What could go wrong in your search for the valley floor?</div>
+        <div class="term-chip">
+          <span>●</span> Qwen3-0.6B · On-device · Zero cloud
         </div>
       </div>
     </div>
   </div>
-</section>
+</div>
+</div>
 
-<!-- MARQUEE -->
-<div class="marquee-section">
-  <div class="marquee-track">
-    <span class="marquee-item">Data Science</span>
-    <span class="marquee-item">Machine Learning</span>
-    <span class="marquee-item">Neural Networks</span>
-    <span class="marquee-item">Python Programming</span>
-    <span class="marquee-item">Statistics</span>
-    <span class="marquee-item">Feature Engineering</span>
-    <span class="marquee-item">Linear Regression</span>
-    <span class="marquee-item">Adaptive Quizzes</span>
-    <span class="marquee-item">Edge AI</span>
-    <span class="marquee-item">Offline Learning</span>
-    <span class="marquee-item">Data Science</span>
-    <span class="marquee-item">Machine Learning</span>
-    <span class="marquee-item">Neural Networks</span>
-    <span class="marquee-item">Python Programming</span>
-    <span class="marquee-item">Statistics</span>
-    <span class="marquee-item">Feature Engineering</span>
-    <span class="marquee-item">Linear Regression</span>
-    <span class="marquee-item">Adaptive Quizzes</span>
-    <span class="marquee-item">Edge AI</span>
-    <span class="marquee-item">Offline Learning</span>
+<!-- ── TICKER ── -->
+<div class="ticker" style="position:relative;z-index:10;">
+  <div class="ticker-track">
+    <span class="ticker-item">Data Science</span>
+    <span class="ticker-item">Machine Learning</span>
+    <span class="ticker-item">Neural Networks</span>
+    <span class="ticker-item">Python Programming</span>
+    <span class="ticker-item">Gradient Descent</span>
+    <span class="ticker-item">Feature Engineering</span>
+    <span class="ticker-item">Adaptive Quizzes</span>
+    <span class="ticker-item">Edge AI</span>
+    <span class="ticker-item">Offline Learning</span>
+    <span class="ticker-item">Socratic Method</span>
+    <span class="ticker-item">ARM64 Inference</span>
+    <span class="ticker-item">Statistics</span>
+    <span class="ticker-item">Data Science</span>
+    <span class="ticker-item">Machine Learning</span>
+    <span class="ticker-item">Neural Networks</span>
+    <span class="ticker-item">Python Programming</span>
+    <span class="ticker-item">Gradient Descent</span>
+    <span class="ticker-item">Feature Engineering</span>
+    <span class="ticker-item">Adaptive Quizzes</span>
+    <span class="ticker-item">Edge AI</span>
+    <span class="ticker-item">Offline Learning</span>
+    <span class="ticker-item">Socratic Method</span>
+    <span class="ticker-item">ARM64 Inference</span>
+    <span class="ticker-item">Statistics</span>
   </div>
 </div>
 
-<!-- HOW IT WORKS -->
-<section id="how">
-  <div class="section">
-    <p class="section-label reveal">The Method</p>
-    <h2 class="section-title reveal">Not answers.<br><em>Questions that reveal.</em></h2>
-    <p class="section-desc reveal">Most AI tutors rob you of the thinking. Socratic AI refuses. Every interaction is engineered to make the insight yours.</p>
-
-    <div class="method-grid reveal">
-      <div class="method-step">
-        <span class="step-num">01</span>
-        <span class="step-icon">🎯</span>
-        <h3 class="step-title">You ask a question</h3>
-        <p class="step-desc">Ask anything about Data Science or Machine Learning — concepts, code, theory. The AI detects your intent and adjusts its approach.</p>
-      </div>
-      <div class="method-step">
-        <span class="step-num">02</span>
-        <span class="step-icon">🧠</span>
-        <h3 class="step-title">The AI thinks first</h3>
-        <p class="step-desc">Internally, the model generates chain-of-thought reasoning via &lt;think&gt; blocks — deliberating on the best guiding question before responding.</p>
-      </div>
-      <div class="method-step">
-        <span class="step-num">03</span>
-        <span class="step-icon">❓</span>
-        <h3 class="step-title">You receive a question</h3>
-        <p class="step-desc">Never the answer. Always a question that leads you there. Fine-tuned on 307 Socratic conversations so this is learned behavior, not a prompt.</p>
-      </div>
-      <div class="method-step">
-        <span class="step-num">04</span>
-        <span class="step-icon">💡</span>
-        <h3 class="step-title">You discover the answer</h3>
-        <p class="step-desc">The insight becomes yours — not borrowed. Research shows self-generated understanding is retained far longer than passive reading.</p>
-      </div>
+<!-- ── HOW IT WORKS ── -->
+<section id="method" class="section">
+  <p class="label reveal">The Method</p>
+  <h2 class="heading reveal">Not answers.<br><em>Guided discovery.</em></h2>
+  <p class="body-text reveal">Fine-tuned at the weight level — not just prompted. The model cannot help but teach the way Socrates did. Struggle is the feature, not the bug.</p>
+  <div class="how-grid reveal">
+    <div class="how-card">
+      <div class="how-number">01</div>
+      <span class="how-icon">🎯</span>
+      <h3 class="how-title">YOU ASK</h3>
+      <p class="how-desc">Ask any Data Science or ML concept. The model auto-detects your intent — conceptual, code, or casual — and adapts its teaching approach instantly.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-number">02</div>
+      <span class="how-icon">🧠</span>
+      <h3 class="how-title">AI REASONS</h3>
+      <p class="how-desc">Internally generates chain-of-thought via &lt;think&gt; blocks before responding. Deep deliberation on the best guiding question — stripped before display.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-number">03</div>
+      <span class="how-icon">❓</span>
+      <h3 class="how-title">YOU GET A QUESTION</h3>
+      <p class="how-desc">Never the answer. Always the question that leads you there. If you say "just tell me," you get a small hint — then another question.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-number">04</div>
+      <span class="how-icon">💡</span>
+      <h3 class="how-title">YOU OWN IT</h3>
+      <p class="how-desc">Self-generated insight is retained far longer than reading. The understanding is yours — not borrowed from a chatbot, earned through thinking.</p>
     </div>
   </div>
 </section>
 
-<!-- FEATURES -->
-<section id="features" class="features-section">
+<!-- ── FEATURES ── -->
+<div id="features" class="section-full features-wrap">
   <div class="features-inner">
-    <div class="features-header">
-      <div>
-        <p class="section-label reveal">Everything it does</p>
-        <h2 class="section-title reveal">A complete<br><em>learning ecosystem.</em></h2>
-      </div>
-      <p class="section-desc reveal">Beyond the Socratic chat — a full suite of tools built for serious learners in any environment.</p>
-    </div>
-
+    <p class="label reveal">Capabilities</p>
+    <h2 class="heading reveal">A complete<br><em>learning system.</em></h2>
+    <p class="body-text reveal">Beyond the Socratic chat — a full suite of tools built for serious learners in any environment, on any connection.</p>
     <div class="features-grid reveal">
-      <div class="feature-card">
-        <div class="feature-icon">🤖</div>
-        <h3 class="feature-title">Socratic Chat</h3>
-        <p class="feature-desc">AI guides through questions, never answers directly. Auto-detects conceptual, code, and casual intent.</p>
+      <div class="feat-card">
+        <div class="feat-num">// 001</div>
+        <span class="feat-icon">🤖</span>
+        <h3 class="feat-title">SOCRATIC CHAT</h3>
+        <p class="feat-desc">AI guides through questions, never answers directly. Auto-detects conceptual, code, and casual intent. Socratic Index of 0.62 maintained across all modes.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">📡</div>
-        <h3 class="feature-title">100% Offline Mode</h3>
-        <p class="feature-desc">Full LLM inference runs on your ARM64 device via a custom C API. No internet after model download.</p>
+      <div class="feat-card">
+        <div class="feat-num">// 002</div>
+        <span class="feat-icon">📡</span>
+        <h3 class="feat-title">100% OFFLINE</h3>
+        <p class="feat-desc">Full LLM inference runs on your ARM64 device via a custom C API. No internet required after the initial model download. Works on every Android device.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3 class="feature-title">Hybrid Routing</h3>
-        <p class="feature-desc">Auto-switches online/offline seamlessly. Crash-loop protection ensures learning never stops.</p>
+      <div class="feat-card">
+        <div class="feat-num">// 003</div>
+        <span class="feat-icon">⚡</span>
+        <h3 class="feat-title">HYBRID ROUTING</h3>
+        <p class="feat-desc">Auto-switches between online and offline modes invisibly. Crash-loop protection and OOM safeguards ensure the learning experience never breaks.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">📚</div>
-        <h3 class="feature-title">DS/ML Curriculum</h3>
-        <p class="feature-desc">Bundled courses: Neural Networks, Linear Regression, Statistics, Feature Engineering, Python.</p>
+      <div class="feat-card">
+        <div class="feat-num">// 004</div>
+        <span class="feat-icon">📚</span>
+        <h3 class="feat-title">DS/ML CURRICULUM</h3>
+        <p class="feat-desc">Bundled courses covering Neural Networks, Linear Regression, Statistics, Feature Engineering, and Python. An admin dashboard lets you manage content.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎯</div>
-        <h3 class="feature-title">Adaptive Quizzes</h3>
-        <p class="feature-desc">Difficulty adjusts dynamically based on your performance history. Always in the learning zone.</p>
+      <div class="feat-card">
+        <div class="feat-num">// 005</div>
+        <span class="feat-icon">🎯</span>
+        <h3 class="feat-title">ADAPTIVE QUIZZES</h3>
+        <p class="feat-desc">Quiz difficulty adjusts dynamically based on your performance history, keeping you in the optimal learning zone. Progress is saved locally and synced online.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🐍</div>
-        <h3 class="feature-title">Python Playground</h3>
-        <p class="feature-desc">Full Python runtime via Pyodide/WebAssembly running directly inside the app. Write and run code.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- TECH STACK -->
-<section class="tech-section">
-  <div class="tech-inner">
-    <p class="section-label reveal">Under the hood</p>
-    <h2 class="section-title reveal">Built different.<br><em>Built from scratch.</em></h2>
-    <p class="section-desc reveal" style="margin-bottom: 0;">When every existing Flutter LLM package was broken, we wrote our own — 235 lines of C that solved what three popular packages couldn't.</p>
-
-    <div class="tech-flow reveal">
-      <div class="tech-node">
-        <div class="tech-node-name">Flutter 3.19</div>
-        <div class="tech-node-role">Mobile App</div>
-      </div>
-      <div class="tech-arrow">→</div>
-      <div class="tech-node">
-        <div class="tech-node-name">dart:ffi</div>
-        <div class="tech-node-role">FFI Bindings</div>
-      </div>
-      <div class="tech-arrow">→</div>
-      <div class="tech-node" style="border-color: var(--orange);">
-        <div class="tech-node-name" style="color: var(--orange);">libchat.so</div>
-        <div class="tech-node-role">Custom C API</div>
-      </div>
-      <div class="tech-arrow">→</div>
-      <div class="tech-node">
-        <div class="tech-node-name">llama.cpp</div>
-        <div class="tech-node-role">Compiled from source</div>
-      </div>
-      <div class="tech-arrow">→</div>
-      <div class="tech-node">
-        <div class="tech-node-name">Qwen3-0.6B</div>
-        <div class="tech-node-role">Fine-tuned GGUF Q4</div>
+      <div class="feat-card">
+        <div class="feat-num">// 006</div>
+        <span class="feat-icon">🐍</span>
+        <h3 class="feat-title">PYTHON PLAYGROUND</h3>
+        <p class="feat-desc">A full Python runtime powered by Pyodide/WebAssembly runs directly inside the app. Write, run, and test code without ever leaving the learning environment.</p>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- PERFORMANCE -->
-<section class="perf-section">
-  <p class="section-label reveal">Performance</p>
-  <h2 class="section-title reveal">Fast enough to<br><em>replace a missing tutor.</em></h2>
-  <p class="section-desc reveal">Tested on real devices. Not benchmarks. Not cloud servers. On the phones your students actually own.</p>
+<!-- ── ARCHITECTURE ── -->
+<div class="section-full arch-wrap">
+  <div class="arch-grid-bg"></div>
+  <div class="arch-inner">
+    <p class="label reveal">Architecture</p>
+    <h2 class="heading reveal">Built from scratch.<br><em>235 lines of C.</em></h2>
+    <p class="body-text reveal">Every existing Flutter LLM package was broken. So we went one layer deeper — a custom C API compiling llama.cpp from source directly into the APK via CMake.</p>
+    <div class="arch-flow reveal">
+      <div class="arch-node">
+        <div class="arch-node-name">Flutter 3.19</div>
+        <div class="arch-node-desc">Mobile App<br>Dart + Material</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="arch-node-name">dart:ffi</div>
+        <div class="arch-node-desc">FFI Bindings<br>Native bridge</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node special">
+        <div class="arch-node-name">libchat.so</div>
+        <div class="arch-node-desc">Custom C API<br>235 lines · CMake</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="arch-node-name">llama.cpp</div>
+        <div class="arch-node-desc">Compiled from source<br>ARM64 baseline</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="arch-node-name">Qwen3-0.6B</div>
+        <div class="arch-node-desc">Fine-tuned model<br>GGUF Q4_K_M</div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- ── PERFORMANCE ── -->
+<section class="section">
+  <p class="label reveal">Performance</p>
+  <h2 class="heading reveal">Fast enough to replace<br><em>a missing tutor.</em></h2>
+  <p class="body-text reveal">Tested on real devices — the phones your students actually own, not lab machines or cloud simulators.</p>
   <div class="perf-grid reveal">
     <div class="perf-card">
-      <div class="perf-device">Huawei P Smart · 4GB</div>
-      <div class="perf-speed">5–7<sup>s</sup></div>
-      <div class="perf-label">Offline response time</div>
-      <div class="perf-bar-wrap"><div class="perf-bar" style="--target-w: 72%;"></div></div>
+      <div class="perf-device">// Huawei P Smart · 4 GB RAM</div>
+      <div class="perf-value">5–7<sup>s</sup></div>
+      <div class="perf-meta">Offline inference response time on a real budget device</div>
+      <div class="perf-bar-bg"><div class="perf-bar-fill" style="--target: 70%;"></div></div>
+      <div class="perf-bar-note">ARM64 · Baseline CPU · No dotprod or SVE</div>
     </div>
     <div class="perf-card">
-      <div class="perf-device">Modern Android · 6GB+</div>
-      <div class="perf-speed">5–7<sup>s</sup></div>
-      <div class="perf-label">Offline response time</div>
-      <div class="perf-bar-wrap"><div class="perf-bar" style="--target-w: 80%;"></div></div>
+      <div class="perf-device">// Modern Android · 6 GB+ RAM</div>
+      <div class="perf-value">5–7<sup>s</sup></div>
+      <div class="perf-meta">Consistent response time across all ARM64 devices</div>
+      <div class="perf-bar-bg"><div class="perf-bar-fill" style="--target: 80%;"></div></div>
+      <div class="perf-bar-note">100% offline success rate on all tested devices</div>
     </div>
     <div class="perf-card">
-      <div class="perf-device">Socratic Quality</div>
-      <div class="perf-speed">0.62</div>
-      <div class="perf-label">Socratic Index maintained</div>
-      <div class="perf-bar-wrap"><div class="perf-bar" style="--target-w: 62%;"></div></div>
+      <div class="perf-device">// Socratic Quality Index</div>
+      <div class="perf-value">0.62</div>
+      <div class="perf-meta">Pedagogical quality maintained across all modes and hardware</div>
+      <div class="perf-bar-bg"><div class="perf-bar-fill" style="--target: 62%;"></div></div>
+      <div class="perf-bar-note">Fine-tuned behavior — not a prompt, a trained skill</div>
     </div>
   </div>
 </section>
 
-<!-- OFFLINE -->
-<section id="offline" class="offline-section">
-  <div class="offline-bg"></div>
+<!-- ── OFFLINE / EDGE ── -->
+<div id="offline" class="section-full offline-wrap">
+  <div class="offline-glow"></div>
   <div class="offline-inner">
     <div>
-      <p class="section-label reveal">No internet? No problem.</p>
-      <h2 class="section-title reveal">Built for the<br><em>last mile.</em></h2>
-      <p class="section-desc reveal">For millions of learners, stable internet is not a guarantee. Socratic AI was engineered for exactly this reality — edge AI that just works.</p>
-      <ul class="offline-points reveal">
-        <li class="offline-point">
-          <span class="offline-point-icon">✦</span>
-          Full 0.6B language model runs directly on your Android phone — no server needed
+      <p class="label reveal">Edge Intelligence</p>
+      <h2 class="heading reveal">No signal.<br><em>No problem.</em></h2>
+      <p class="body-text reveal">Built for the last mile. For the student with no stable connection. A full AI tutor running entirely on their phone — no server, no subscription, no data costs.</p>
+      <ul class="offline-list reveal">
+        <li class="offline-item">
+          <span class="offline-item-icon">◆</span>
+          <span class="offline-item-text">Full 0.6B language model runs directly on your Android — zero server dependency after the first model download</span>
         </li>
-        <li class="offline-point">
-          <span class="offline-point-icon">✦</span>
-          Seamless auto-switching between online and offline — invisible to the learner
+        <li class="offline-item">
+          <span class="offline-item-icon">◆</span>
+          <span class="offline-item-text">Seamless auto-switching between online and offline — students never notice the transition, learning never stops</span>
         </li>
-        <li class="offline-point">
-          <span class="offline-point-icon">✦</span>
-          Crash-loop protection ensures continuous learning even on older hardware
+        <li class="offline-item">
+          <span class="offline-item-icon">◆</span>
+          <span class="offline-item-text">Crash-loop protection and out-of-memory safeguards built for older, resource-constrained hardware</span>
         </li>
-        <li class="offline-point">
-          <span class="offline-point-icon">✦</span>
-          Tested on ARM64 baseline — no dotprod, no SVE — runs on every Android device
+        <li class="offline-item">
+          <span class="offline-item-icon">◆</span>
+          <span class="offline-item-text">ARM64 baseline CPU targets only — compatible with every Android device made since 2015</span>
         </li>
       </ul>
     </div>
 
-    <div class="routing-diagram reveal">
-      <div class="routing-title">HybridTutorService · routing logic</div>
-      <div class="routing-row">
-        <span class="routing-icon">🌐</span>
-        Network available?
-        <span class="routing-arrow-r">→ Remote FastAPI</span>
-      </div>
-      <div class="routing-row">
-        <span class="routing-icon">📵</span>
-        No network?
-        <span class="routing-arrow-r">→ Local libchat</span>
-      </div>
-      <div class="routing-row">
-        <span class="routing-icon">⚠️</span>
-        Inference crash?
-        <span class="routing-arrow-r">→ Block local, route remote</span>
-      </div>
-      <div class="routing-row">
-        <span class="routing-icon">💾</span>
-        Model load crash?
-        <span class="routing-arrow-r">→ OOM protection</span>
-      </div>
+    <div class="route-box reveal">
+      <div class="route-title">// HybridTutorService · routing logic</div>
+      <div class="route-row">🌐 Network available? <span class="route-dest">→ Remote FastAPI</span></div>
+      <div class="route-row">📵 No network? <span class="route-dest">→ Local libchat</span></div>
+      <div class="route-row">⚠️ Inference crash? <span class="route-dest">→ Block + route remote</span></div>
+      <div class="route-row">💾 Model load crash? <span class="route-dest">→ OOM protection</span></div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- CTA -->
+<!-- ── CTA ── -->
 <section class="cta-section">
-  <div class="cta-bg"></div>
+  <div class="cta-atmosphere"></div>
+  <div class="cta-ring-1"></div>
+  <div class="cta-ring-2"></div>
   <div class="cta-inner">
-    <p class="cta-label reveal">Start learning</p>
-    <h2 class="cta-title reveal">Stop reading.<br><em>Start discovering.</em></h2>
-    <p class="cta-sub reveal">Try the live demo now, or download the Android app and take your AI tutor anywhere — even where there's no signal.</p>
+    <div class="cta-label reveal">Initialize your session</div>
+    <h2 class="cta-heading reveal">Stop reading.<br><em>Start thinking.</em></h2>
+    <p class="cta-body reveal">The demo is live. The APK is free. The AI is ready to ask you the question that changes how you understand everything — with or without internet.</p>
     <div class="cta-buttons reveal">
-      <a href="https://socratic.hx-ai.org/" target="_blank" class="btn-primary" style="font-size: 1rem; padding: 1.1rem 2.4rem;">
-        Try Live Demo →
-      </a>
-      <a href="https://github.com/O-keita/socratic_ai_tutor" target="_blank" class="btn-secondary" style="font-size: 1rem; padding: 1.1rem 2rem;">
-        ↓ Download APK (58MB)
-      </a>
+      <a href="https://socratic.hx-ai.org/" target="_blank" class="btn-primary" style="padding:1.1rem 2.8rem;font-size:0.82rem;">▶ Launch Live Demo</a>
+      <a href="https://github.com/O-keita/socratic_ai_tutor" target="_blank" class="btn-secondary" style="padding:1.1rem 2.5rem;font-size:0.82rem;"><span>↓ Download APK (58 MB)</span></a>
     </div>
   </div>
 </section>
 
-<!-- FOOTER -->
+<!-- ── FOOTER ── -->
 <footer>
-  <div class="footer-logo">Socratic<span>.</span>AI</div>
-  <div class="footer-links">
+  <div class="foot-logo">SOCRATIC.AI</div>
+  <div class="foot-links">
     <a href="https://socratic.hx-ai.org/" target="_blank">Live Demo</a>
     <a href="https://github.com/O-keita/socratic_ai_tutor" target="_blank">GitHub</a>
     <a href="https://socratic.hx-ai.org/admin" target="_blank">Admin</a>
   </div>
-  <div class="footer-copy">Built by MarAcademy · Omar Keita</div>
+  <div class="foot-copy">Built by Bantaba AI · Omar Keita · The Gambia</div>
 </footer>
 
 <script>
-  // Custom cursor
-  const cursor = document.getElementById('cursor');
-  const ring = document.getElementById('cursorRing');
-  let mx = 0, my = 0, rx = 0, ry = 0;
+/* ── NEURAL CANVAS ── */
+const canvas = document.getElementById('nc');
+const ctx = canvas.getContext('2d');
+let W, H, nodes = [], mouse = { x: -999, y: -999 };
 
-  document.addEventListener('mousemove', e => {
-    mx = e.clientX; my = e.clientY;
-    cursor.style.left = mx + 'px';
-    cursor.style.top = my + 'px';
-  });
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
 
-  function animRing() {
-    rx += (mx - rx) * 0.12;
-    ry += (my - ry) * 0.12;
-    ring.style.left = rx + 'px';
-    ring.style.top = ry + 'px';
-    requestAnimationFrame(animRing);
+function initNodes() {
+  nodes = [];
+  for (let i = 0; i < 85; i++) {
+    nodes.push({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
+      r: Math.random() * 1.5 + 0.5,
+      phase: Math.random() * Math.PI * 2
+    });
   }
-  animRing();
+}
 
-  document.querySelectorAll('a, button').forEach(el => {
-    el.addEventListener('mouseenter', () => {
-      cursor.style.transform = 'translate(-50%,-50%) scale(2.5)';
-      ring.style.width = '60px'; ring.style.height = '60px';
-      ring.style.opacity = '0.3';
-    });
-    el.addEventListener('mouseleave', () => {
-      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
-      ring.style.width = '36px'; ring.style.height = '36px';
-      ring.style.opacity = '0.6';
-    });
+function drawCanvas() {
+  ctx.clearRect(0, 0, W, H);
+  const all = [...nodes, { x: mouse.x, y: mouse.y, r: 0, isM: true }];
+
+  for (let i = 0; i < all.length; i++) {
+    for (let j = i + 1; j < all.length; j++) {
+      const dx = all[i].x - all[j].x, dy = all[i].y - all[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxD = (all[i].isM || all[j].isM) ? 200 : 130;
+      if (dist < maxD) {
+        const alpha = (1 - dist / maxD) * 0.5;
+        const g = ctx.createLinearGradient(all[i].x, all[i].y, all[j].x, all[j].y);
+        if ((i + j) % 4 === 0) {
+          g.addColorStop(0, `rgba(0,229,255,${alpha})`);
+          g.addColorStop(1, `rgba(255,107,0,${alpha * 0.5})`);
+        } else {
+          g.addColorStop(0, `rgba(0,229,255,${alpha * 0.7})`);
+          g.addColorStop(1, `rgba(0,200,220,${alpha * 0.1})`);
+        }
+        ctx.beginPath();
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 0.6;
+        ctx.moveTo(all[i].x, all[i].y);
+        ctx.lineTo(all[j].x, all[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  nodes.forEach(n => {
+    n.phase += 0.018;
+    const glow = Math.sin(n.phase) * 0.5 + 0.5;
+    const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 5);
+    g.addColorStop(0, `rgba(0,229,255,${glow * 0.7})`);
+    g.addColorStop(1, 'rgba(0,229,255,0)');
+    ctx.beginPath(); ctx.fillStyle = g;
+    ctx.arc(n.x, n.y, n.r * 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.fillStyle = `rgba(0,229,255,${glow})`;
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
+    n.x += n.vx; n.y += n.vy;
+    if (n.x < 0 || n.x > W) n.vx *= -1;
+    if (n.y < 0 || n.y > H) n.vy *= -1;
   });
 
-  // Scroll reveal
-  const reveals = document.querySelectorAll('.reveal');
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach((e, i) => {
-      if (e.isIntersecting) {
-        setTimeout(() => e.target.classList.add('visible'), i * 80);
-      }
-    });
-  }, { threshold: 0.1 });
-  reveals.forEach(r => obs.observe(r));
+  requestAnimationFrame(drawCanvas);
+}
 
-  // Perf bar animation on scroll
-  const perfObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.querySelectorAll('.perf-bar').forEach(bar => {
-          bar.style.animation = 'none';
-          bar.offsetHeight;
-          bar.style.animation = 'growBar 1.5s ease forwards';
-        });
-      }
-    });
-  }, { threshold: 0.3 });
-  document.querySelectorAll('.perf-grid').forEach(g => perfObs.observe(g));
+resize(); initNodes(); drawCanvas();
+window.addEventListener('resize', () => { resize(); initNodes(); });
+document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+/* ── CURSOR ── */
+const cdot = document.getElementById('cdot');
+const cring = document.getElementById('cring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cdot.style.left = mx + 'px'; cdot.style.top = my + 'px';
+});
+(function animCursor() {
+  rx += (mx - rx) * 0.1; ry += (my - ry) * 0.1;
+  cring.style.left = rx + 'px'; cring.style.top = ry + 'px';
+  requestAnimationFrame(animCursor);
+})();
+
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cdot.style.transform = 'translate(-50%,-50%) scale(2.5)';
+    cring.style.width = '56px'; cring.style.height = '56px'; cring.style.opacity = '0.8';
+  });
+  el.addEventListener('mouseleave', () => {
+    cdot.style.transform = 'translate(-50%,-50%) scale(1)';
+    cring.style.width = '36px'; cring.style.height = '36px'; cring.style.opacity = '0.5';
+  });
+});
+
+/* ── SCROLL REVEAL ── */
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 70);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(r => revealObs.observe(r));
+
+/* ── PERF BARS ── */
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll('.perf-bar-fill').forEach(bar => {
+        bar.style.animation = 'none';
+        bar.offsetHeight;
+        bar.style.animation = 'barGrow 2s ease forwards';
+      });
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.perf-grid').forEach(g => barObs.observe(g));
 </script>
 </body>
 </html>
