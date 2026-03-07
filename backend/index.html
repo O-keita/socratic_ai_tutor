@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Socratic AI Tutor — Think. Discover. Learn.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,700;0,900;1,300;1,700&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0a;
+    --paper: #f5f0e8;
+    --orange: #e85d00;
+    --orange-dim: #c44d00;
+    --blue-deep: #0d1b2a;
+    --blue-mid: #112240;
+    --cream: #faf7f0;
+    --muted: #6b6560;
+    --border: rgba(10,10,10,0.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Instrument Sans', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--orange);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease, opacity 0.2s;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--orange);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.4s cubic-bezier(.16,1,.3,1), width 0.3s, height 0.3s, opacity 0.2s;
+    transform: translate(-50%, -50%);
+    opacity: 0.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(245,240,232,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--orange); }
+  .nav-links { display: flex; gap: 2.5rem; align-items: center; }
+  .nav-links a {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta {
+    background: var(--ink) !important;
+    color: var(--cream) !important;
+    padding: 0.55rem 1.4rem;
+    border-radius: 2px;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em;
+    transition: background 0.2s !important;
+  }
+  .nav-cta:hover { background: var(--orange) !important; color: white !important; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 80px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6rem 3rem 6rem 3rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--ink);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    padding: 0.4rem 0.9rem;
+    border-radius: 1px;
+    margin-bottom: 2.5rem;
+    width: fit-content;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+  .hero-badge-dot {
+    width: 6px; height: 6px;
+    background: var(--orange);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(3.2rem, 5.5vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.8rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.4s forwards;
+  }
+  .hero-title em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--orange);
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 420px;
+    margin-bottom: 3rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.6s forwards;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.8s forwards;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--orange);
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.9rem 2rem;
+    border-radius: 2px;
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .btn-primary:hover { background: var(--orange-dim); transform: translateY(-2px); }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.9rem 1.6rem;
+    border-radius: 2px;
+    border: 1.5px solid var(--border);
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--ink); transform: translateY(-2px); }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 4rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+    opacity: 0;
+    animation: fadeUp 0.8s 1s forwards;
+  }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    letter-spacing: 0.03em;
+  }
+
+  /* Hero right — chat mockup */
+  .hero-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 3rem 6rem 2rem;
+    position: relative;
+  }
+
+  .hero-bg-shape {
+    position: absolute;
+    right: -80px; top: 50%;
+    transform: translateY(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(ellipse at center, rgba(232,93,0,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .chat-window {
+    background: var(--blue-deep);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 40px 80px rgba(10,10,10,0.25), 0 0 0 1px rgba(255,255,255,0.06);
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.5s forwards;
+    position: relative;
+    z-index: 2;
+  }
+
+  .chat-header {
+    background: var(--blue-mid);
+    padding: 1rem 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .chat-dots { display: flex; gap: 6px; }
+  .chat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .chat-dot:nth-child(1) { background: #ff5f57; }
+  .chat-dot:nth-child(2) { background: #febc2e; }
+  .chat-dot:nth-child(3) { background: #28c840; }
+  .chat-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.4);
+    margin-left: 0.5rem;
+    letter-spacing: 0.04em;
+  }
+
+  .chat-body {
+    padding: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 380px;
+  }
+
+  .msg {
+    max-width: 85%;
+    padding: 0.85rem 1.1rem;
+    border-radius: 12px;
+    font-size: 0.83rem;
+    line-height: 1.6;
+    opacity: 0;
+  }
+  .msg-user {
+    background: var(--orange);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+    animation: msgIn 0.5s forwards;
+  }
+  .msg-ai {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.85);
+    align-self: flex-start;
+    border-bottom-left-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: msgIn 0.5s forwards;
+    font-family: 'Instrument Sans', sans-serif;
+  }
+  .msg-ai strong { color: var(--orange); font-weight: 600; }
+
+  .msg:nth-child(1) { animation-delay: 1.0s; }
+  .msg:nth-child(2) { animation-delay: 1.8s; }
+  .msg:nth-child(3) { animation-delay: 2.8s; }
+  .msg:nth-child(4) { animation-delay: 3.8s; }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .offline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(40,200,64,0.15);
+    border: 1px solid rgba(40,200,64,0.3);
+    color: #28c840;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    margin-top: 0.8rem;
+    letter-spacing: 0.06em;
+    opacity: 0;
+    animation: msgIn 0.5s 4.6s forwards;
+  }
+
+  /* MARQUEE */
+  .marquee-section {
+    background: var(--ink);
+    padding: 1rem 0;
+    overflow: hidden;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .marquee-track {
+    display: flex;
+    gap: 3rem;
+    animation: marquee 25s linear infinite;
+    white-space: nowrap;
+    width: max-content;
+  }
+  .marquee-item {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .marquee-item::after {
+    content: '◆';
+    font-size: 0.4rem;
+    color: var(--orange);
+    font-style: normal;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* HOW IT WORKS */
+  .section { padding: 8rem 3rem; max-width: 1200px; margin: 0 auto; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--orange);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.2rem, 3.5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+  .section-title em { font-style: italic; font-weight: 300; color: var(--orange); }
+  .section-desc {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 560px;
+  }
+
+  /* Method steps */
+  .method-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-top: 5rem;
+    border: 1px solid var(--border);
+  }
+  .method-step {
+    padding: 3rem;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+  .method-step:hover { background: rgba(232,93,0,0.03); }
+  .method-step:nth-child(even) { border-right: none; }
+  .method-step:nth-child(3), .method-step:nth-child(4) { border-bottom: none; }
+  .step-num {
+    font-family: 'Fraunces', serif;
+    font-size: 4rem;
+    font-weight: 900;
+    color: rgba(10,10,10,0.06);
+    line-height: 1;
+    position: absolute;
+    top: 1.5rem; right: 2rem;
+    letter-spacing: -0.04em;
+  }
+  .step-icon {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    display: block;
+  }
+  .step-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.02em;
+  }
+  .step-desc {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  /* FEATURES */
+  .features-section {
+    background: var(--blue-deep);
+    padding: 8rem 0;
+  }
+  .features-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 3rem;
+  }
+  .features-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    margin-bottom: 5rem;
+    align-items: end;
+  }
+  .features-section .section-label { color: var(--orange); }
+  .features-section .section-title { color: white; }
+  .features-section .section-desc { color: rgba(255,255,255,0.5); }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.06);
+  }
+  .feature-card {
+    background: var(--blue-deep);
+    padding: 2.5rem;
+    transition: background 0.3s;
+  }
+  .feature-card:hover { background: var(--blue-mid); }
+  .feature-icon {
+    width: 44px; height: 44px;
+    background: rgba(232,93,0,0.15);
+    border: 1px solid rgba(232,93,0,0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .feature-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.6rem;
+    letter-spacing: -0.01em;
+  }
+  .feature-desc {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.65;
+  }
+
+  /* TECH STACK */
+  .tech-section {
+    background: var(--paper);
+    padding: 6rem 3rem;
+    overflow: hidden;
+  }
+  .tech-inner { max-width: 1200px; margin: 0 auto; }
+  .tech-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-top: 3rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  .tech-node {
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    padding: 1.2rem 1.8rem;
+    border-radius: 4px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .tech-node:hover { border-color: var(--orange); transform: translateY(-4px); }
+  .tech-node-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .tech-node-role {
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  .tech-arrow {
+    color: var(--orange);
+    font-size: 1.2rem;
+    padding: 0 0.8rem;
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  /* PERFORMANCE */
+  .perf-section { padding: 8rem 3rem; max-width: 1200px; margin: 0 auto; }
+  .perf-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: var(--border);
+    margin-top: 4rem;
+  }
+  .perf-card {
+    background: var(--cream);
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .perf-device {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--orange);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+  .perf-speed {
+    font-family: 'Fraunces', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin-bottom: 0.3rem;
+  }
+  .perf-speed sup { font-size: 1rem; font-weight: 400; color: var(--muted); }
+  .perf-label { color: var(--muted); font-size: 0.82rem; margin-bottom: 1.5rem; }
+  .perf-bar-wrap { background: rgba(10,10,10,0.08); height: 4px; border-radius: 2px; overflow: hidden; }
+  .perf-bar {
+    height: 100%;
+    background: var(--orange);
+    border-radius: 2px;
+    animation: growBar 1.5s ease forwards;
+    width: 0%;
+  }
+  @keyframes growBar {
+    to { width: var(--target-w); }
+  }
+
+  /* OFFLINE SECTION */
+  .offline-section {
+    background: var(--ink);
+    padding: 8rem 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .offline-bg {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 40% at 80% 50%, rgba(232,93,0,0.12) 0%, transparent 70%),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 40px,
+        rgba(255,255,255,0.015) 40px,
+        rgba(255,255,255,0.015) 41px
+      );
+    pointer-events: none;
+  }
+  .offline-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  .offline-section .section-title { color: white; }
+  .offline-section .section-desc { color: rgba(255,255,255,0.5); margin-bottom: 2.5rem; }
+  .offline-points { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+  .offline-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  .offline-point-icon {
+    color: var(--orange);
+    font-size: 1rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+  }
+
+  /* routing diagram */
+  .routing-diagram {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+  .routing-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    margin-bottom: 1.8rem;
+  }
+  .routing-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1.2rem;
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    margin-bottom: 0.6rem;
+    border: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.65);
+    font-family: 'DM Mono', monospace;
+  }
+  .routing-icon { font-size: 1rem; }
+  .routing-arrow-r { margin-left: auto; color: var(--orange); font-size: 0.7rem; }
+
+  /* CTA SECTION */
+  .cta-section {
+    padding: 10rem 3rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 50% 60% at center, rgba(232,93,0,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-inner { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; }
+  .cta-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; color: var(--orange); text-transform: uppercase; margin-bottom: 1.5rem; }
+  .cta-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+  .cta-title em { font-style: italic; font-weight: 300; color: var(--orange); }
+  .cta-sub { color: var(--muted); font-size: 1rem; line-height: 1.7; margin-bottom: 3rem; }
+  .cta-buttons { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+
+  /* FOOTER */
+  footer {
+    background: var(--ink);
+    padding: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  .footer-logo {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+  }
+  .footer-logo span { color: var(--orange); }
+  .footer-links { display: flex; gap: 2rem; }
+  .footer-links a { color: rgba(255,255,255,0.4); font-size: 0.82rem; text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: white; }
+  .footer-copy { color: rgba(255,255,255,0.25); font-size: 0.75rem; font-family: 'DM Mono', monospace; }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { display: none; }
+    .method-grid { grid-template-columns: 1fr; }
+    .method-step { border-right: none; }
+    .method-step:nth-child(3) { border-bottom: 1px solid var(--border); }
+    .features-header { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .perf-grid { grid-template-columns: 1fr; }
+    .offline-inner { grid-template-columns: 1fr; }
+    nav { padding: 1.2rem 1.5rem; }
+    .section { padding: 5rem 1.5rem; }
+    nav .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Socratic<span>.</span>AI</a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#offline">Offline Mode</a>
+    <a href="https://socratic.hx-ai.org/" target="_blank" class="nav-cta">Try Live Demo →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      LIVE · OFFLINE-FIRST · FINE-TUNED AI
+    </div>
+    <h1 class="hero-title">
+      The AI that<br>
+      <em>asks</em> instead<br>
+      of telling.
+    </h1>
+    <p class="hero-sub">
+      Socratic AI Tutor teaches Data Science and Machine Learning through guided questions — the way the greatest minds have always taught. Works entirely without internet.
+    </p>
+    <div class="hero-actions">
+      <a href="https://socratic.hx-ai.org/" target="_blank" class="btn-primary">
+        Try Live Demo →
+      </a>
+      <a href="https://github.com/O-keita/socratic_ai_tutor" target="_blank" class="btn-secondary">
+        ↓ Download APK
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">0.6B</div>
+        <div class="stat-label">Fine-tuned parameters</div>
+      </div>
+      <div>
+        <div class="stat-num">58MB</div>
+        <div class="stat-label">App install size</div>
+      </div>
+      <div>
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Offline success rate</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-bg-shape"></div>
+    <div class="chat-window">
+      <div class="chat-header">
+        <div class="chat-dots">
+          <div class="chat-dot"></div>
+          <div class="chat-dot"></div>
+          <div class="chat-dot"></div>
+        </div>
+        <span class="chat-title">socratic-ai · offline mode active</span>
+      </div>
+      <div class="chat-body">
+        <div class="msg msg-user">What is gradient descent?</div>
+        <div class="msg msg-ai">Before I explain — <strong>imagine you're lost in a hilly fog.</strong> How would you find the lowest valley if you could only feel the ground beneath your feet?</div>
+        <div class="msg msg-user">I'd feel which way is downhill and step that way?</div>
+        <div class="msg msg-ai"><strong>Exactly.</strong> Now — what if each "step" you took was too large? What might go wrong in your search for the valley floor?</div>
+        <div class="offline-badge">
+          ● RUNNING ON-DEVICE · NO INTERNET
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <span class="marquee-item">Data Science</span>
+    <span class="marquee-item">Machine Learning</span>
+    <span class="marquee-item">Neural Networks</span>
+    <span class="marquee-item">Python Programming</span>
+    <span class="marquee-item">Statistics</span>
+    <span class="marquee-item">Feature Engineering</span>
+    <span class="marquee-item">Linear Regression</span>
+    <span class="marquee-item">Adaptive Quizzes</span>
+    <span class="marquee-item">Edge AI</span>
+    <span class="marquee-item">Offline Learning</span>
+    <span class="marquee-item">Data Science</span>
+    <span class="marquee-item">Machine Learning</span>
+    <span class="marquee-item">Neural Networks</span>
+    <span class="marquee-item">Python Programming</span>
+    <span class="marquee-item">Statistics</span>
+    <span class="marquee-item">Feature Engineering</span>
+    <span class="marquee-item">Linear Regression</span>
+    <span class="marquee-item">Adaptive Quizzes</span>
+    <span class="marquee-item">Edge AI</span>
+    <span class="marquee-item">Offline Learning</span>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section">
+    <p class="section-label reveal">The Method</p>
+    <h2 class="section-title reveal">Not answers.<br><em>Questions that reveal.</em></h2>
+    <p class="section-desc reveal">Most AI tutors rob you of the thinking. Socratic AI refuses. Every interaction is engineered to make the insight yours.</p>
+
+    <div class="method-grid reveal">
+      <div class="method-step">
+        <span class="step-num">01</span>
+        <span class="step-icon">🎯</span>
+        <h3 class="step-title">You ask a question</h3>
+        <p class="step-desc">Ask anything about Data Science or Machine Learning — concepts, code, theory. The AI detects your intent and adjusts its approach.</p>
+      </div>
+      <div class="method-step">
+        <span class="step-num">02</span>
+        <span class="step-icon">🧠</span>
+        <h3 class="step-title">The AI thinks first</h3>
+        <p class="step-desc">Internally, the model generates chain-of-thought reasoning via &lt;think&gt; blocks — deliberating on the best guiding question before responding.</p>
+      </div>
+      <div class="method-step">
+        <span class="step-num">03</span>
+        <span class="step-icon">❓</span>
+        <h3 class="step-title">You receive a question</h3>
+        <p class="step-desc">Never the answer. Always a question that leads you there. Fine-tuned on 307 Socratic conversations so this is learned behavior, not a prompt.</p>
+      </div>
+      <div class="method-step">
+        <span class="step-num">04</span>
+        <span class="step-icon">💡</span>
+        <h3 class="step-title">You discover the answer</h3>
+        <p class="step-desc">The insight becomes yours — not borrowed. Research shows self-generated understanding is retained far longer than passive reading.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="features-section">
+  <div class="features-inner">
+    <div class="features-header">
+      <div>
+        <p class="section-label reveal">Everything it does</p>
+        <h2 class="section-title reveal">A complete<br><em>learning ecosystem.</em></h2>
+      </div>
+      <p class="section-desc reveal">Beyond the Socratic chat — a full suite of tools built for serious learners in any environment.</p>
+    </div>
+
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3 class="feature-title">Socratic Chat</h3>
+        <p class="feature-desc">AI guides through questions, never answers directly. Auto-detects conceptual, code, and casual intent.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <h3 class="feature-title">100% Offline Mode</h3>
+        <p class="feature-desc">Full LLM inference runs on your ARM64 device via a custom C API. No internet after model download.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">Hybrid Routing</h3>
+        <p class="feature-desc">Auto-switches online/offline seamlessly. Crash-loop protection ensures learning never stops.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📚</div>
+        <h3 class="feature-title">DS/ML Curriculum</h3>
+        <p class="feature-desc">Bundled courses: Neural Networks, Linear Regression, Statistics, Feature Engineering, Python.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3 class="feature-title">Adaptive Quizzes</h3>
+        <p class="feature-desc">Difficulty adjusts dynamically based on your performance history. Always in the learning zone.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🐍</div>
+        <h3 class="feature-title">Python Playground</h3>
+        <p class="feature-desc">Full Python runtime via Pyodide/WebAssembly running directly inside the app. Write and run code.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="tech-section">
+  <div class="tech-inner">
+    <p class="section-label reveal">Under the hood</p>
+    <h2 class="section-title reveal">Built different.<br><em>Built from scratch.</em></h2>
+    <p class="section-desc reveal" style="margin-bottom: 0;">When every existing Flutter LLM package was broken, we wrote our own — 235 lines of C that solved what three popular packages couldn't.</p>
+
+    <div class="tech-flow reveal">
+      <div class="tech-node">
+        <div class="tech-node-name">Flutter 3.19</div>
+        <div class="tech-node-role">Mobile App</div>
+      </div>
+      <div class="tech-arrow">→</div>
+      <div class="tech-node">
+        <div class="tech-node-name">dart:ffi</div>
+        <div class="tech-node-role">FFI Bindings</div>
+      </div>
+      <div class="tech-arrow">→</div>
+      <div class="tech-node" style="border-color: var(--orange);">
+        <div class="tech-node-name" style="color: var(--orange);">libchat.so</div>
+        <div class="tech-node-role">Custom C API</div>
+      </div>
+      <div class="tech-arrow">→</div>
+      <div class="tech-node">
+        <div class="tech-node-name">llama.cpp</div>
+        <div class="tech-node-role">Compiled from source</div>
+      </div>
+      <div class="tech-arrow">→</div>
+      <div class="tech-node">
+        <div class="tech-node-name">Qwen3-0.6B</div>
+        <div class="tech-node-role">Fine-tuned GGUF Q4</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERFORMANCE -->
+<section class="perf-section">
+  <p class="section-label reveal">Performance</p>
+  <h2 class="section-title reveal">Fast enough to<br><em>replace a missing tutor.</em></h2>
+  <p class="section-desc reveal">Tested on real devices. Not benchmarks. Not cloud servers. On the phones your students actually own.</p>
+
+  <div class="perf-grid reveal">
+    <div class="perf-card">
+      <div class="perf-device">Huawei P Smart · 4GB</div>
+      <div class="perf-speed">5–7<sup>s</sup></div>
+      <div class="perf-label">Offline response time</div>
+      <div class="perf-bar-wrap"><div class="perf-bar" style="--target-w: 72%;"></div></div>
+    </div>
+    <div class="perf-card">
+      <div class="perf-device">Modern Android · 6GB+</div>
+      <div class="perf-speed">5–7<sup>s</sup></div>
+      <div class="perf-label">Offline response time</div>
+      <div class="perf-bar-wrap"><div class="perf-bar" style="--target-w: 80%;"></div></div>
+    </div>
+    <div class="perf-card">
+      <div class="perf-device">Socratic Quality</div>
+      <div class="perf-speed">0.62</div>
+      <div class="perf-label">Socratic Index maintained</div>
+      <div class="perf-bar-wrap"><div class="perf-bar" style="--target-w: 62%;"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- OFFLINE -->
+<section id="offline" class="offline-section">
+  <div class="offline-bg"></div>
+  <div class="offline-inner">
+    <div>
+      <p class="section-label reveal">No internet? No problem.</p>
+      <h2 class="section-title reveal">Built for the<br><em>last mile.</em></h2>
+      <p class="section-desc reveal">For millions of learners, stable internet is not a guarantee. Socratic AI was engineered for exactly this reality — edge AI that just works.</p>
+      <ul class="offline-points reveal">
+        <li class="offline-point">
+          <span class="offline-point-icon">✦</span>
+          Full 0.6B language model runs directly on your Android phone — no server needed
+        </li>
+        <li class="offline-point">
+          <span class="offline-point-icon">✦</span>
+          Seamless auto-switching between online and offline — invisible to the learner
+        </li>
+        <li class="offline-point">
+          <span class="offline-point-icon">✦</span>
+          Crash-loop protection ensures continuous learning even on older hardware
+        </li>
+        <li class="offline-point">
+          <span class="offline-point-icon">✦</span>
+          Tested on ARM64 baseline — no dotprod, no SVE — runs on every Android device
+        </li>
+      </ul>
+    </div>
+
+    <div class="routing-diagram reveal">
+      <div class="routing-title">HybridTutorService · routing logic</div>
+      <div class="routing-row">
+        <span class="routing-icon">🌐</span>
+        Network available?
+        <span class="routing-arrow-r">→ Remote FastAPI</span>
+      </div>
+      <div class="routing-row">
+        <span class="routing-icon">📵</span>
+        No network?
+        <span class="routing-arrow-r">→ Local libchat</span>
+      </div>
+      <div class="routing-row">
+        <span class="routing-icon">⚠️</span>
+        Inference crash?
+        <span class="routing-arrow-r">→ Block local, route remote</span>
+      </div>
+      <div class="routing-row">
+        <span class="routing-icon">💾</span>
+        Model load crash?
+        <span class="routing-arrow-r">→ OOM protection</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-bg"></div>
+  <div class="cta-inner">
+    <p class="cta-label reveal">Start learning</p>
+    <h2 class="cta-title reveal">Stop reading.<br><em>Start discovering.</em></h2>
+    <p class="cta-sub reveal">Try the live demo now, or download the Android app and take your AI tutor anywhere — even where there's no signal.</p>
+    <div class="cta-buttons reveal">
+      <a href="https://socratic.hx-ai.org/" target="_blank" class="btn-primary" style="font-size: 1rem; padding: 1.1rem 2.4rem;">
+        Try Live Demo →
+      </a>
+      <a href="https://github.com/O-keita/socratic_ai_tutor" target="_blank" class="btn-secondary" style="font-size: 1rem; padding: 1.1rem 2rem;">
+        ↓ Download APK (58MB)
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Socratic<span>.</span>AI</div>
+  <div class="footer-links">
+    <a href="https://socratic.hx-ai.org/" target="_blank">Live Demo</a>
+    <a href="https://github.com/O-keita/socratic_ai_tutor" target="_blank">GitHub</a>
+    <a href="https://socratic.hx-ai.org/admin" target="_blank">Admin</a>
+  </div>
+  <div class="footer-copy">Built by MarAcademy · Omar Keita</div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+
+  function animRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.transform = 'translate(-50%,-50%) scale(2.5)';
+      ring.style.width = '60px'; ring.style.height = '60px';
+      ring.style.opacity = '0.3';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+      ring.style.width = '36px'; ring.style.height = '36px';
+      ring.style.opacity = '0.6';
+    });
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(r => obs.observe(r));
+
+  // Perf bar animation on scroll
+  const perfObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.perf-bar').forEach(bar => {
+          bar.style.animation = 'none';
+          bar.offsetHeight;
+          bar.style.animation = 'growBar 1.5s ease forwards';
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.perf-grid').forEach(g => perfObs.observe(g));
+</script>
+</body>
+</html>

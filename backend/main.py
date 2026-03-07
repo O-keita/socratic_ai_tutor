@@ -232,9 +232,13 @@ def _require_admin(x_admin_token: Optional[str]) -> dict:
 # ---------------------------------------------------------------------------
 # App routes
 # ---------------------------------------------------------------------------
-@app.get("/")
+_INDEX_HTML = Path(__file__).parent / "index.html"
+
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {"message": "Bantaba AI API is running"}
+    if _INDEX_HTML.exists():
+        return HTMLResponse(_INDEX_HTML.read_text())
+    return HTMLResponse("<h1>Socratic AI Tutor API</h1>")
 
 
 @app.post("/register", response_model=UserResponse, status_code=201)
