@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bantaba AI — Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#FFF7ED',
+              100: '#FFEDD5',
+              200: '#FED7AA',
+              300: '#FDBA74',
+              400: '#FB923C',
+              500: '#F97316',
+              600: '#EA580C',
+              700: '#C2410C',
+            },
+            slate: {
+              900: '#0F172A',
+              800: '#1E293B',
+              700: '#334155',
+              600: '#475569',
+              500: '#64748B',
+              400: '#94A3B8',
+              300: '#CBD5E1',
+              200: '#E2E8F0',
+              100: '#F1F5F9',
+              50:  '#F8FAFC',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #F97316 0%, #FB923C 50%, #FDBA74 100%);
+    }
+
+    .gradient-bg-dark {
+      background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.15);
+    }
+
+    .nav-item { transition: all 0.2s; }
+    .nav-item:hover {
+      background-color: rgba(249, 115, 22, 0.08);
+      color: #F97316;
+    }
+    .nav-item.active {
+      background-color: rgba(249, 115, 22, 0.1);
+      color: #F97316;
+      font-weight: 600;
+      border-left: 3px solid #F97316;
+    }
+
+    .section-hidden { display: none; }
+
+    /* Toast notifications */
+    .toast {
+      animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+    }
+    @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } }
+    @keyframes fadeOut { to { opacity: 0; } }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans">
+
+  <!-- Auth Screen -->
+  <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-slate-200">
+      <div class="text-center mb-8">
+        <img src="/admin/logo" alt="Bantaba AI" class="w-16 h-16 mx-auto mb-4 rounded-2xl">
+        <h1 class="text-2xl font-bold text-slate-900">Bantaba AI</h1>
+        <p class="text-slate-500 text-sm mt-1">Admin Dashboard</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
+          <input id="admin-email-input" type="email" placeholder="admin@example.com"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Password</label>
+          <input id="admin-password-input" type="password" placeholder="Enter your password"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition" />
+        </div>
+        <button onclick="login()" class="w-full gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">
+          Sign In
+        </button>
+        <p id="auth-error" class="text-red-500 text-sm text-center hidden"></p>
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-slate-100">
+        <p class="text-xs text-slate-400 text-center">
+          Credentials from <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">ADMIN_EMAIL</code> &amp;
+          <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">ADMIN_PASSWORD</code> env vars
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Shell -->
+  <div id="app-shell" class="hidden fixed inset-0 flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col h-screen flex-shrink-0">
+      <div class="p-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <img src="/admin/logo" alt="Logo" class="w-10 h-10 rounded-xl">
+          <div>
+            <div class="font-bold text-slate-900 text-sm">Bantaba AI</div>
+            <div class="text-xs text-slate-400">Admin Panel</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex-1 p-4 space-y-1">
+        <button onclick="showSection('dashboard')" class="nav-item active w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </button>
+        <button onclick="showSection('courses')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          Courses
+        </button>
+        <button onclick="showSection('users')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          Users
+        </button>
+        <button onclick="showSection('logs')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Performance
+        </button>
+        <button onclick="showSection('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-slate-600 text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Settings
+        </button>
+      </nav>
+
+      <div class="p-4 border-t border-slate-100">
+        <div class="flex items-center gap-3 px-3 py-2 bg-brand-50 rounded-xl mb-3">
+          <div class="w-8 h-8 rounded-full gradient-bg-dark flex items-center justify-center text-white text-sm font-bold">A</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-slate-900">Admin</div>
+            <div class="text-xs text-slate-400">Authenticated</div>
+          </div>
+        </div>
+        <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-xl transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-slate-50">
+
+      <!-- ════════════ DASHBOARD ════════════ -->
+      <section id="dashboard-section" class="p-8">
+        <div class="max-w-7xl mx-auto">
+          <div class="mb-8">
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Dashboard</h1>
+            <p class="text-slate-500">Welcome to the Bantaba AI admin panel</p>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <div class="stat-card bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+              </div>
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="stat-students">0</div>
+              <div class="text-sm text-slate-400">Total Students</div>
+            </div>
+            <div class="stat-card bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+              </div>
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="stat-courses">0</div>
+              <div class="text-sm text-slate-400">Total Courses</div>
+            </div>
+            <div class="stat-card bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                </div>
+              </div>
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="stat-chats">0</div>
+              <div class="text-sm text-slate-400">Chats (since restart)</div>
+            </div>
+            <div class="stat-card bg-white rounded-2xl p-6 border border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+              </div>
+              <div class="text-3xl font-extrabold text-slate-900 mb-0.5" id="stat-lessons">0</div>
+              <div class="text-sm text-slate-400">Total Lessons</div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Overview Doughnut -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-lg font-bold text-slate-900 mb-4">Content Overview</h2>
+              <div class="flex items-center justify-center" style="height:220px">
+                <canvas id="chart-overview"></canvas>
+              </div>
+            </div>
+            <!-- Server Health Bar Chart -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-lg font-bold text-slate-900 mb-4">Server Health</h2>
+              <div style="height:220px">
+                <canvas id="chart-health"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Model Info + Recent Users -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-lg font-bold text-slate-900 mb-4">Model Info</h2>
+              <div id="model-info" class="space-y-1 text-sm">
+                <p class="text-slate-400">Loading...</p>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-lg font-bold text-slate-900 mb-4">Recent Users</h2>
+              <div id="recent-users" class="space-y-2">
+                <p class="text-slate-400 text-sm">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════ COURSES ════════════ -->
+      <section id="courses-section" class="p-8 section-hidden">
+        <div class="max-w-7xl mx-auto">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Courses</h1>
+              <p class="text-slate-500">Manage your course content and lessons</p>
+            </div>
+            <button onclick="showUploadModal()" class="flex items-center gap-2 px-5 py-2.5 gradient-bg-dark text-white font-semibold rounded-xl hover:opacity-90 transition text-sm">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Upload Course
+            </button>
+          </div>
+          <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="text-center py-12 col-span-full">
+              <p class="text-slate-400">Loading courses...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════ USERS ════════════ -->
+      <section id="users-section" class="p-8 section-hidden">
+        <div class="max-w-7xl mx-auto">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Users</h1>
+              <p class="text-slate-500">View all registered students</p>
+            </div>
+            <div class="text-sm text-slate-400" id="users-count-label"></div>
+          </div>
+
+          <!-- User stats mini-charts -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-2xl border border-slate-100 p-5 col-span-1">
+              <div class="text-sm font-semibold text-slate-700 mb-2">Registration Timeline</div>
+              <div style="height:140px"><canvas id="chart-users-timeline"></canvas></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-5 col-span-2">
+              <!-- Users Table -->
+              <div class="overflow-hidden">
+                <table class="w-full">
+                  <thead class="border-b border-slate-100">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">User</th>
+                      <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Joined</th>
+                      <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                      <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="users-table-body" class="divide-y divide-slate-50">
+                    <tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">Loading users...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════ MODEL PERFORMANCE ════════════ -->
+      <section id="logs-section" class="p-8 section-hidden">
+        <div class="max-w-7xl mx-auto">
+          <div class="mb-8">
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Model Performance</h1>
+            <p class="text-slate-500">Real-time inference monitoring &amp; Socratic compliance</p>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-slate-900 mb-0.5" id="perf-total">0</div>
+              <div class="text-xs text-slate-400">Total Chats</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-brand-600 mb-0.5" id="perf-avg-rt">—</div>
+              <div class="text-xs text-slate-400">Avg Response (ms)</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-slate-900 mb-0.5" id="perf-avg-si">—</div>
+              <div class="text-xs text-slate-400">Avg Socratic Index</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-emerald-500 mb-0.5" id="perf-q-rate">—</div>
+              <div class="text-xs text-slate-400">Question Rate</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-slate-900 mb-0.5" id="perf-avg-pt">—</div>
+              <div class="text-xs text-slate-400">Avg Prompt Tokens</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100">
+              <div class="text-2xl font-extrabold text-slate-900 mb-0.5" id="perf-avg-ct">—</div>
+              <div class="text-xs text-slate-400">Avg Completion Tokens</div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Response Time + Socratic Index over time -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Response Time (ms)</h2>
+              <div style="height:200px"><canvas id="chart-perf-rt"></canvas></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Socratic Index Over Time</h2>
+              <div style="height:200px"><canvas id="chart-perf-si"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Scaffolding Distribution + Sentiment + Question Rate -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Scaffolding Level</h2>
+              <div style="height:180px"><canvas id="chart-perf-scaffolding"></canvas></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Student Sentiment</h2>
+              <div style="height:180px"><canvas id="chart-perf-sentiment"></canvas></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 class="text-sm font-bold text-slate-900 mb-3">Token Usage</h2>
+              <div style="height:180px"><canvas id="chart-perf-tokens"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Recent Chat Logs Table -->
+          <div class="bg-white rounded-2xl border border-slate-100 p-6">
+            <h2 class="text-sm font-bold text-slate-900 mb-4">Recent Chat Logs</h2>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="border-b border-slate-100">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Time</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">User</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Message</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Response</th>
+                    <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400 uppercase">RT (ms)</th>
+                    <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400 uppercase">SI</th>
+                    <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400 uppercase">Level</th>
+                    <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400 uppercase">Sent.</th>
+                    <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400 uppercase">Q?</th>
+                  </tr>
+                </thead>
+                <tbody id="perf-logs-body" class="divide-y divide-slate-50">
+                  <tr><td colspan="9" class="px-3 py-8 text-center text-slate-300">No chat logs yet. Logs appear after users send messages.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════ SETTINGS ════════════ -->
+      <section id="settings-section" class="p-8 section-hidden">
+        <div class="max-w-3xl mx-auto">
+          <div class="mb-8">
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Settings</h1>
+            <p class="text-slate-500">Server and model configuration (read-only)</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Server Info</h3>
+            <div id="settings-server-info" class="space-y-1 text-sm">
+              <p class="text-slate-400">Loading...</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-100 p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Model Configuration</h3>
+            <div id="settings-model-info" class="space-y-1 text-sm">
+              <p class="text-slate-400">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Upload Course Modal -->
+  <div id="upload-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-slate-900">Upload New Course</h2>
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form onsubmit="uploadCourse(event)" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Course ID</label>
+          <input type="text" id="course-id" placeholder="e.g., intro-to-ml" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-400 mt-1">Unique identifier (lowercase, hyphens only)</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Course Title</label>
+          <input type="text" id="course-title" placeholder="e.g., Introduction to Machine Learning" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
+          <textarea id="course-description" rows="3" placeholder="Brief course description..." required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Course JSON File (Optional)</label>
+          <input type="file" id="course-json" accept=".json" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-400 mt-1">Upload a course.json with modules structure, or leave empty to create a blank course</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Lesson Files (Optional)</label>
+          <input type="file" id="lesson-files" accept=".md" multiple class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+          <p class="text-xs text-slate-400 mt-1">Upload markdown (.md) lesson files</p>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="flex-1 gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">Upload Course</button>
+          <button type="button" onclick="closeUploadModal()" class="px-6 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <script>
+    let ADMIN_TOKEN = '';
+    const API_BASE = window.location.origin;
+
+    // ── Toast helper ─────────────────────────────────────────────────────
+    function toast(msg, type = 'success') {
+      const colors = { success: 'bg-emerald-500', error: 'bg-red-500', info: 'bg-brand-500' };
+      const el = document.createElement('div');
+      el.className = `toast fixed top-4 right-4 z-[999] ${colors[type] || colors.info} text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium`;
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    // ── Auth ─────────────────────────────────────────────────────────────
+    async function login() {
+      const email = document.getElementById('admin-email-input').value.trim();
+      const password = document.getElementById('admin-password-input').value;
+      const errorEl = document.getElementById('auth-error');
+      if (!email || !password) { errorEl.textContent = 'Please enter both email and password'; errorEl.classList.remove('hidden'); return; }
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+        if (r.ok) {
+          const d = await r.json();
+          ADMIN_TOKEN = d.token;
+          sessionStorage.setItem('admin_token', ADMIN_TOKEN);
+          document.getElementById('auth-screen').classList.add('hidden');
+          document.getElementById('app-shell').classList.remove('hidden');
+          loadDashboardData();
+        } else {
+          const e = await r.json();
+          errorEl.textContent = e.detail || 'Invalid credentials';
+          errorEl.classList.remove('hidden');
+        }
+      } catch (_) {
+        errorEl.textContent = 'Connection error. Is the backend running?';
+        errorEl.classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      fetch(`${API_BASE}/admin/api/logout`, { method: 'POST', headers: { 'X-Admin-Token': ADMIN_TOKEN } })
+        .finally(() => {
+          sessionStorage.removeItem('admin_token');
+          ADMIN_TOKEN = '';
+          document.getElementById('auth-screen').classList.remove('hidden');
+          document.getElementById('app-shell').classList.add('hidden');
+          document.getElementById('admin-email-input').value = '';
+          document.getElementById('admin-password-input').value = '';
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = sessionStorage.getItem('admin_token');
+      if (saved) {
+        ADMIN_TOKEN = saved;
+        fetch(`${API_BASE}/admin/api/me`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } })
+          .then(r => { if (r.ok) { document.getElementById('auth-screen').classList.add('hidden'); document.getElementById('app-shell').classList.remove('hidden'); loadDashboardData(); } else { sessionStorage.removeItem('admin_token'); ADMIN_TOKEN = ''; } });
+      }
+    });
+
+    // ── Navigation ───────────────────────────────────────────────────────
+    function showSection(section) {
+      document.querySelectorAll('main > section').forEach(s => s.classList.add('section-hidden'));
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      const t = document.getElementById(`${section}-section`);
+      if (t) t.classList.remove('section-hidden');
+      document.querySelectorAll('.nav-item').forEach(b => {
+        if (b.getAttribute('onclick') === `showSection('${section}')`) b.classList.add('active');
+      });
+      if (section === 'dashboard') loadDashboardData();
+      if (section === 'courses')   loadCourses();
+      if (section === 'users')     loadUsers();
+      if (section === 'logs')      loadChatLogs();
+      if (section === 'settings')  loadSettings();
+    }
+
+    // ── Chart instances ──────────────────────────────────────────────────
+    let chartOverview = null, chartHealth = null, chartUsersTimeline = null;
+    let chartPerfRT = null, chartPerfSI = null, chartPerfScaffolding = null, chartPerfSentiment = null, chartPerfTokens = null;
+    const ORANGE = '#F97316', ORANGE_LIGHT = '#FB923C', ORANGE_PALE = '#FDBA74',
+          SLATE = '#0F172A', EMERALD = '#10B981', AMBER = '#F59E0B', RED = '#EF4444',
+          ORANGE_BG = 'rgba(249,115,22,0.1)', EMERALD_BG = 'rgba(16,185,129,0.1)';
+
+    function destroyChart(c) { if (c) c.destroy(); return null; }
+
+    // ── Dashboard ────────────────────────────────────────────────────────
+    async function loadDashboardData() {
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/stats`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const s = await r.json();
+
+        document.getElementById('stat-students').textContent = s.total_users || 0;
+        document.getElementById('stat-courses').textContent  = s.total_courses || 0;
+        document.getElementById('stat-chats').textContent    = s.chats_since_restart || 0;
+        document.getElementById('stat-lessons').textContent  = s.total_lessons || 0;
+
+        // Model info
+        const hrs = Math.floor((s.uptime_seconds||0)/3600);
+        const mins = Math.floor(((s.uptime_seconds||0)%3600)/60);
+        const row = (l,v) => `<div class="flex justify-between py-2 border-b border-slate-50"><span class="text-slate-400">${l}</span><span class="font-medium text-slate-800">${v}</span></div>`;
+        document.getElementById('model-info').innerHTML =
+          row('Model', s.model_name||'—') +
+          row('Status', s.model_loaded ? '<span class="text-emerald-500 font-semibold">Loaded</span>' : '<span class="text-red-500 font-semibold">Not loaded</span>') +
+          row('Context', `${s.n_ctx||'—'} tokens`) +
+          row('Temperature', s.temperature||'—') +
+          row('Max Tokens', s.max_tokens||'—') +
+          row('Uptime', `${hrs}h ${mins}m`);
+
+        // Recent users
+        const users = s.recent_users || [];
+        document.getElementById('recent-users').innerHTML = users.length === 0
+          ? '<p class="text-slate-400 text-sm">No users yet</p>'
+          : users.map(u => `
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+              <div class="w-9 h-9 rounded-full gradient-bg-dark flex items-center justify-center text-white text-xs font-bold">${(u.username||'U').charAt(0).toUpperCase()}</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-slate-800">${u.username||'Unknown'}</div>
+                <div class="text-xs text-slate-400">${u.email||''}</div>
+              </div>
+              <div class="text-xs text-slate-300">${u.created_at ? new Date(u.created_at).toLocaleDateString() : ''}</div>
+            </div>`).join('');
+
+        // ── Overview Doughnut ──
+        chartOverview = destroyChart(chartOverview);
+        const ctx1 = document.getElementById('chart-overview').getContext('2d');
+        chartOverview = new Chart(ctx1, {
+          type: 'doughnut',
+          data: {
+            labels: ['Users', 'Courses', 'Lessons', 'Chats'],
+            datasets: [{
+              data: [s.total_users||0, s.total_courses||0, s.total_lessons||0, s.chats_since_restart||0],
+              backgroundColor: [ORANGE, ORANGE_LIGHT, ORANGE_PALE, EMERALD],
+              borderWidth: 0,
+              hoverOffset: 6,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, cutout: '65%',
+            plugins: {
+              legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10, font: { family: 'Plus Jakarta Sans', size: 12 } } }
+            }
+          }
+        });
+
+        // ── Server Health Bar ──
+        chartHealth = destroyChart(chartHealth);
+        const ctx2 = document.getElementById('chart-health').getContext('2d');
+        chartHealth = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+            labels: ['Uptime (min)', 'Context (k)', 'Threads', 'GPU Layers'],
+            datasets: [{
+              data: [Math.round((s.uptime_seconds||0)/60), Math.round((s.n_ctx||0)/1000), s.n_threads||0, s.n_gpu_layers||0],
+              backgroundColor: [ORANGE_BG, ORANGE_BG, ORANGE_BG, ORANGE_BG],
+              borderColor: [ORANGE, ORANGE_LIGHT, ORANGE_PALE, ORANGE],
+              borderWidth: 2, borderRadius: 8, barPercentage: 0.6,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } } },
+              y: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 12, weight: 500 } } }
+            }
+          }
+        });
+      } catch (e) { console.error('Dashboard error:', e); }
+    }
+
+    // ── Courses ──────────────────────────────────────────────────────────
+    async function loadCourses() {
+      const grid = document.getElementById('courses-grid');
+      grid.innerHTML = '<div class="text-center py-12 col-span-full"><p class="text-slate-400">Loading courses...</p></div>';
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/courses`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const courses = (await r.json()).courses || [];
+        if (courses.length === 0) {
+          grid.innerHTML = `<div class="text-center py-16 col-span-full">
+            <svg class="w-14 h-14 text-slate-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <p class="text-slate-400 mb-4">No courses yet</p>
+            <button onclick="showUploadModal()" class="gradient-bg-dark text-white px-6 py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold">Upload Your First Course</button>
+          </div>`;
+          return;
+        }
+        grid.innerHTML = courses.map(c => {
+          let lc = 0;
+          (c.modules||[]).forEach(m => (m.chapters||[]).forEach(ch => { lc += (ch.lessons||[]).length; }));
+          const diff = c.difficulty || 'intermediate';
+          const dc = { beginner: 'bg-emerald-50 text-emerald-700', intermediate: 'bg-brand-50 text-brand-700', advanced: 'bg-slate-800 text-white' };
+          return `<div class="bg-white rounded-2xl border border-slate-100 p-6 hover:shadow-lg hover:shadow-brand-500/5 transition">
+            <div class="w-11 h-11 rounded-xl gradient-bg-dark flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <div class="mb-2"><span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${dc[diff]||dc.intermediate}">${diff}</span></div>
+            <h3 class="font-bold text-slate-900 mb-1">${c.title||c.id}</h3>
+            <p class="text-sm text-slate-400 mb-4 line-clamp-2">${c.description||'No description'}</p>
+            <div class="flex items-center justify-between text-xs text-slate-300 mb-4">
+              <span>${(c.modules||[]).length} modules</span><span>${lc} lessons</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="viewCourseDetails('${c.id}')" class="flex-1 px-3 py-2 text-xs border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition font-medium">View</button>
+              <button onclick="editCourse('${c.id}')" class="flex-1 px-3 py-2 text-xs border border-brand-200 text-brand-600 rounded-xl hover:bg-brand-50 transition font-medium">Edit</button>
+              <button onclick="deleteCourse('${c.id}')" class="px-3 py-2 text-xs text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition font-medium">Delete</button>
+            </div>
+          </div>`;
+        }).join('');
+        document.getElementById('stat-courses').textContent = courses.length;
+      } catch (e) {
+        console.error('Courses error:', e);
+        grid.innerHTML = '<div class="text-center py-12 col-span-full text-red-500">Error loading courses</div>';
+      }
+    }
+
+    // ── Users ────────────────────────────────────────────────────────────
+    async function loadUsers() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">Loading...</td></tr>';
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/users`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const users = (await r.json()).users || [];
+        document.getElementById('users-count-label').textContent = `${users.length} user${users.length !== 1 ? 's' : ''}`;
+
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">No users registered yet</td></tr>';
+        } else {
+          tbody.innerHTML = users.map(u => `
+            <tr class="hover:bg-slate-50/50">
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full gradient-bg-dark flex items-center justify-center text-white text-xs font-bold">${(u.username||u.email||'U').charAt(0).toUpperCase()}</div>
+                  <div><div class="text-sm font-semibold text-slate-800">${u.username||'Unknown'}</div><div class="text-xs text-slate-400">${u.email||''}</div></div>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-500">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600">Active</span></td>
+              <td class="px-4 py-3"><button onclick="deleteUser('${u.id}','${(u.username||u.email||'').replace(/'/g,"\\'")}')" class="text-xs text-red-500 hover:text-red-600 font-medium">Delete</button></td>
+            </tr>`).join('');
+        }
+
+        // Timeline chart
+        chartUsersTimeline = destroyChart(chartUsersTimeline);
+        const dateCounts = {};
+        users.forEach(u => {
+          if (u.created_at) {
+            const d = new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            dateCounts[d] = (dateCounts[d]||0) + 1;
+          }
+        });
+        const labels = Object.keys(dateCounts).slice(-7);
+        const data = labels.map(l => dateCounts[l]);
+        const ctx = document.getElementById('chart-users-timeline').getContext('2d');
+        chartUsersTimeline = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{ data, borderColor: ORANGE, backgroundColor: ORANGE_BG, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: ORANGE, borderWidth: 2 }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } },
+              y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1, font: { family: 'Plus Jakarta Sans', size: 10 } } }
+            }
+          }
+        });
+
+        document.getElementById('stat-students').textContent = users.length;
+      } catch (e) {
+        console.error('Users error:', e);
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-500 text-sm">Error loading users</td></tr>';
+      }
+    }
+
+    // ── Model Performance ─────────────────────────────────────────────────
+    const CHART_FONT = { family: 'Plus Jakarta Sans' };
+    const GRID_COLOR = '#f1f5f9';
+
+    async function loadChatLogs() {
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/chat-logs`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const { logs, total, aggregates: agg } = await r.json();
+
+        // ── KPI cards ──
+        document.getElementById('perf-total').textContent = total;
+        document.getElementById('perf-avg-rt').textContent = total ? `${agg.avg_response_time_ms}` : '—';
+        document.getElementById('perf-avg-si').textContent = total ? agg.avg_socratic_index.toFixed(2) : '—';
+        document.getElementById('perf-q-rate').textContent = total ? `${Math.round(agg.question_rate * 100)}%` : '—';
+        document.getElementById('perf-avg-pt').textContent = total ? agg.avg_prompt_tokens : '—';
+        document.getElementById('perf-avg-ct').textContent = total ? agg.avg_completion_tokens : '—';
+
+        if (total === 0) return; // No charts to draw
+
+        // Prepare time-series data (last 50 entries, chronological)
+        const recent = logs.slice(0, 50).reverse();
+        const labels = recent.map((l, i) => `#${total - 50 + i + 1}`);
+
+        // ── Response Time line chart ──
+        chartPerfRT = destroyChart(chartPerfRT);
+        chartPerfRT = new Chart(document.getElementById('chart-perf-rt').getContext('2d'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Response Time (ms)',
+              data: recent.map(l => l.response_time_ms),
+              borderColor: ORANGE, backgroundColor: ORANGE_BG, fill: true,
+              tension: 0.3, pointRadius: 2, borderWidth: 2,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { display: false },
+              y: { beginAtZero: true, grid: { color: GRID_COLOR }, ticks: { font: { ...CHART_FONT, size: 10 } } }
+            }
+          }
+        });
+
+        // ── Socratic Index line chart ──
+        chartPerfSI = destroyChart(chartPerfSI);
+        chartPerfSI = new Chart(document.getElementById('chart-perf-si').getContext('2d'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Socratic Index',
+                data: recent.map(l => l.socratic_index),
+                borderColor: ORANGE, backgroundColor: ORANGE_BG, fill: true,
+                tension: 0.3, pointRadius: 2, borderWidth: 2,
+              },
+              {
+                label: 'Ends with ?',
+                data: recent.map(l => l.ends_with_question ? 1 : 0),
+                borderColor: EMERALD, backgroundColor: EMERALD_BG, fill: false,
+                tension: 0, pointRadius: 3, borderWidth: 1.5, borderDash: [4, 4],
+              }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, font: { ...CHART_FONT, size: 11 } } } },
+            scales: {
+              x: { display: false },
+              y: { min: 0, max: 1, grid: { color: GRID_COLOR }, ticks: { font: { ...CHART_FONT, size: 10 } } }
+            }
+          }
+        });
+
+        // ── Scaffolding doughnut ──
+        const scaff = agg.scaffolding_distribution || {};
+        const scaffLabels = Object.keys(scaff);
+        const scaffColors = { beginner: EMERALD, intermediate: ORANGE, advanced: SLATE };
+        chartPerfScaffolding = destroyChart(chartPerfScaffolding);
+        chartPerfScaffolding = new Chart(document.getElementById('chart-perf-scaffolding').getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: scaffLabels,
+            datasets: [{ data: scaffLabels.map(k => scaff[k]), backgroundColor: scaffLabels.map(k => scaffColors[k] || ORANGE_PALE), borderWidth: 0, hoverOffset: 4 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { ...CHART_FONT, size: 11 } } } } }
+        });
+
+        // ── Sentiment doughnut ──
+        const sent = agg.sentiment_distribution || {};
+        const sentLabels = Object.keys(sent);
+        const sentColors = { low_confidence: RED, neutral: '#94A3B8', high_confidence: EMERALD };
+        chartPerfSentiment = destroyChart(chartPerfSentiment);
+        chartPerfSentiment = new Chart(document.getElementById('chart-perf-sentiment').getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: sentLabels.map(l => l.replace('_', ' ')),
+            datasets: [{ data: sentLabels.map(k => sent[k]), backgroundColor: sentLabels.map(k => sentColors[k] || ORANGE_PALE), borderWidth: 0, hoverOffset: 4 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { ...CHART_FONT, size: 11 } } } } }
+        });
+
+        // ── Token usage bar chart (prompt vs completion per request) ──
+        chartPerfTokens = destroyChart(chartPerfTokens);
+        chartPerfTokens = new Chart(document.getElementById('chart-perf-tokens').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labels.slice(-20),
+            datasets: [
+              { label: 'Prompt', data: recent.slice(-20).map(l => l.prompt_tokens), backgroundColor: ORANGE_BG, borderColor: ORANGE, borderWidth: 1.5, borderRadius: 4, barPercentage: 0.7 },
+              { label: 'Completion', data: recent.slice(-20).map(l => l.completion_tokens), backgroundColor: EMERALD_BG, borderColor: EMERALD, borderWidth: 1.5, borderRadius: 4, barPercentage: 0.7 },
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { ...CHART_FONT, size: 11 } } } },
+            scales: {
+              x: { display: false, stacked: true },
+              y: { beginAtZero: true, stacked: true, grid: { color: GRID_COLOR }, ticks: { font: { ...CHART_FONT, size: 10 } } }
+            }
+          }
+        });
+
+        // ── Logs table ──
+        const tbody = document.getElementById('perf-logs-body');
+        const levelBadge = l => {
+          const c = { beginner: 'bg-emerald-50 text-emerald-600', intermediate: 'bg-brand-50 text-brand-700', advanced: 'bg-slate-800 text-white' };
+          return `<span class="inline-flex px-1.5 py-0.5 rounded text-xs font-medium ${c[l]||c.intermediate}">${l}</span>`;
+        };
+        const sentBadge = s => {
+          const c = { low_confidence: 'bg-red-50 text-red-600', neutral: 'bg-slate-100 text-slate-500', high_confidence: 'bg-emerald-50 text-emerald-600' };
+          const label = s.replace('_', ' ');
+          return `<span class="inline-flex px-1.5 py-0.5 rounded text-xs font-medium ${c[s]||c.neutral}">${label}</span>`;
+        };
+        const qBadge = q => q ? '<span class="text-emerald-500 font-bold">Y</span>' : '<span class="text-red-400">N</span>';
+        const timeStr = ts => { try { const d = new Date(ts); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); } catch(_) { return '—'; } };
+
+        tbody.innerHTML = logs.slice(0, 5).map(l => `
+          <tr class="hover:bg-slate-50/50">
+            <td class="px-3 py-2 text-xs text-slate-400 whitespace-nowrap">${timeStr(l.timestamp)}</td>
+            <td class="px-3 py-2 text-xs font-medium text-slate-700 whitespace-nowrap">${l.username||'—'}</td>
+            <td class="px-3 py-2 text-xs text-slate-500 max-w-[200px] truncate" title="${(l.message_preview||'').replace(/"/g,'&quot;')}">${l.message_preview||'—'}</td>
+            <td class="px-3 py-2 text-xs text-slate-500 max-w-[200px] truncate" title="${(l.response_preview||'').replace(/"/g,'&quot;')}">${l.response_preview||'—'}</td>
+            <td class="px-3 py-2 text-xs text-right font-mono ${l.response_time_ms > 5000 ? 'text-red-500 font-bold' : 'text-slate-600'}">${l.response_time_ms}</td>
+            <td class="px-3 py-2 text-xs text-right font-mono text-slate-600">${l.socratic_index.toFixed(2)}</td>
+            <td class="px-3 py-2 text-center">${levelBadge(l.scaffolding_level)}</td>
+            <td class="px-3 py-2 text-center">${sentBadge(l.sentiment)}</td>
+            <td class="px-3 py-2 text-center">${qBadge(l.ends_with_question)}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="9" class="px-3 py-8 text-center text-slate-300">No chat logs yet.</td></tr>';
+
+      } catch (e) { console.error('Performance error:', e); }
+    }
+
+    // ── Settings ─────────────────────────────────────────────────────────
+    async function loadSettings() {
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/stats`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (!r.ok) return;
+        const s = await r.json();
+        const hrs = Math.floor((s.uptime_seconds||0)/3600);
+        const mins = Math.floor(((s.uptime_seconds||0)%3600)/60);
+        const row = (l,v) => `<div class="flex justify-between py-2.5 border-b border-slate-50"><span class="text-slate-400">${l}</span><span class="font-medium text-slate-800">${v}</span></div>`;
+
+        document.getElementById('settings-server-info').innerHTML =
+          row('Backend URL', window.location.origin) + row('Uptime', `${hrs}h ${mins}m`) +
+          row('Total Users', s.total_users||0) + row('Total Courses', s.total_courses||0) +
+          row('Chat Requests', s.chats_since_restart||0);
+
+        document.getElementById('settings-model-info').innerHTML =
+          row('Model File', s.model_name||'—') + row('Model Path', s.model_path||'—') +
+          row('Status', s.model_loaded ? '<span class="text-emerald-500 font-semibold">Loaded</span>' : '<span class="text-red-500 font-semibold">Not loaded</span>') +
+          row('Context Window', `${s.n_ctx||'—'} tokens`) + row('Threads', s.n_threads||'—') +
+          row('GPU Layers', s.n_gpu_layers||0) + row('Temperature', s.temperature||'—') +
+          row('Max Tokens', s.max_tokens||'—') + row('Top P', s.top_p||'—') +
+          row('Top K', s.top_k||'—') + row('Repeat Penalty', s.repeat_penalty||'—');
+      } catch (e) { console.error('Settings error:', e); }
+    }
+
+    // ── Modal helpers ────────────────────────────────────────────────────
+    function createModal(html) {
+      const m = document.createElement('div');
+      m.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      m.onclick = e => { if (e.target === m) m.remove(); };
+      m.innerHTML = `<div class="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">${html}</div>`;
+      document.body.appendChild(m);
+      return m;
+    }
+    function closeModal(el) { const m = el.closest('.fixed'); if (m) m.remove(); }
+
+    function showUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); }
+    function closeUploadModal() {
+      document.getElementById('upload-modal').classList.add('hidden');
+      ['course-id','course-title','course-description','course-json','lesson-files'].forEach(id => { document.getElementById(id).value = ''; });
+    }
+
+    // ── Upload Course ────────────────────────────────────────────────────
+    async function uploadCourse(e) {
+      e.preventDefault();
+      const courseId = document.getElementById('course-id').value.trim();
+      const title = document.getElementById('course-title').value.trim();
+      const desc = document.getElementById('course-description').value.trim();
+      const jsonFile = document.getElementById('course-json').files[0];
+      const lessonFiles = document.getElementById('lesson-files').files;
+      if (!courseId) { toast('Please enter a course ID', 'error'); return; }
+      try {
+        let data = jsonFile ? JSON.parse(await jsonFile.text()) : { modules: [] };
+        data.title = title || data.title || courseId;
+        data.description = desc || data.description || '';
+        const r = await fetch(`${API_BASE}/admin/api/courses/${courseId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN }, body: JSON.stringify(data) });
+        if (!r.ok) { toast('Failed to upload course', 'error'); return; }
+        let up = 0;
+        for (const f of lessonFiles) {
+          const lr = await fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons/${f.name}`, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'X-Admin-Token': ADMIN_TOKEN }, body: await f.text() });
+          if (lr.ok) up++;
+        }
+        toast(up > 0 ? `Course uploaded with ${up} lesson(s)!` : 'Course uploaded!');
+        closeUploadModal(); loadCourses(); loadDashboardData();
+      } catch (err) { toast('Error: ' + err.message, 'error'); }
+    }
+
+    // ── Delete Course ────────────────────────────────────────────────────
+    async function deleteCourse(id) {
+      if (!confirm(`Delete course "${id}"? This cannot be undone.`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/courses/${id}`, { method: 'DELETE', headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (r.ok) { toast('Course deleted'); loadCourses(); loadDashboardData(); } else toast('Failed to delete course', 'error');
+      } catch (e) { toast('Error deleting course', 'error'); }
+    }
+
+    // ── Delete User ──────────────────────────────────────────────────────
+    async function deleteUser(id, name) {
+      if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/users/${id}`, { method: 'DELETE', headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (r.ok) { toast('User deleted'); loadUsers(); loadDashboardData(); } else toast('Failed to delete user', 'error');
+      } catch (e) { toast('Error deleting user', 'error'); }
+    }
+
+    // ── View Course Details ──────────────────────────────────────────────
+    async function viewCourseDetails(courseId) {
+      try {
+        const [cr, lr] = await Promise.all([
+          fetch(`${API_BASE}/content/${courseId}/course.json`),
+          fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } })
+        ]);
+        if (!cr.ok) { toast('Course not found', 'error'); return; }
+        const course = await cr.json();
+        const files = lr.ok ? (await lr.json()).lessons || [] : [];
+
+        let modHtml = '';
+        (course.modules||[]).forEach((m,i) => {
+          let chHtml = '';
+          (m.chapters||[]).forEach((ch,j) => {
+            let lsHtml = (ch.lessons||[]).map(l => `<li class="text-sm text-slate-500 py-1 pl-4 border-l-2 border-brand-100">${l.title||l.id}</li>`).join('');
+            chHtml += `<div class="ml-4 mb-2"><div class="text-sm font-medium text-slate-600">${i+1}.${j+1} ${ch.title}</div><ul class="mt-1">${lsHtml||'<li class="text-xs text-slate-300 pl-4">No lessons</li>'}</ul></div>`;
+          });
+          modHtml += `<div class="mb-3"><div class="font-semibold text-slate-800 mb-1">${i+1}. ${m.title}</div>${chHtml||'<div class="ml-4 text-sm text-slate-300">No chapters</div>'}</div>`;
+        });
+
+        let filesHtml = files.length === 0 ? '<p class="text-sm text-slate-300">No lesson files uploaded</p>'
+          : files.map(f => `<div class="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-xl">
+            <div class="flex items-center gap-2"><svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span class="text-sm text-slate-600">${f}</span></div>
+            <div class="flex gap-2"><button onclick="editLesson('${courseId}','${f}')" class="text-xs text-brand-600 hover:text-brand-700 font-medium">Edit</button><button onclick="deleteLesson('${courseId}','${f}',this)" class="text-xs text-red-500 hover:text-red-600 font-medium">Delete</button></div>
+          </div>`).join('');
+
+        createModal(`
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-slate-900">${course.title||courseId}</h2>
+            <button onclick="closeModal(this)" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <div class="space-y-3 mb-5">
+            <div class="flex gap-2">
+              <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-brand-50 text-brand-700">${course.difficulty||'intermediate'}</span>
+              <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-600">ID: ${course.id}</span>
+            </div>
+            <p class="text-sm text-slate-500">${course.description||'No description'}</p>
+          </div>
+          <div class="flex items-center gap-3 mb-5">
+            <button onclick="closeModal(this); editCourse('${courseId}')" class="px-4 py-2 text-sm gradient-bg-dark text-white rounded-xl hover:opacity-90 transition font-medium">Edit Course</button>
+            <button onclick="closeModal(this); deleteCourse('${courseId}')" class="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition font-medium">Delete Course</button>
+          </div>
+          <h3 class="font-semibold text-slate-900 mb-3 text-sm">Course Structure</h3>
+          <div class="bg-slate-50 rounded-xl p-4 mb-5">${modHtml||'<p class="text-sm text-slate-300">No modules defined</p>'}</div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-slate-900 text-sm">Lesson Files</h3>
+            <button onclick="addLesson('${courseId}')" class="flex items-center gap-1 px-3 py-1.5 text-xs gradient-bg-dark text-white rounded-lg hover:opacity-90 transition font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add Lesson
+            </button>
+          </div>
+          <div class="space-y-2">${filesHtml}</div>
+        `);
+      } catch (e) { console.error('View course error:', e); toast('Error loading course', 'error'); }
+    }
+
+    // ── Edit Course ──────────────────────────────────────────────────────
+    async function editCourse(courseId) {
+      try {
+        const r = await fetch(`${API_BASE}/content/${courseId}/course.json`);
+        if (!r.ok) { toast('Course not found', 'error'); return; }
+        const c = await r.json();
+        const modal = createModal(`
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-slate-900">Edit Course</h2>
+            <button onclick="closeModal(this)" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <form id="edit-course-form" class="space-y-5">
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Course ID</label><input type="text" value="${courseId}" disabled class="w-full px-4 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-400"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Title</label><input type="text" id="edit-title" value="${(c.title||'').replace(/"/g,'&quot;')}" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Description</label><textarea id="edit-description" rows="3" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">${c.description||''}</textarea></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Difficulty</label>
+              <select id="edit-difficulty" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none">
+                <option value="beginner" ${c.difficulty==='beginner'?'selected':''}>Beginner</option>
+                <option value="intermediate" ${c.difficulty==='intermediate'||!c.difficulty?'selected':''}>Intermediate</option>
+                <option value="advanced" ${c.difficulty==='advanced'?'selected':''}>Advanced</option>
+              </select>
+            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Duration</label><input type="text" id="edit-duration" value="${(c.duration||'').replace(/"/g,'&quot;')}" placeholder="e.g., 4 hours" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Course Structure (JSON)</label><textarea id="edit-modules-json" rows="8" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-mono text-sm">${JSON.stringify(c.modules||[],null,2)}</textarea><p class="text-xs text-slate-400 mt-1">Edit modules/chapters/lessons structure</p></div>
+            <div class="flex gap-3 pt-2">
+              <button type="submit" class="flex-1 gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">Save Changes</button>
+              <button type="button" onclick="closeModal(this)" class="px-6 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+            </div>
+          </form>
+        `);
+        document.getElementById('edit-course-form').onsubmit = async (ev) => {
+          ev.preventDefault();
+          let modules;
+          try { modules = JSON.parse(document.getElementById('edit-modules-json').value); }
+          catch (err) { toast('Invalid JSON: ' + err.message, 'error'); return; }
+          const updated = { ...c, title: document.getElementById('edit-title').value.trim(), description: document.getElementById('edit-description').value.trim(), difficulty: document.getElementById('edit-difficulty').value, duration: document.getElementById('edit-duration').value.trim(), modules };
+          const sr = await fetch(`${API_BASE}/admin/api/courses/${courseId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN }, body: JSON.stringify(updated) });
+          if (sr.ok) { modal.remove(); loadCourses(); loadDashboardData(); toast('Course updated!'); } else toast('Failed to save', 'error');
+        };
+      } catch (e) { toast('Error loading course', 'error'); }
+    }
+
+    // ── Add Lesson ───────────────────────────────────────────────────────
+    function addLesson(courseId) {
+      document.querySelectorAll('.fixed.inset-0.bg-black').forEach(m => m.remove());
+      const modal = createModal(`
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-900">Add Lesson</h2>
+          <button onclick="closeModal(this)" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <form id="add-lesson-form" class="space-y-5">
+          <div><label class="block text-sm font-medium text-slate-700 mb-2">Filename</label><input type="text" id="new-lesson-filename" placeholder="e.g., introduction.md" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none"><p class="text-xs text-slate-400 mt-1">Must end with .md</p></div>
+          <div><label class="block text-sm font-medium text-slate-700 mb-2">Content (Markdown)</label><textarea id="new-lesson-content" rows="12" placeholder="# Lesson Title&#10;&#10;Write your lesson content here..." required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-mono text-sm"></textarea></div>
+          <div><p class="text-sm text-slate-500 mb-2">Or upload a .md file:</p><input type="file" id="new-lesson-file" accept=".md" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50"></div>
+          <div class="flex gap-3 pt-2">
+            <button type="submit" class="flex-1 gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">Save Lesson</button>
+            <button type="button" onclick="closeModal(this); viewCourseDetails('${courseId}')" class="px-6 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+          </div>
+        </form>
+      `);
+      document.getElementById('new-lesson-file').onchange = async (ev) => {
+        const f = ev.target.files[0];
+        if (f) { document.getElementById('new-lesson-filename').value = f.name; document.getElementById('new-lesson-content').value = await f.text(); }
+      };
+      document.getElementById('add-lesson-form').onsubmit = async (ev) => {
+        ev.preventDefault();
+        let fn = document.getElementById('new-lesson-filename').value.trim();
+        if (!fn.endsWith('.md')) fn += '.md';
+        const r = await fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons/${fn}`, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'X-Admin-Token': ADMIN_TOKEN }, body: document.getElementById('new-lesson-content').value });
+        if (r.ok) { modal.remove(); viewCourseDetails(courseId); toast('Lesson added!'); } else toast('Failed to save lesson', 'error');
+      };
+    }
+
+    // ── Edit Lesson ──────────────────────────────────────────────────────
+    async function editLesson(courseId, filename) {
+      document.querySelectorAll('.fixed.inset-0.bg-black').forEach(m => m.remove());
+      try {
+        const r = await fetch(`${API_BASE}/content/${courseId}/lessons/${filename}`);
+        const content = r.ok ? await r.text() : '';
+        const modal = createModal(`
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-slate-900">Edit Lesson</h2>
+            <button onclick="closeModal(this)" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <form id="edit-lesson-form" class="space-y-5">
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Filename</label><input type="text" value="${filename}" disabled class="w-full px-4 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-400"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-2">Content (Markdown)</label><textarea id="edit-lesson-content" rows="16" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-mono text-sm">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></div>
+            <div class="flex gap-3 pt-2">
+              <button type="submit" class="flex-1 gradient-bg-dark text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">Save Changes</button>
+              <button type="button" onclick="closeModal(this); viewCourseDetails('${courseId}')" class="px-6 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+            </div>
+          </form>
+        `);
+        document.getElementById('edit-lesson-form').onsubmit = async (ev) => {
+          ev.preventDefault();
+          const sr = await fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons/${filename}`, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'X-Admin-Token': ADMIN_TOKEN }, body: document.getElementById('edit-lesson-content').value });
+          if (sr.ok) { modal.remove(); viewCourseDetails(courseId); toast('Lesson saved!'); } else toast('Failed to save', 'error');
+        };
+      } catch (e) { toast('Error loading lesson', 'error'); }
+    }
+
+    // ── Delete Lesson ────────────────────────────────────────────────────
+    async function deleteLesson(courseId, filename, btn) {
+      if (!confirm(`Delete lesson "${filename}"?`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/admin/api/courses/${courseId}/lessons/${filename}`, { method: 'DELETE', headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+        if (r.ok) { const row = btn.closest('.flex.items-center'); if (row) row.remove(); toast('Lesson deleted'); } else toast('Failed to delete', 'error');
+      } catch (e) { toast('Error deleting lesson', 'error'); }
+    }
+
+    // ── Enter key on login ───────────────────────────────────────────────
+    document.getElementById('admin-email-input')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+    document.getElementById('admin-password-input')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+  </script>
+</body>
+</html>
