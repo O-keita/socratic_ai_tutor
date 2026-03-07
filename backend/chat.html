@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Bantaba AI — Socratic Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Syne:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -16,6 +16,13 @@
 ═══════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
+html { 
+  height: -webkit-fill-available;
+}
+body {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
 
 :root {
   --void:    #010810;
@@ -41,6 +48,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   cursor: none;
 }
@@ -84,7 +92,9 @@ body::before {
 .app {
   position: relative; z-index: 10;
   display: flex; flex-direction: column;
-  height: 100vh; max-width: 1100px;
+  height: 100vh; 
+  height: 100dvh;
+  max-width: 1100px;
   margin: 0 auto; width: 100%;
 }
 
@@ -456,6 +466,49 @@ body::before {
   .header-btn { display: none; }
   .msg-bubble { max-width: 90%; }
   .welcome-title { font-size: 1.3rem; }
+  
+  /* Fix mobile viewport height issues */
+  .app { height: 100dvh; min-height: -webkit-fill-available; }
+  html { height: -webkit-fill-available; }
+  
+  /* Ensure input is always visible */
+  .input-wrap { 
+    position: sticky; 
+    bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 1.2rem);
+  }
+  
+  .mode-bar { 
+    flex-wrap: wrap; 
+    gap: 0.4rem;
+  }
+  .mode-btn, .clear-btn {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.6rem;
+  }
+  
+  /* Make input area more visible */
+  .input-box {
+    padding: 0.7rem;
+  }
+  
+  #user-input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    min-height: 20px;
+  }
+  
+  .send-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .input-footer {
+    font-size: 0.65rem;
+  }
+  
+  .input-hint kbd {
+    display: none;
+  }
 }
 </style>
 </head>
