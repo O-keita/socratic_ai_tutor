@@ -18,8 +18,7 @@ By combining on-device LLM inference with a cloud-fallback API, it provides a se
 ## Project Resources & Deployment
 
 ### 🚀 Live Deployment
-- **Web Application**: [https://socratic.hx-ai.org/](https://socratic.hx-ai.org/)
-- **Admin Dashboard**: [https://socratic.hx-ai.org/admin](https://socratic.hx-ai.org/admin)
+- **Project Website**: [https://socratic.hx-ai.org/](https://socratic.hx-ai.org/) — landing page with APK download and project info
 - **API Documentation**: [https://socratic.hx-ai.org/docs](https://socratic.hx-ai.org/docs)
 - **GitHub Repository**: [https://github.com/O-keita/socratic_ai_tutor.git](https://github.com/O-keita/socratic_ai_tutor.git)
 - **Demo Video**: [Watch on Google Drive](https://drive.google.com/file/d/1l-9Va1SJiuBBCUlkOo-EHtdCbECaZXLv/view?usp=sharing)
@@ -88,13 +87,16 @@ Full documentation: [`socratic_app/android/app/src/main/cpp/LIBCHAT.md`](socrati
 ## Key Features
 
 - **Socratic Guardrails**: The AI never gives direct answers — responds only with guiding questions to scaffold knowledge discovery.
+- **Contextual Hints**: When students are stuck, the AI provides subtle hints before asking follow-up questions to maintain the learning flow.
 - **Hybrid Intelligence**: Seamless switching between local inference (100% offline) and remote inference based on connectivity.
 - **100% Offline Inference**: Quantized GGUF models run locally on ARM64 Android devices via our custom `libchat` C API.
 - **`<think>` Block Reasoning**: The model generates internal reasoning in `<think>...</think>` blocks (stripped before display) to improve response quality.
-- **DS/ML Curriculum**: Integrated course library covering Probability, Neural Networks, Feature Engineering, and more.
-- **Python Playground**: In-app Python editor powered by Pyodide (WebAssembly) for hands-on coding.
-- **Local Persistence**: Sessions and progress saved locally via SharedPreferences.
-- **High-Contrast UI**: "Modern Orange and Dark Blue" theme optimized for readability in both Light and Dark modes.
+- **Comprehensive Data Science and Machine Learning Curriculum**: Integrated course library covering Probability, Neural Networks, Feature Engineering, Statistics, Linear Regression, Clustering, and more.
+- **Adaptive Quizzes**: In-app quizzes that adjust difficulty based on student performance, with the AI tutor available during quiz attempts for guided assistance.
+- **Interactive Glossary**: Searchable Data Science and Machine Learning term glossary bundled offline for quick reference without leaving the app.
+- **Python Playground**: In-app Python code editor powered by Pyodide (WebAssembly) for hands-on coding exercises, fully functional offline.
+- **Session Management**: Conversation history and learning progress saved locally via SharedPreferences.
+- **Modern UI/UX**: "Modern Orange and Dark Blue" theme optimized for readability in both Light and Dark modes.
 
 ---
 
@@ -119,13 +121,8 @@ Full documentation: [`socratic_app/android/app/src/main/cpp/LIBCHAT.md`](socrati
 ### Backend (Python/FastAPI)
 - **Framework**: FastAPI
 - **Inference**: `llama-cpp-python`
-- **Admin Panel**: Web-based course management at `/admin`
+- **Authentication**: JWT-based user authentication and session management
 - **Metrics**: Adaptive performance tracking and session analysis
-
-### Web App (React)
-- **Stack**: React 18 + TypeScript + Vite + Tailwind CSS
-- **Features**: Student portal + admin dashboard
-- **Auth**: JWT-based, syncs progress with backend
 
 ---
 
@@ -134,12 +131,12 @@ Full documentation: [`socratic_app/android/app/src/main/cpp/LIBCHAT.md`](socrati
 ```text
 socratic_ai_tutor/
 ├── backend/                  # FastAPI server
-│   ├── main.py               # All routes (auth, chat, content, admin)
-│   ├── core/                 # Auth & admin session management
+│   ├── main.py               # All routes (auth, chat, content)
+│   ├── core/                 # Auth & session management
 │   ├── ml/                   # Inference engine & prompt templates
 │   ├── evaluation/           # Adaptive metrics & session analysis
 │   ├── data/                 # Config & user database
-│   └── content/              # Admin-uploaded courses (runtime)
+│   └── content/              # Course content (runtime)
 ├── socratic_app/             # Flutter mobile app
 │   ├── android/app/src/main/cpp/
 │   │   ├── libchat.h         # C API header (4 functions)
@@ -147,13 +144,12 @@ socratic_ai_tutor/
 │   │   ├── CMakeLists.txt    # Builds llama.cpp from source
 │   │   └── LIBCHAT.md        # Full C API documentation
 │   ├── lib/
-│   │   ├── screens/          # UI screens
+│   │   ├── screens/          # UI screens (chat, courses, quizzes, glossary, playground, settings)
 │   │   ├── services/         # Business logic & inference
 │   │   ├── models/           # Data classes
 │   │   ├── widgets/          # Reusable components
 │   │   └── theme/            # App theme
-│   └── assets/               # Courses, quizzes, glossary, playground
-├── webapp/                   # React web app (admin + student portal)
+│   └── assets/               # Courses, quizzes, glossary data
 ├── notebooks/training/       # Fine-tuning notebooks (Colab)
 ├── models/                   # GGUF model files (not in git)
 ├── docker-compose.yml
@@ -318,20 +314,21 @@ Always start with a thinking block. This is mandatory.
 
 1. **No Direct Answers**: The AI identifies solution requests and pivots to guiding questions.
 2. **Scaffolding**: Complex problems are broken into smaller, manageable inquiries.
-3. **Three-Mode Behavior**: Conceptual questions get Socratic guidance, code questions get implementation guidance, casual messages get warm responses.
-4. **Think-Then-Respond**: The model reasons internally in `<think>` blocks before responding, improving pedagogical quality (reasoning is stripped from the UI).
+3. **Contextual Hints**: When students struggle, the AI provides hints before asking the next guiding question.
+4. **Three-Mode Behavior**: Conceptual questions get Socratic guidance, code questions get implementation guidance, casual messages get warm responses.
+5. **Think-Then-Respond**: The model reasons internally in `<think>` blocks before responding, improving pedagogical quality (reasoning is stripped from the UI).
 
 ---
 
 ## Content Library
 
-The tutor's curriculum covers:
-- **Machine Learning**: Linear Regression, Clustering, Neural Networks, Evaluation Metrics
-- **Data Science Foundations**: Statistics, Probability, Data Cleaning, EDA
-- **Programming**: Python fundamentals, data structures, algorithms
-- **Critical Thinking**: Logic, reasoning, cognitive biases
+The tutor's comprehensive Data Science and Machine Learning curriculum covers:
+- **Machine Learning**: Linear Regression, Clustering, Neural Networks, Decision Trees, Evaluation Metrics
+- **Data Science Foundations**: Statistics, Probability, Data Cleaning, Exploratory Data Analysis (EDA), Feature Engineering
+- **Programming**: Python fundamentals, NumPy, Pandas, data structures, algorithms
+- **Critical Thinking**: Logic, reasoning, problem-solving strategies
 
-Courses are bundled in the APK for offline use. Admins can upload additional courses through the web panel at `/admin`.
+All courses are bundled in the APK for complete offline access. The interactive **Glossary** provides quick definitions of Data Science and Machine Learning terms. **Adaptive Quizzes** test understanding with difficulty adjusted based on performance.
 
 ---
 
@@ -445,19 +442,20 @@ Building a custom C API (`libchat`) to run llama.cpp on Android was a technicall
 **Milestone 3 — Hybrid Cloud/Edge Routing**
 The `HybridTutorService` with crash-loop protection enables graceful degradation: if the device cannot run local inference (x86 emulator, insufficient RAM, previous crash), it automatically routes to the cloud backend. This makes the app functional across a wider range of devices and removes a hard dependency on any single inference path.
 
-**Milestone 4 — Deployed Web Platform**
-The live web app at [socratic.hx-ai.org](https://socratic.hx-ai.org) extends the reach beyond Android, enabling access from any browser. The admin dashboard allows course content to be updated without app releases — an important operational capability for real-world deployment.
+**Milestone 4 — Interactive Learning Features**
+The addition of adaptive quizzes, searchable glossary, and Python playground creates a comprehensive learning environment. Students can test their knowledge, look up terms instantly, and practice coding — all without leaving the app or requiring internet connectivity.
 
 ### Objectives vs. Project Proposal
 
 | Objective | Status | Notes |
 |-----------|--------|-------|
-| Socratic tutoring behavior | ✅ Achieved | Model maintains guiding-question behavior across all tested inputs |
+| Socratic tutoring behavior | ✅ Achieved | Model maintains guiding-question behavior with contextual hints |
 | Offline inference on Android | ✅ Achieved | ARM64 devices with 4GB+ RAM run full offline inference |
-| DS/ML curriculum coverage | ✅ Achieved | ML, statistics, Python, critical thinking modules bundled |
+| Data Science and Machine Learning curriculum | ✅ Achieved | Complete curriculum with courses, quizzes, and glossary |
 | Adaptive difficulty | ✅ Achieved | Socratic Index (0.60–0.65) responds to student proficiency |
 | Low-resource device support | ✅ Achieved | Tested on 4GB Huawei P Smart (Android 9) |
 | Python coding environment | ✅ Achieved | In-app Pyodide playground functional offline |
+| Interactive learning features | ✅ Achieved | Quizzes, glossary, and AI assistance during quizzes |
 | x86_64 / emulator support | ⚠️ Partial | Offline inference unavailable on x86; remote fallback covers it |
 
 ---
@@ -474,35 +472,19 @@ The live web app at [socratic.hx-ai.org](https://socratic.hx-ai.org) extends the
 
 4. **Consider Smaller Models for Lower-End Devices**: Qwen3-0.6B (~460 MB, 5-7s) works on 4GB devices. For 2-3GB devices, the SmolLM2-360M variant (~258 MB) offers faster inference at the cost of some response quality — a worthwhile trade-off for wider reach.
 
+5. **Expand Quiz and Glossary Content**: The adaptive quiz system and glossary framework are reusable across domains. Creating similar resources for physics, chemistry, or mathematics would extend the platform's educational reach.
+
 ### Future Work
 
 - **iOS Support**: The `libchat` C API is platform-agnostic. Extending CMake builds to target iOS/macOS would require Metal/CoreML integration for performance, but the Dart FFI layer would remain unchanged.
-- **Larger Context & Multi-Turn Memory**: Current context window is 4096 tokens. Increasing this (with Flash Attention) would enable longer tutoring sessions and better coherence across a full lecture.
-- **Student Analytics Dashboard**: Backend already tracks Socratic Index and session data. A student-facing analytics view showing learning progress over time would increase engagement.
+- **Larger Context & Multi-Turn Memory**: Current context window is 4096 tokens. Increasing this would enable longer tutoring sessions and better coherence across full learning modules.
+- **Student Analytics Dashboard**: Track learning progress, quiz performance, and Socratic interaction quality over time to provide personalized insights.
 - **Multilingual Support**: Fine-tuning on Wolof or French Socratic datasets would serve the primary target population (West Africa) more directly.
-- **Curriculum Expansion via Community**: An open submission process for course content (reviewed by educators before upload) would allow the content library to grow without central bottlenecks.
+- **Curriculum Expansion**: Add more Data Science and Machine Learning topics, case studies, and real-world projects to the course library.
 
 ---
 
 ## Deployment
-
-### ✅ Current Deployment Status
-
-**Live Backend Server:**
-- **URL**: https://socratic.hx-ai.org/
-- **Admin Dashboard**: https://socratic.hx-ai.org/admin
-- **API Documentation**: https://socratic.hx-ai.org/docs
-- **Deployment Method**: DigitalOcean App Platform
-- **Container**: Docker (docker-compose.yml)
-- **Status**: ✅ Running (production verified)
-
-**Deployment Verification:**
-- Health check endpoint: `/health` (returns 200 OK)
-- API endpoints: All routes tested and functional
-- Model inference: Working on production server
-- Admin panel: Accessible with credentials
-
----
 
 ### Deploy Your Own Backend (Docker)
 
@@ -551,7 +533,7 @@ curl http://localhost:8880/health
 | `MODEL_PATH` | `/app/models/socratic-q4_k_m.gguf` | Path to GGUF model |
 | `N_THREADS` | `4` | CPU threads for inference |
 | `N_CTX` | `4096` | Context window size |
-| `N_GPU_LAYERS` | `0` | GPU layers (0 = CPU only) |
+
 
 ---
 
@@ -587,7 +569,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 1. Create account with email & password
 2. App will prompt to download model (~460 MB)
 3. Download completes → Ready to use
-4. App automatically connects to backend at https://socratic.hx-ai.org/
+4. Explore features: Chat, Courses, Quizzes, Glossary, Python Playground
 
 ---
 
@@ -597,7 +579,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 # View complete testing report
 cat testing/TESTING_REPORT.md
 
-# Test on emulator (connects to deployed backend)
+# Test on emulator
 cd socratic_app
 flutter run
 
@@ -607,12 +589,6 @@ flutter devices
 
 # Then run:
 flutter run -d <device-id>
-
-# Test backend directly:
-curl https://socratic.hx-ai.org/health
-curl -X POST https://socratic.hx-ai.org/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is machine learning?", "session_id": "test", "user_id": "demo"}'
 ```
 
 ---
