@@ -85,22 +85,6 @@ Full documentation: [`socratic_app/android/app/src/main/cpp/LIBCHAT.md`](socrati
 
 ---
 
-## App Interfaces
-
-| Splash Screen | Login | Register |
-| :---: | :---: | :---: |
-| ![Splash](screenshots/splash.png) | ![Login](screenshots/login.png) | ![Register](screenshots/register.png) |
-
-| Home (Courses) | AI Tutor | Chat |
-| :---: | :---: | :---: |
-| ![Home](screenshots/home.png) | ![AI Tutor](screenshots/ai_tutor_home.png) | ![Chat](screenshots/chat.png) |
-
-| Profile | Settings |
-| :---: | :---: |
-| ![Profile](screenshots/profilr.png) | ![Settings](screenshots/settings.png) |
-
----
-
 ## Key Features
 
 - **Socratic Guardrails**: The AI never gives direct answers — responds only with guiding questions to scaffold knowledge discovery.
