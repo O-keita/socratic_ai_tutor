@@ -432,6 +432,58 @@ Full testing report available at [`testing/TESTING_REPORT.md`](testing/TESTING_R
 
 ---
 
+## Discussion
+
+### Milestone Importance & Impact
+
+**Milestone 1 — Fine-Tuned Socratic Model**
+The most critical milestone of the project. Training a 0.6B parameter model to consistently ask guiding questions instead of giving direct answers required careful dataset curation and LoRA fine-tuning. The impact is significant: unlike general-purpose LLMs that answer immediately, this model actively promotes critical thinking. The `<think>` reasoning blocks further improve response quality by forcing the model to reason before responding. This milestone directly validates the core pedagogical hypothesis of the project.
+
+**Milestone 2 — On-Device Offline Inference**
+Building a custom C API (`libchat`) to run llama.cpp on Android was a technically complex milestone that unlocked the offline-first value proposition. All three existing Flutter packages for on-device LLM inference were evaluated and rejected due to build failures, missing submodules, or CPU incompatibility. The custom solution runs on every ARM64 device at 5-7s per response — within acceptable range for a learning interaction. This milestone directly addresses the low-resource environment constraint in the original project proposal.
+
+**Milestone 3 — Hybrid Cloud/Edge Routing**
+The `HybridTutorService` with crash-loop protection enables graceful degradation: if the device cannot run local inference (x86 emulator, insufficient RAM, previous crash), it automatically routes to the cloud backend. This makes the app functional across a wider range of devices and removes a hard dependency on any single inference path.
+
+**Milestone 4 — Deployed Web Platform**
+The live web app at [socratic.hx-ai.org](https://socratic.hx-ai.org) extends the reach beyond Android, enabling access from any browser. The admin dashboard allows course content to be updated without app releases — an important operational capability for real-world deployment.
+
+### Objectives vs. Project Proposal
+
+| Objective | Status | Notes |
+|-----------|--------|-------|
+| Socratic tutoring behavior | ✅ Achieved | Model maintains guiding-question behavior across all tested inputs |
+| Offline inference on Android | ✅ Achieved | ARM64 devices with 4GB+ RAM run full offline inference |
+| DS/ML curriculum coverage | ✅ Achieved | ML, statistics, Python, critical thinking modules bundled |
+| Adaptive difficulty | ✅ Achieved | Socratic Index (0.60–0.65) responds to student proficiency |
+| Low-resource device support | ✅ Achieved | Tested on 4GB Huawei P Smart (Android 9) |
+| Python coding environment | ✅ Achieved | In-app Pyodide playground functional offline |
+| x86_64 / emulator support | ⚠️ Partial | Offline inference unavailable on x86; remote fallback covers it |
+
+---
+
+## Recommendations
+
+### For the Community
+
+1. **Deploy in Low-Connectivity Classrooms**: The offline-first design makes Bantaba AI well-suited for schools with unreliable internet. Distributing the APK via USB or local Wi-Fi hotspot (no internet required) can make AI-assisted tutoring accessible where it currently isn't.
+
+2. **Extend to Other STEM Domains**: The Socratic fine-tuning pipeline is domain-agnostic. The same approach (dataset curation → LoRA fine-tuning → GGUF quantization) can produce tutors for physics, chemistry, or mathematics. The training notebooks are open-source and reusable.
+
+3. **Use libchat for Other On-Device LLM Projects**: The custom `libchat` C API is a clean, minimal wrapper around llama.cpp that solves real packaging issues with existing Flutter/Dart LLM packages. Other mobile developers can adopt the same CMake-based build approach.
+
+4. **Consider Smaller Models for Lower-End Devices**: Qwen3-0.6B (~460 MB, 5-7s) works on 4GB devices. For 2-3GB devices, the SmolLM2-360M variant (~258 MB) offers faster inference at the cost of some response quality — a worthwhile trade-off for wider reach.
+
+### Future Work
+
+- **iOS Support**: The `libchat` C API is platform-agnostic. Extending CMake builds to target iOS/macOS would require Metal/CoreML integration for performance, but the Dart FFI layer would remain unchanged.
+- **Larger Context & Multi-Turn Memory**: Current context window is 4096 tokens. Increasing this (with Flash Attention) would enable longer tutoring sessions and better coherence across a full lecture.
+- **Student Analytics Dashboard**: Backend already tracks Socratic Index and session data. A student-facing analytics view showing learning progress over time would increase engagement.
+- **Multilingual Support**: Fine-tuning on Wolof or French Socratic datasets would serve the primary target population (West Africa) more directly.
+- **Curriculum Expansion via Community**: An open submission process for course content (reviewed by educators before upload) would allow the content library to grow without central bottlenecks.
+
+---
+
 ## Deployment
 
 ### ✅ Current Deployment Status
