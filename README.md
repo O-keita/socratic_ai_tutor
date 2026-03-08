@@ -1,6 +1,9 @@
 # Socratic AI Tutor: Hybrid Offline-First Personalized Learning
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/O-keita/socratic_ai_tutor.git)
+[![Release](https://img.shields.io/badge/Release-v1.0.0-brightgreen?logo=github)](https://github.com/O-keita/socratic_ai_tutor/releases/tag/v1.0.0)
+[![Download APK](https://img.shields.io/badge/Download-APK%20v1.0.0%20(58MB)-green?logo=android)](https://github.com/O-keita/socratic_ai_tutor/releases/download/v1.0.0/bantaba-ai-v1.0.0.apk)
+[![Demo Video](https://img.shields.io/badge/Demo-Watch%20Video-red?logo=google-drive)](https://drive.google.com/file/d/1l-9Va1SJiuBBCUlkOo-EHtdCbECaZXLv/view?usp=sharing)
 [![Flutter](https://img.shields.io/badge/Frontend-Flutter-blue.svg)](https://flutter.dev)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-green.svg)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -19,6 +22,7 @@ By combining on-device LLM inference with a cloud-fallback API, it provides a se
 - **Admin Dashboard**: [https://socratic.hx-ai.org/admin](https://socratic.hx-ai.org/admin)
 - **API Documentation**: [https://socratic.hx-ai.org/docs](https://socratic.hx-ai.org/docs)
 - **GitHub Repository**: [https://github.com/O-keita/socratic_ai_tutor.git](https://github.com/O-keita/socratic_ai_tutor.git)
+- **Demo Video**: [Watch on Google Drive](https://drive.google.com/file/d/1l-9Va1SJiuBBCUlkOo-EHtdCbECaZXLv/view?usp=sharing)
 
 ### 📱 Mobile App Download
 - **Android APK (Release)**: [Download v1.0.0](https://github.com/O-keita/socratic_ai_tutor/releases/download/v1.0.0/bantaba-ai-v1.0.0.apk) or build from source (see Installation below)
