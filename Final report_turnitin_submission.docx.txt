@@ -1,0 +1,684 @@
+﻿Project Title
+
+
+
+
+Program Name
+
+
+Your name
+
+
+Course
+
+
+
+
+
+
+
+
+Supervisor
+
+
+
+
+
+
+year
+
+
+________________
+
+
+
+
+DECLARATION
+
+
+This Proposal Project is my original work, unless stated and all external sources have been referenced or cited in my document. This work has not been presented for award of degree or for any similar purpose in any other university
+
+
+Signature…………………………                         Date…………………………..
+Name of Student 
+________________
+
+
+CERTIFICATION
+
+
+
+
+
+
+
+
+
+
+The undersigned certifies that he has read and hereby recommended for acceptance of African Leadership University a report entitled ………..
+
+
+Signature………………………                                 Date………………………….
+Prof/Dr./Mrs./Miss/Mr. Name of the Supervisor
+Faculty,
+Bachelor of Software Engineering,
+ALU
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+________________
+
+
+DEDICATION AND ACKNOWLEDGEMENT 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+________________
+
+
+Abstract
+
+
+
+
+The summary of a report abstract should summarize the following:
+1. Introduction and background ( 1 sentence or two is enough)
+2.  Problem statement.
+3. The proposed and implemented solution
+4. Conclusion drawn from the results you got 
+
+
+Range for the  number of Words in the abstract (150 - 250 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+( Each section must be on its page) 
+
+
+Table of Contents
+
+
+List of Tables
+
+
+List of Figures
+
+
+List of Acronyms/Abbreviations 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    CHAPTER ONE: INTRODUCTION 
+(“The tense changes to “past tense where possible”)
+1.1  Introduction and Background
+1.2 Problem statement
+1.3 Project’s main objective
+1.3.1List of the specific objectives
+1.4 Research questions
+1.5 Project scope
+1.6 Significance and Justification
+1.7 Research Budget
+1.8 Research Timeline
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+________________
+
+
+CHAPTER TWO: LITERATURE REVIEW 
+(“The tense changes to “past tense where possible”)
+2.1 Introduction 
+2.2 Historical Background of the Research Topic
+2.3 Overview of Existing System 
+2.4 Review of Related Work 
+2.3.1 Summary of Reviewed Literature 
+2.5 Strength and Weaknesses of the Existing System(s) 
+2.6 General Comments
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+________________
+
+
+CHAPTER THREE: SYSTEM ANALYSIS AND DESIGN
+(“The tense changes to “past tense where possible”)
+                         
+
+
+3.1 Introduction 
+3.2 Research Design (including the SDLC model used)
+        3.1.1 Dataset and Dataset Description (For those in ML specialization)
+3.3 Functional and Non-functional Requirements 
+3.2.1 Proposed Model Diagram 
+3.4 System Architecture 
+3.5 Float Chart, Use Case Diagram, Sequence Diagram and all other diagrams. 
+3.6 Development Tools
+________________
+
+
+CHAPTER 4: SYSTEM IMPLEMENTATION AND TESTING
+
+(Screenshot and source code as sample only just for main modules and source codes for the same screenshot are required)
+4.1 Implementation and coding
+4.1.1 Introduction
+Be brief about what this section is talking about, not what the project is about. Be specific to what this section will be addressing. Do not Repeat what you mentioned in the other chapters in short…………
+
+
+4.1.2 Description of implementation Tools and technology
+4.2 Graphical view of the project
+4.2.1 Screenshots with description
+
+
+Basically. insert Screenshots of different features of your app. Yes they have to be features mentioned in the functional requirements. Actions a user can perform on the system that directly address your problem statement e.g a User can view pending payments for water service platform, or A user can access play the game that improves your coordination etc
+
+
+4.3 Testing
+4.2.1 Introduction
+4.2.2 Objective of testing
+4.2.3 Unit testing outputs
+4.2.4 Validation testing outputs
+4.2.5 Integration testing outputs
+4.2.6 Functional and system testing results
+4.2.7 Acceptance testing report
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CHAPTER 5: THE DESCRIPTION OF THE RESULTS/SYSTEM
+Below are Examples of result reporting for some problems solved around AR/VR and Web
+1. Water Distribution Web Platform Example:
+Problem: An organization that distributes water lacks a centralized platform for monitoring water quality, tracking individual water usage, and managing user payment statuses. Customers cannot verify the quality of the water they receive, monitor their own usage, or view their payment status, resulting in inefficiencies and poor user satisfaction.
+Results :
+1. Water Quality Reporting Rate Over Time
+Graph Type: Line graph
+Description: A line graph showing the frequency and accuracy of water quality updates. The x-axis represents time (e.g., weeks or months), and the y-axis shows the percentage accuracy of quality reporting, ideally trending upward toward a target accuracy (e.g., 95%).
+2. Daily Water Usage Tracking Accuracy
+Graph Type: Bar chart
+Description: A bar chart comparing recorded versus actual usage accuracy per user over time. Each bar represents a user's daily usage, showing consistency in tracking accuracy.
+3. Payment Status Update Speed
+Graph Type: Line or bar graph
+Description: A graph showing the average time taken to update payment status post-transaction, decreasing as platform efficiency improves.
+4. User Engagement Rate
+Graph Type: Line graph
+Description: A line graph showing the percentage of users checking water quality, usage, and payment status over time, indicating growing platform usage.
+2. AR/VR Game for Autistic Students
+Improvement in Emotion Recognition Accuracy
+Problem Autistic students often face challenges in social interactions, communication, and sensory processing, which can make it difficult for them to engage in traditional classroom settings. They may struggle to recognize social cues, interpret emotions, and manage sensory overload in real-life interactions.
+
+
+1. Graph Type: Line graph
+Description: A line graph displaying students' accuracy in identifying emotions before and after using the game. The x-axis represents testing sessions, and the y-axis shows accuracy percentage, ideally showing an upward trend.
+2. Time Spent in VR Social Scenarios
+Graph Type: Bar chart
+Description: A bar chart showing the time students spend engaging with different social scenarios (e.g., "Greeting Others," "Making Eye Contact") over sessions, suggesting increased comfort in more complex scenarios over time.
+3. Sensory Tolerance Improvement
+Graph Type: Stacked bar chart
+Description: A stacked bar chart showing students' tolerance levels in various sensory environments (e.g., "Quiet," "Moderate Noise," "Crowded"). Each section within a bar represents time tolerated before feeling overstimulated, ideally growing as students progress.
+
+
+
+
+
+
+________________
+
+
+CHAPTER 6: CONCLUSIONS AND RECOMMENDATIONS
+Recommendation, limitations of the Study, suggestions for further studies or research
+What can we conclude from the results you presented? Does it address the problem you stated? Does it support your hypothesis?
+What can be done by someone else who would like to take up from where you have left off? Or if you are to continue, what would you like to add/remove/improve
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+References

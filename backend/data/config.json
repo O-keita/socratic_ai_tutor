@@ -1,8 +1,8 @@
 {
   "model": {
     "repo_id": "Omar-keita/DSML-Socatic-qwen3-0.6B",
-    "filename": "socratic-qwen3-0.5B-Q4_K_M.gguf",
-    "path": "models/socratic-q4_k_m.gguf",
+    "filename": "socratic-qwen3-0.5B-GGUF_Q8_server.gguf",
+    "path": "models/socratic-qwen3-0.5B-GGUF_Q8_server.gguf",
     "n_ctx": 4096,
     "n_threads": 4,
     "n_gpu_layers": 0,
