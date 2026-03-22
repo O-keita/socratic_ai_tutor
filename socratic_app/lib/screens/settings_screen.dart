@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/theme_service.dart';
 import '../services/hybrid_tutor_service.dart';
 import '../services/llm_service.dart';
 import '../services/model_download_service.dart';
 import '../services/model_version_service.dart';
+import '../services/session_service.dart';
+import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
 import 'model_setup_screen.dart';
+import 'eula_screen.dart';
+import 'about_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,6 +23,67 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final HybridTutorService _hybridService = HybridTutorService();
+  bool _privacyMode = false;
+
+  static const String _privacyModeKey = 'privacy_mode_enabled';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrivacyMode();
+  }
+
+  Future<void> _loadPrivacyMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _privacyMode = prefs.getBool(_privacyModeKey) ?? false;
+    });
+  }
+
+  Future<void> _togglePrivacyMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_privacyModeKey, value);
+    setState(() {
+      _privacyMode = value;
+    });
+  }
+
+  Future<void> _clearAllData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Clear All Data?'),
+        content: const Text(
+          'This will permanently delete all your conversation history, '
+          'session logs, and lesson progress. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+            child: const Text('Delete Everything'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Clear sessions
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('chat_sessions');
+
+    // Clear lesson progress
+    await ProgressService.resetProgress();
+
+    if (mounted) {
+      AppSnackBar.success(context, 'All data cleared successfully.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +176,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(
-                                  builder: (_) => const ModelSetupScreen()),
+                                  builder: (_) => const ModelSetupScreen(fromSettings: true)),
                             ),
                           ),
                           if (isDownloading)
@@ -133,6 +199,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     );
                   },
+                ),
+                const SizedBox(height: 24),
+                _buildSectionHeader('Privacy'),
+                Card(
+                  child: SwitchListTile(
+                    title: const Text('Privacy Mode'),
+                    subtitle: Text(
+                      _privacyMode
+                          ? 'Conversations are not saved'
+                          : 'Conversations are saved locally',
+                    ),
+                    value: _privacyMode,
+                    onChanged: _togglePrivacyMode,
+                    secondary: Icon(
+                      _privacyMode
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    activeColor: AppTheme.accentOrange,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildSectionHeader('Data'),
+                _buildSettingsTile(
+                  'Clear All Data',
+                  'Delete all conversations and progress',
+                  Icons.delete_forever_outlined,
+                  onTap: _clearAllData,
                 ),
                 const SizedBox(height: 24),
                 _buildSectionHeader('General'),
@@ -160,6 +254,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
                     }
                   },
+                ),
+                const SizedBox(height: 24),
+                _buildSectionHeader('Legal & Info'),
+                _buildSettingsTile(
+                  'EULA & Privacy Policy',
+                  'Review terms of use and data practices',
+                  Icons.shield_outlined,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const EulaScreen()),
+                  ),
+                ),
+                _buildSettingsTile(
+                  'About Bantaba AI',
+                  'Learn about the system and its limitations',
+                  Icons.info_outline,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AboutScreen()),
+                  ),
                 ),
               ],
             ),

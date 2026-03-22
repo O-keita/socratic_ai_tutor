@@ -6,9 +6,21 @@ import '../models/session.dart';
 class SessionService {
   static const String _sessionsKey = 'chat_sessions';
   
+  static const String _privacyModeKey = 'privacy_mode_enabled';
+
+  // Delete all sessions
+  static Future<void> clearAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_sessionsKey);
+  }
+
   // Save or update a session
   static Future<void> saveSession(Session session) async {
     final prefs = await SharedPreferences.getInstance();
+
+    // When privacy mode is on, keep session in memory but don't persist
+    if (prefs.getBool(_privacyModeKey) ?? false) return;
+
     final sessionsJson = prefs.getStringList(_sessionsKey) ?? [];
     
     final sessions = sessionsJson

@@ -5,10 +5,14 @@ import '../services/model_version_service.dart';
 import '../theme/app_theme.dart';
 import '../services/theme_service.dart';
 import '../utils/app_config.dart';
+import '../utils/app_snackbar.dart';
 import 'home_screen.dart';
 
 class ModelSetupScreen extends StatefulWidget {
-  const ModelSetupScreen({super.key});
+  /// Set to true when opened from Settings so the screen shows a model
+  /// management UI instead of auto-navigating home when a model already exists.
+  final bool fromSettings;
+  const ModelSetupScreen({super.key, this.fromSettings = false});
 
   @override
   State<ModelSetupScreen> createState() => _ModelSetupScreenState();
@@ -20,6 +24,7 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
 
   bool _isLikelyEmulator = false;
   bool _showUpdateUI = false;
+  bool _modelInstalled = false;
 
   @override
   void initState() {
@@ -35,16 +40,101 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
     final downloader = ModelDownloadService();
     final exists = await downloader.isModelDownloaded(modelFileName);
     if (exists && mounted) {
+      setState(() => _modelInstalled = true);
       // If an update is available, show the update UI instead of going home
       final versionService = ModelVersionService();
       if (versionService.updateAvailable) {
         setState(() => _showUpdateUI = true);
         return;
       }
-      _navigateToHome();
+      // When opened from Settings show the management UI; otherwise go home.
+      if (!widget.fromSettings) _navigateToHome();
       return;
     }
     await downloader.checkPartialDownload(modelFileName);
+  }
+
+  Future<void> _confirmDeleteModel(ModelDownloadService downloader) async {
+    // Step 1 — warning dialog
+    final step1 = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Local Model?'),
+        content: const Text(
+          'This will permanently remove the downloaded AI model (~460 MB) '
+          'from your device.\n\n'
+          'You will not be able to use offline mode until you redownload it. '
+          'Your conversations and progress will not be affected.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+    if (step1 != true || !mounted) return;
+
+    // Step 2 — type DELETE to confirm
+    final controller = TextEditingController();
+    final step2 = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: const Text('Are you absolutely sure?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Type DELETE in the box below to confirm you want to remove the model.',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  hintText: 'DELETE',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (_) => setS(() {}),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: controller.text.trim() == 'DELETE'
+                  ? () => Navigator.of(ctx).pop(true)
+                  : null,
+              style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+              child: const Text('Delete Model'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    if (step2 != true || !mounted) return;
+
+    final ok = await downloader.deleteModel(modelFileName);
+    if (!mounted) return;
+    if (ok) {
+      setState(() { _modelInstalled = false; });
+      AppSnackBar.success(context, 'Model deleted. Download again to use offline mode.');
+    } else {
+      AppSnackBar.error(context, 'Could not delete the model. Try again.');
+    }
   }
 
   void _navigateToHome() {
@@ -90,7 +180,12 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: _showUpdateUI
                       ? _buildUpdateUI(isDark, downloader)
-                      : _buildDownloadUI(isDark, downloader),
+                      : (_modelInstalled &&
+                              widget.fromSettings &&
+                              downloader.status != DownloadStatus.downloading &&
+                              downloader.status != DownloadStatus.connecting)
+                          ? _buildManageUI(isDark, downloader)
+                          : _buildDownloadUI(isDark, downloader),
                 ),
               ),
             ],
@@ -251,6 +346,82 @@ class _ModelSetupScreenState extends State<ModelSetupScreen> {
             ),
             child: const Text('Keep Current', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.accentOrange)),
           ),
+        ),
+      ],
+    );
+  }
+
+  // ── Manage installed model UI ──────────────────────────────────────────
+  Widget _buildManageUI(bool isDark, ModelDownloadService downloader) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            color: AppTheme.success.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.check_circle_outline, size: 52, color: AppTheme.success),
+        ),
+        const SizedBox(height: 28),
+        Text(
+          'Model Installed',
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          AppConfig.modelDisplayName,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 15, color: isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary),
+        ),
+        const SizedBox(height: 40),
+
+        // Redownload
+        SizedBox(
+          width: double.infinity,
+          child: Container(
+            decoration: BoxDecoration(gradient: AppTheme.buttonGradient, borderRadius: BorderRadius.circular(18)),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                setState(() => _modelInstalled = false);
+                downloader.downloadModel(downloadUrl, modelFileName);
+              },
+              icon: const Icon(Icons.download_rounded, color: Colors.white, size: 20),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              ),
+              label: const Text('Redownload Model', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Delete (styled to look non-trivial but accessible)
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _confirmDeleteModel(downloader),
+            icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.error),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              side: BorderSide(color: AppTheme.error.withValues(alpha: 0.5)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+            label: const Text('Delete Model', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.error)),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        Text(
+          'Deleting the model will disable offline mode until you redownload it.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: isDark ? AppTheme.textMuted : AppTheme.lightTextMuted, height: 1.4),
         ),
       ],
     );

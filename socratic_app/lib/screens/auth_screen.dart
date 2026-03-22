@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
-import 'onboarding_screen.dart';
+import 'eula_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -42,7 +42,18 @@ class _AuthScreenState extends State<AuthScreen> {
           _passwordController.text,
         );
         if (success && mounted) {
-          Navigator.of(context).pushReplacementNamed('/home');
+          final userId = authService.currentUser!.id;
+          final accepted = await EulaScreen.isAccepted(userId);
+          if (!mounted) return;
+          if (accepted) {
+            Navigator.of(context).pushReplacementNamed('/home');
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => EulaScreen(blocking: true, userId: userId),
+              ),
+            );
+          }
         } else {
           errorMessage = 'Login failed. Please check your credentials.';
         }
@@ -53,9 +64,8 @@ class _AuthScreenState extends State<AuthScreen> {
           _passwordController.text,
         );
         if (success && mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => OnboardingScreen()),
-          );
+          setState(() => _isLogin = true);
+          AppSnackBar.success(context, 'Account created! Please sign in.');
         } else {
           errorMessage = 'Registration failed.';
         }

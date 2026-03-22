@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'auth_screen.dart';
+import 'eula_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -33,10 +34,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       await Future.delayed(const Duration(milliseconds: 100));
       attempts++;
     }
+    if (!mounted) return;
+    final navigator = Navigator.of(context);
     if (authService.isAuthenticated) {
-      if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+      final userId = authService.currentUser!.id;
+      final accepted = await EulaScreen.isAccepted(userId);
+      if (!mounted) return;
+      if (accepted) {
+        navigator.pushReplacementNamed('/home');
+      } else {
+        navigator.pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => EulaScreen(blocking: true, userId: userId),
+          ),
+        );
+      }
     } else {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const AuthScreen()));
+      navigator.pushReplacement(MaterialPageRoute(builder: (_) => const AuthScreen()));
     }
   }
 

@@ -303,6 +303,32 @@ class ModelDownloadService extends ChangeNotifier {
     }
   }
 
+  /// Delete the fully downloaded model file and reset state to [notStarted].
+  /// Does nothing (and returns false) if the model is not present.
+  Future<bool> deleteModel(String fileName) async {
+    try {
+      final dir = await getApplicationSupportDirectory()
+          .timeout(const Duration(seconds: 2));
+      final file = File(p.join(dir.path, fileName));
+      if (await file.exists()) {
+        await file.delete();
+        debugPrint('DownloadService: model deleted → ${file.path}');
+      }
+      // Also wipe any leftover partial file
+      final tmpFile = File('${p.join(dir.path, fileName)}.tmp');
+      if (await tmpFile.exists()) await tmpFile.delete();
+    } catch (e) {
+      debugPrint('DownloadService: delete failed → $e');
+      return false;
+    }
+    _status = DownloadStatus.notStarted;
+    _progress = 0.0;
+    _hasPartial = false;
+    _totalBytes = null;
+    notifyListeners();
+    return true;
+  }
+
   /// Cancel the in-progress download.  The partial `.tmp` file is preserved
   /// so the next [downloadModel] call resumes automatically.
   void cancelDownload() {
