@@ -775,7 +775,7 @@ function appendError(msg) {
   row.className = 'msg-row';
   row.innerHTML = `
     <div class="msg-avatar avatar-ai">B</div>
-    <div class="bubble-error">⚠ ${msg}</div>
+    <div class="bubble-error">⚠ ${escapeHtml(msg)}</div>
   `;
   area.appendChild(row);
   scrollBottom();
@@ -855,7 +855,13 @@ async function sendMessage(overrideText) {
 
     if (!response.ok) {
       conversationHistory.pop(); // revert on failure
-      throw new Error(`Server returned ${response.status}`);
+      let detail = null;
+      try {
+        detail = (await response.json()).detail;
+      } catch (_) { /* body wasn't JSON — fall back below */ }
+      const apiError = new Error(detail || `Server returned ${response.status}`);
+      apiError.isApiError = Boolean(detail);
+      throw apiError;
     }
 
     const data = await response.json();
@@ -882,6 +888,8 @@ async function sendMessage(overrideText) {
     hideThinking();
     if (err.name === 'TypeError' && err.message.includes('fetch')) {
       appendError('Could not reach the server. Please check your connection or try the offline APK.');
+    } else if (err.isApiError) {
+      appendError(err.message);
     } else {
       appendError(`Something went wrong: ${err.message}`);
     }

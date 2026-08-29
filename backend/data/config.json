@@ -1,16 +1,10 @@
 {
   "model": {
-    "repo_id": "Omar-keita/DSML-Socatic-qwen3-0.6B",
-    "filename": "socratic-qwen3-0.5B-GGUF_Q8_server.gguf",
-    "path": "models/socratic-qwen3-0.5B-GGUF_Q8_server.gguf",
+    "model_name": "openai/gpt-oss-120b",
     "n_ctx": 4096,
-    "n_threads": 4,
-    "n_gpu_layers": 0,
     "temperature": 0.6,
     "max_tokens": 256,
-    "top_p": 0.9,
-    "top_k": 30,
-    "repeat_penalty": 1.05
+    "top_p": 0.9
   },
   "tutor": {
     "difficulty_levels": {

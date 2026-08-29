@@ -56,6 +56,8 @@ from slowapi.errors import RateLimitExceeded
 # Thread pool for running synchronous inference without blocking the event loop
 _inference_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
+import groq
+
 from ml.inference_engine import inference_engine
 from ml.model_loader import model_loader
 from core.auth import (
@@ -210,6 +212,35 @@ class ChatResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Session question cap — keeps Groq usage bounded per conversation
+# ---------------------------------------------------------------------------
+_MAX_SESSION_QUESTIONS = 5
+_SESSION_LIMIT_MESSAGE = (
+    "You've reached the limit of {limit} questions for this session. "
+    "Start a new conversation to keep exploring!"
+)
+_SERVICE_UNAVAILABLE_MESSAGE = (
+    "The tutor is taking a short break and can't respond right now. "
+    "Please try again in a little while."
+)
+
+
+def _tutor_turns_used(history: Optional[List[Dict[str, str]]]) -> int:
+    """Count prior tutor answers in the conversation (assistant turns)."""
+    if not history:
+        return 0
+    return sum(1 for msg in history if msg.get("role") == "assistant")
+
+
+def _check_session_limit(history: Optional[List[Dict[str, str]]]) -> None:
+    if _tutor_turns_used(history) >= _MAX_SESSION_QUESTIONS:
+        raise HTTPException(
+            status_code=403,
+            detail=_SESSION_LIMIT_MESSAGE.format(limit=_MAX_SESSION_QUESTIONS),
+        )
+
+
+# ---------------------------------------------------------------------------
 # Helper — auth dependencies
 # ---------------------------------------------------------------------------
 async def _get_auth_user(authorization: Optional[str] = Header(None)) -> dict:
@@ -305,6 +336,7 @@ async def chat_public(payload: ChatRequest, request: Request):
     _chat_request_count += 1
     username = "guest"
     logger.info("Public chat request: %.80s...", payload.message)
+    _check_session_limit(payload.history)
     try:
         loop = asyncio.get_event_loop()
         data = await asyncio.wait_for(
@@ -337,6 +369,9 @@ async def chat_public(payload: ChatRequest, request: Request):
         return ChatResponse(**data)
     except asyncio.TimeoutError:
         raise HTTPException(status_code=503, detail="The AI is taking too long. Please try again.")
+    except groq.GroqError as e:
+        logger.error("Groq API unavailable (public chat): %s", e)
+        raise HTTPException(status_code=503, detail=_SERVICE_UNAVAILABLE_MESSAGE)
     except Exception:
         logger.exception("Public chat error")
         raise HTTPException(status_code=500, detail="An error occurred. Please try again.")
@@ -349,6 +384,7 @@ async def chat(payload: ChatRequest, request: Request, user: dict = Depends(_get
     _chat_request_count += 1
     username = user.get("username", "?")
     logger.info("Chat request from %s: %.80s...", username, payload.message)
+    _check_session_limit(payload.history)
     try:
         loop = asyncio.get_event_loop()
         data = await asyncio.wait_for(
@@ -387,6 +423,9 @@ async def chat(payload: ChatRequest, request: Request, user: dict = Depends(_get
     except asyncio.TimeoutError:
         logger.error("Chat timeout for user %s", username)
         raise HTTPException(status_code=503, detail="The AI is taking too long. Please try again.")
+    except groq.GroqError as e:
+        logger.error("Groq API unavailable for user %s: %s", username, e)
+        raise HTTPException(status_code=503, detail=_SERVICE_UNAVAILABLE_MESSAGE)
     except Exception:
         logger.exception("Chat error for user %s", username)
         raise HTTPException(status_code=500, detail="An error occurred. Please try again.")
@@ -528,17 +567,11 @@ async def admin_stats(x_admin_token: Optional[str] = Header(default=None)):
         "total_users": len(users_db),
         "chats_since_restart": _chat_request_count,
         "model_loaded": inference_engine.model is not None,
-        "model_name": model_loader.filename,
-        "model_path": str(model_loader.model_path),
-        "model_hf_url": f"https://huggingface.co/{model_loader.repo_id}",
+        "model_name": model_loader.model_name,
         "n_ctx": model_loader.n_ctx,
-        "n_threads": model_loader.n_threads,
-        "n_gpu_layers": model_loader.n_gpu_layers,
         "temperature": inference_engine.temperature,
         "max_tokens": inference_engine.default_max_tokens,
         "top_p": inference_engine.top_p,
-        "top_k": inference_engine.top_k,
-        "repeat_penalty": inference_engine.repeat_penalty,
         "uptime_seconds": uptime_secs,
         "total_courses": total_courses,
         "total_lessons": total_lessons,
