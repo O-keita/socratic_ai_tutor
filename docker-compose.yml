@@ -8,8 +8,6 @@ services:
       # Port 8880 — supported by Cloudflare proxy (free tier), not conflicting with other services.
       - "8880:8880"
     volumes:
-      # GGUF model — place the file at ./models/ on the host before starting
-      - ./models:/app/models
       # Persist the file-based user DB across container restarts/rebuilds
       - ./data:/app/data
       # Persist admin-uploaded course content
@@ -22,10 +20,8 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      # Rename your GGUF file to match this, or change this to match your file
-      - MODEL_PATH=${MODEL_PATH:-/app/models/socratic-qwen3-0.5B-GGUF_Q8_server.gguf}
-      - N_GPU_LAYERS=${N_GPU_LAYERS:-0}
-      - N_THREADS=${N_THREADS:-4}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=${GROQ_MODEL:-openai/gpt-oss-120b}
       - N_CTX=${N_CTX:-4096}
     env_file:
       - .env

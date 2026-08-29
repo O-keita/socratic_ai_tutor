@@ -120,7 +120,7 @@ Full documentation: [`socratic_app/android/app/src/main/cpp/LIBCHAT.md`](socrati
 
 ### Backend (Python/FastAPI)
 - **Framework**: FastAPI
-- **Inference**: `llama-cpp-python`
+- **Inference**: Groq API (cloud), using our own Socratic system prompt
 - **Authentication**: JWT-based user authentication and session management
 - **Metrics**: Adaptive performance tracking and session analysis
 
@@ -151,7 +151,6 @@ socratic_ai_tutor/
 │   │   └── theme/            # App theme
 │   └── assets/               # Courses, quizzes, glossary data
 ├── notebooks/training/       # Fine-tuning notebooks (Colab)
-├── models/                   # GGUF model files (not in git)
 ├── docker-compose.yml
 └── requirements.txt
 ```
@@ -490,7 +489,7 @@ The addition of adaptive quizzes, searchable glossary, and Python playground cre
 
 **Prerequisites:**
 - Docker & Docker Compose installed
-- Model file: Download [`socratic-q4_k_m.gguf`](https://huggingface.co/Omar-keita/DSML-Socatic-qwen3-0.6B/resolve/main/socratic-qwen3-0.5B-Q4_K_M.gguf) and place in `models/` folder
+- A Groq API key — get one at [console.groq.com/keys](https://console.groq.com/keys)
 
 **Steps:**
 
@@ -499,26 +498,23 @@ The addition of adaptive quizzes, searchable glossary, and Python playground cre
 git clone https://github.com/O-keita/socratic_ai_tutor.git
 cd socratic_ai_tutor
 
-# 2. Place the model file
-mkdir -p models
-# Download and place socratic-q4_k_m.gguf in models/
-
-# 3. Create .env file (optional, sets production parameters)
+# 2. Create .env file
 cat > .env << EOF
 JWT_SECRET_KEY=your-secret-key
 CORS_ORIGINS=*
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=admin123
+GROQ_API_KEY=your-groq-api-key
 EOF
 
-# 4. Build and run containers
+# 3. Build and run containers
 docker compose up --build -d
 
-# 5. Verify deployment
+# 4. Verify deployment
 curl http://localhost:8880/health
 # Should return: {"status": "ok"}
 
-# 6. Access the server
+# 5. Access the server
 # Server: http://localhost:8880
 # Admin: http://localhost:8880/admin
 # Docs: http://localhost:8880/docs
@@ -530,8 +526,8 @@ curl http://localhost:8880/health
 | `PORT` | `8880` | Server port |
 | `JWT_SECRET_KEY` | (required) | JWT signing key |
 | `CORS_ORIGINS` | `*` | CORS allowed origins |
-| `MODEL_PATH` | `/app/models/socratic-q4_k_m.gguf` | Path to GGUF model |
-| `N_THREADS` | `4` | CPU threads for inference |
+| `GROQ_API_KEY` | (required) | Groq API key for cloud inference |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | Groq-hosted model to use |
 | `N_CTX` | `4096` | Context window size |
 
 

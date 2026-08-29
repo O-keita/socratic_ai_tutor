@@ -5,11 +5,6 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
@@ -17,7 +12,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # Runtime directories (overridden by volume mounts in docker-compose)
-RUN mkdir -p /app/models /app/data /app/content
+RUN mkdir -p /app/data /app/content
 
 # Save config.json to a location outside the /app/data volume mount.
 # The entrypoint script copies it back on every container start, ensuring
