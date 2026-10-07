@@ -1,4 +1,7 @@
 fastapi==0.129.0
 groq==0.31.1
 pydantic==2.12.5
+email-validator==2.3.0
+python-jose==3.5.0
 slowapi==0.1.9
+psycopg[binary]==3.2.9
